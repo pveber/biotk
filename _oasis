@@ -1,0 +1,43 @@
+OASISFormat:  0.2
+OCamlVersion: >= 3.12
+Name:         guizmin
+Version:      1.0
+Synopsis:     OCaml library for building (bioinformatics) pipelines
+Authors:      Philippe Veber
+License:      GPL
+LicenseFile:  LICENCE
+Plugins:      StdFiles (0.2), META (0.2)
+BuildTools:   ocamlbuild
+Homepage:     https://github.com/pveber/guizmin
+
+XStdFilesINSTALLFilename: INSTALL
+XStdFilesREADME: false
+XStdFilesAUTHORS: false
+
+Description:
+  This package provides a library and a syntax extension to build bioinformatics pipelines
+  . 
+  The library is built from a set of components that are both properly typed 
+  and dependency-aware. The library offers an access to a couple of standard 
+  tools and databases in bioinformatics.
+
+
+Library guizmin
+  Path:    src
+  Modules: Guizmin
+  
+Library pa_guizmin
+  Path:               src/syntax
+  Modules:            Pa_guizmin
+  FindlibParent:      guizmin
+  FindlibName:        syntax
+  BuildDepends:       camlp4.lib, camlp4.quotations.o 
+  CompiledObject:     byte
+  XMETAType:          syntax
+  XMETARequires:      camlp4, guizmin
+  XMETADescription:   Syntax extension for guizmin
+
+SourceRepository head
+  Type: git
+  Location: git://github.com/pveber/guizmin.git
+  Browser: https://github.com/pveber/guizmin
