@@ -1,0 +1,9 @@
+# OASIS_START
+# DO NOT EDIT (digest: 549839e99100ec0790311bc14e340c59)
+# Library pa_guizmin
+"src/syntax": include
+<src/syntax/*.ml{,i}>: pkg_camlp4.quotations.o
+<src/syntax/*.ml{,i}>: pkg_camlp4.lib
+# Library guizmin
+"src": include
+# OASIS_STOP
