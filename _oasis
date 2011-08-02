@@ -31,8 +31,9 @@ Library pa_guizmin
   Modules:            Pa_guizmin
   FindlibParent:      guizmin
   FindlibName:        syntax
-  BuildDepends:       camlp4.lib, camlp4.quotations.o 
+  BuildDepends:       camlp4.lib, camlp4.quotations.o, camlp4.extend
   CompiledObject:     byte
+  ByteOpt:            -pp camlp4of
   XMETAType:          syntax
   XMETARequires:      camlp4, guizmin
   XMETADescription:   Syntax extension for guizmin

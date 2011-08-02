@@ -1,5 +1,5 @@
 (* OASIS_START *)
-(* DO NOT EDIT (digest: a4fa53e390b152822a98c83081bd4cb3) *)
+(* DO NOT EDIT (digest: f9607661dd8dcbcd1c9baf1dad93f5bd) *)
 module OASISGettext = struct
 # 21 "/home/gildor/programmation/oasis/src/oasis/OASISGettext.ml"
   
@@ -454,7 +454,15 @@ let package_default =
      MyOCamlbuildBase.lib_ocaml =
        [("src/syntax/pa_guizmin", ["src/syntax"]); ("src/guizmin", ["src"])];
      lib_c = [];
-     flags = [];
+     flags =
+       [
+          (["oasis_library_pa_guizmin_byte"; "ocaml"; "link"; "byte"],
+            [(OASISExpr.EBool true, S [A "-pp"; A "camlp4of"])]);
+          (["oasis_library_pa_guizmin_byte"; "ocaml"; "ocamldep"; "byte"],
+            [(OASISExpr.EBool true, S [A "-pp"; A "camlp4of"])]);
+          (["oasis_library_pa_guizmin_byte"; "ocaml"; "compile"; "byte"],
+            [(OASISExpr.EBool true, S [A "-pp"; A "camlp4of"])])
+       ];
      }
   ;;
 
