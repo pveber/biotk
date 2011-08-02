@@ -36,10 +36,23 @@ struct
     List.fold_right (dep_abstract _loc) deps body
     |> List.fold_right (param_abstract _loc) params 
 
+
+  let param_string _loc ~params = 
+    let aux _loc param accu = 
+      let lid, str_val = match param with
+	| `lab_param (lid,"string") | `anon_param (lid,"string") 
+	| `opt_param (lid,"string",_) -> lid, <:expr< $lid:lid$ >>
+
+	| `lab_param (lid,"int") | `anon_param (lid,"int") 
+	| `opt_param (lid,"int",_) -> lid, <:expr< (string_of_int $lid:lid$) >>
+      in <:expr< $str:lid ^ "="$ ^ $str_val$ ^ ";" ^ $accu$ >>
+    in	  
+    List.fold_right (aux _loc) params <:expr< "" >>
+
   let expand_process _loc ~params ~deps ~body =
     abstract _loc
       ~params ~deps
-      ~body:(<:expr< () >>)
+      ~body:(<:expr< $param_string _loc ~params$ >>)
 
   let list_of_opt = function
       None -> []
