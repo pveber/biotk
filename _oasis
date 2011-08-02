@@ -33,7 +33,6 @@ Library pa_guizmin
   FindlibName:        syntax
   BuildDepends:       camlp4.lib, camlp4.quotations.o, camlp4.extend
   CompiledObject:     byte
-  ByteOpt:            -pp camlp4of
   XMETAType:          syntax
   XMETARequires:      camlp4, guizmin
   XMETADescription:   Syntax extension for guizmin
