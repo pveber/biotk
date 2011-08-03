@@ -45,14 +45,33 @@ struct
 
 	| `lab_param (lid,"int") | `anon_param (lid,"int") 
 	| `opt_param (lid,"int",_) -> lid, <:expr< (string_of_int $lid:lid$) >>
+	| _ -> assert false
       in <:expr< $str:lid ^ "="$ ^ $str_val$ ^ ";" ^ $accu$ >>
     in	  
     List.fold_right (aux _loc) params <:expr< "" >>
 
+  let dep_term_list _loc deps =
+    List.fold_right
+      (fun d accu -> match d with
+	   `anon_dep lid -> <:expr< $lid:lid$#term :: $accu$ >>
+	 | `anon_list_dep lid -> 
+	     <:expr< (List.map (fun t -> t#term) $lid:lid$) @ $accu$ >>)
+      deps <:expr< [] >>
+
+  let digest x = Digest.(to_hex (string (Marshal.to_string x [])))
+
   let expand_process _loc ~params ~deps ~body =
     abstract _loc
       ~params ~deps
-      ~body:(<:expr< $param_string _loc ~params$ >>)
+      ~body:(<:expr< 
+	       let term = ($param_string _loc ~params$,
+			   $dep_term_list _loc deps$,
+			   $str:digest body$) in
+  	       (object
+		  method term = term
+		  method build = $body$
+		end)
+			 >>)
 
   let list_of_opt = function
       None -> []
