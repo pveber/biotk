@@ -4,11 +4,9 @@ module Guizmin : sig
   type 'a pipeline
   val eval : 'a pipeline -> 'a
 
-  type 'a pipeline
-
   val v0 : 'a pipeline
-  val v1 : ('a -> 'b) -> 'a value -> 'b pipeline
-  val v2 : ('a -> 'b -> 'c) -> 'a value -> 'b value -> 'c pipeline
+  val v1 : descr -> ('a -> 'b) -> 'a value -> 'b pipeline
+  val v2 : descr -> ('a -> 'b -> 'c) -> 'a value -> 'b value -> 'c pipeline
 
   type 'a file = private string 
   val f0 : 'a file pipeline
@@ -27,13 +25,46 @@ struct
     body : unit -> unit ;
   }
 
-  type protocol = 
+  type descr = 
       Input of path
-    | Step of step * protocol list
-    | Merge of protocol list
-    | Expand of (unit -> protocol list)
+    | Step of string * descr list
 
-  type 'a value = protocol * unit -> 'a
+    | Merge of descr list
+    | Expand of 
+
+  type 'a pipeline = < exec : unit ; extract : 'a ; clean : unit >
+
+
+  let digest x = assert false
+
+  let load_value path = 
+    let ic = open_in path in 
+    let v = input_value ic in
+    close_in ic ; v
+
+  let save_value f path = 
+    let oc = open_out path in
+    output_value oc (f ()) ;
+    close_out oc
+
+  let v0 path = object
+    method exec = assert (Sys.file_exists path)
+    method eval = load_value path
+    method clean = ()
+  end
+
+  let v1 descr f x = 
+    let path = digest (descr, xobject
+    method 
+
+
+  type _ step = 
+      Input  : path -> 'a step
+    | Recipe : path * (unit -> unit) -> 'a step
+    | Select : path * path pipeline -> 'b step
+    | Merge  : 'a pipeline list -> 'a list step
+    | Expand : ('a -> 'b pipeline list) * 'a pipeline -> 'b list step
+  and 'a pipeline = 'a step * (unit -> 'a)
 
 
   let rec run = function
@@ -50,15 +81,6 @@ struct
     extract ()
 
 
-  let extract_value path () = 
-    let ic = open_in path in 
-    let v = input_value ic in
-    close_in ic ; v
-
-  let save_value f path () = 
-    let oc = open_out path in
-    output_value oc (f ()) ;
-    close_out oc
 
   let v0 path = (Input path, extract_value path)
 

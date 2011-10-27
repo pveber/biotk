@@ -24,7 +24,7 @@ Description:
 
 Library guizmin
   Path:    src
-  Modules: GzmTarget, Guizmin
+  Modules: GzmCore, Guizmin
   
 Library pa_guizmin
   Path:               src/syntax
