@@ -28,3 +28,24 @@ let rec path = function
 let ( ++ ) deps f = (f :> protocol) :: deps
 let ( ++* ) deps files = (files :> protocol list) @ deps
 
+let rec compile = function
+  | Input _ -> GzmMakefile.empty
+  | Step s ->
+      let r = { 
+	GzmMakefile.target = s.target ;
+	GzmMakefile.cmds = s.body ;
+	GzmMakefile.deps = List.map path s.deps
+      }
+      in 
+      GzmMakefile.add r (GzmMakefile.concat (List.map compile s.deps))
+  | Select (p,dir) ->
+      let r = { 
+	GzmMakefile.target = (path dir) ^ "/" ^ p ;
+	GzmMakefile.cmds = [] ;
+	GzmMakefile.deps = [ path dir ]
+      }
+      in 
+      GzmMakefile.(add r (compile dir))
+
+
+let sp = Printf.sprintf

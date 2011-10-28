@@ -24,7 +24,8 @@ Description:
 
 Library guizmin
   Path:    src
-  Modules: GzmCore, Guizmin
+  Modules: GzmMakefile, GzmCore, GzmUcsc, Guizmin
+  BuildDepends: batteries
   
 Library pa_guizmin
   Path:               src/syntax
@@ -36,6 +37,13 @@ Library pa_guizmin
   XMETAType:          syntax
   XMETARequires:      camlp4, guizmin
   XMETADescription:   Syntax extension for guizmin
+
+Executable "Tests"
+  Path:         src
+  BuildTools:   ocamlbuild
+  MainIs:       test_yeast.ml
+  BuildDepends: threads, batteries, guizmin
+  Install:      false
 
 SourceRepository head
   Type: git

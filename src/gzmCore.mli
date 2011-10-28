@@ -23,3 +23,8 @@ val select : path -> 'a dir -> 'a target
 val path : 'a file -> string
 val ( ++ ) : protocol list -> 'a target -> protocol list
 val ( ++* ) : protocol list -> 'a target list -> protocol list
+
+
+
+val compile : 'a target -> GzmMakefile.t
+val sp : ('a, unit, string) format -> 'a
