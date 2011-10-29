@@ -1,3 +1,18 @@
+type t = 
+    Input of string
+  | Rule of string option * script * deps
+  | PartOf of t * string
+and script = string list
+and deps = t list
+
+type 'a file = private t
+type 'a dir = private t
+
+val input : string -> 'a file
+val rule : ?path:string list -> script -> deps -> 'a file
+val partof : 'a dir -> string -> 'b file
+
+
 type term = Target of target_id * term list
 and target_id = string * param list
 and param = string * [ `S of string | `I of int | `F of float ]

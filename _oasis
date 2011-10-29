@@ -24,7 +24,10 @@ Description:
 
 Library guizmin
   Path:    src
-  Modules: GzmTarget, Guizmin
+  Modules: GzmCore, GzmMakefile, Guizmin
+  FindlibName: guizmin
+  BuildDepends: threads, unix, batteries
+  Install: true
   
 Library pa_guizmin
   Path:               src/syntax

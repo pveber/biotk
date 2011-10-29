@@ -80,8 +80,11 @@ struct
   EXTEND Gram
     GLOBAL: expr;
     expr: LEVEL "top" [
-      [ LIDENT "process"; params = LIST0 param ; deps = OPT [ LIDENT "uses" ; deps = LIST1 dep -> deps ] ; "->" ; body = expr ->
-	  expand_process _loc ~params ~deps:(list_of_opt deps) ~body
+      [ LIDENT "value"; LIDENT "pipeline"; id = a_STRING ;
+	params = LIST0 param ; 
+	deps = OPT [ LIDENT "uses" ; deps = LIST1 dep -> deps ] ; 
+	"->" ; body = expr ->
+	  expand_value_pipeline _loc ~id ~params ~deps:(list_of_opt deps) ~body
       ]
     ];
     dep: [

@@ -1,5 +1,5 @@
 # OASIS_START
-# DO NOT EDIT (digest: 6c189522e5e689a8d15751e1acf99234)
+# DO NOT EDIT (digest: dc6f8e2e30f016768084fa43b01e94fa)
 version = "1.0"
 description = "OCaml library for building (bioinformatics) pipelines"
 archive(byte) = "guizmin.cma"
@@ -9,8 +9,8 @@ package "syntax" (
  version = "1.0"
  description = "Syntax extension for guizmin"
  requires = "camlp4 guizmin"
- archive(syntax,preprocessor) = "pa_guizmin.cma"
- archive(syntax,toploop) = "pa_guizmin.cma"
+ archive(syntax, preprocessor) = "pa_guizmin.cma"
+ archive(syntax, toploop) = "pa_guizmin.cma"
  exists_if = "pa_guizmin.cma"
 )
 # OASIS_STOP
