@@ -60,7 +60,7 @@ struct
 
   let digest x = Digest.(to_hex (string (Marshal.to_string x [])))
 
-  let expand_process _loc ~params ~deps ~body =
+  let expand_value_pipeline _loc ~id ~params ~deps ~body =
     abstract _loc
       ~params ~deps
       ~body:(<:expr< 
