@@ -1,37 +1,51 @@
-open Batteries
-
-type path = string
-
-type rule = {
-  target : path ;
-  recipe : script ;
+type protocol = 
+    Input of path
+  | Step of step
+  | Select of path * protocol
+and step = {
+  target : string ;
+  body : script ;
   cleanup : script ;
-  deps : rule list
+  deps : protocol list
 }
+and path = string
 and script = string list
 
-type 'a target = rule
-type 'a factory = ?path:path -> unit -> 'a target
+type 'a target = protocol
+type 'a file = < format : 'a ; kind : [`file] > target
+type 'a dir  = < contents : 'a ; kind : [`directory] > target
 
-let path t = t.target
+let input p = Input p
+let step ?(body = []) ?(cleanup = []) ?(deps = []) target = 
+  Step { target ; body ; cleanup ; deps }
+let select p t = Select (p,t)
 
-let factory ~recipe ?(cleanup = []) ~deps ?path () = {
-  target = (
-    match path with 
-	None -> assert false
-      | Some p -> p
-  ) ;
-  recipe ;
-  cleanup ;
-  deps
-}
+let rec path = function
+    Input p -> p
+  | Step s -> s.target 
+  | Select (p, t) -> (path t) ^ "/" ^ p
 
-let input path = factory ~recipe:[] ~deps:[] ~path ()
+let ( ++ ) deps f = (f :> protocol) :: deps
+let ( ++* ) deps files = (files :> protocol list) @ deps
 
-type 'a file = < format : 'a   ; kind : [`file] > target
-type 'a dir  = < contents : 'a ; kind : [`dir]  > target 
+let rec compile = function
+  | Input _ -> GzmMakefile.empty
+  | Step s ->
+      let r = { 
+	GzmMakefile.target = s.target ;
+	GzmMakefile.cmds = s.body ;
+	GzmMakefile.deps = List.map path s.deps
+      }
+      in 
+      GzmMakefile.add r (GzmMakefile.concat (List.map compile s.deps))
+  | Select (p,dir) ->
+      let r = { 
+	GzmMakefile.target = (path dir) ^ "/" ^ p ;
+	GzmMakefile.cmds = [] ;
+	GzmMakefile.deps = [ path dir ]
+      }
+      in 
+      GzmMakefile.(add r (compile dir))
 
-let ( $ ) dir path = 
-  factory ~recipe:[] ~deps:[ dir ] ~path:(dir.target ^ "/" ^ path) ()
 
-    
+let sp = Printf.sprintf

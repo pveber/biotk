@@ -1,13 +1,16 @@
 open Batteries
 open Printf
 
-open GzmCore
+type build_rule = {
+  target : string ;
+  deps : string list ;
+  cmds : string list
+}
 
-module S = Set.Make(
-  struct
-    type t = rule
-    let compare x y = compare x.target y.target
-  end)
+module S = Set.Make(struct
+		      type t = build_rule
+		      let compare = compare
+		    end)
 
 include S
 
@@ -20,10 +23,11 @@ let concat l =
 let rule_to_channel oc r = 
   fprintf oc "%s: %s\n" 
     r.target
-    (String.concat " " (List.map (fun r -> r.target) r.deps)) ;
-  List.iter (fprintf oc "\t$(shell %s)\n") r.recipe ;
-  output_string oc "\n"
+    (String.concat " " r.deps) ;
+  fprintf oc "\t%s" (String.concat " && \\\n\t" r.cmds) ;
+  output_string oc "\n\n"
 
 let to_channel oc mk = 
-  output_string oc "SHELL := /bin/bash\n" ;
+  output_string oc "SHELL := /bin/bash\n\n" ;
+  output_string oc "all:\n\n" ;
   iter (rule_to_channel oc) mk
