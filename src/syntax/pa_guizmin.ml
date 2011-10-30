@@ -60,15 +60,15 @@ struct
 
   let digest x = Digest.(to_hex (string (Marshal.to_string x [])))
 
-  let expand_value_pipeline _loc ~id ~params ~deps ~body =
+  let expand_pipeline kind _loc ~id ~deps ~body =
     abstract _loc
-      ~params ~deps
+      ~params:(snd id) ~deps
       ~body:(<:expr< 
-	       let term = ($param_string _loc ~params$,
-			   $dep_term_list _loc deps$,
-			   $str:digest body$) in
+	       (* let term = ($param_string _loc ~params$, *)
+	       (* 		   $dep_term_list _loc deps$, *)
+	       (* 		   $str:digest body$) in *)
   	       (object
-		  method term = term
+		  (* method term = term *)
 		  method build = $body$
 		end)
 			 >>)
@@ -80,11 +80,11 @@ struct
   EXTEND Gram
     GLOBAL: expr;
     expr: LEVEL "top" [
-      [ LIDENT "value"; LIDENT "pipeline"; id = a_STRING ;
+      [ pkind = pipeline_kind ; LIDENT "pipeline"; pname = a_STRING ;
 	params = LIST0 param ; 
 	deps = OPT [ LIDENT "uses" ; deps = LIST1 dep -> deps ] ; 
 	"->" ; body = expr ->
-	  expand_value_pipeline _loc ~id ~params ~deps:(list_of_opt deps) ~body
+	  expand_pipeline pkind _loc ~id:(pname,params) ~deps:(list_of_opt deps) ~body
       ]
     ];
     dep: [
@@ -99,6 +99,11 @@ struct
     param_type: [
       [ LIDENT "string" -> "string"
       | LIDENT "int"    -> "int" ]
+    ];
+    pipeline_kind: [
+      [ LIDENT "value" -> `value
+      | LIDENT "file"  -> `file 
+      | LIDENT "dir"   -> `dir ]
     ];
       
   END

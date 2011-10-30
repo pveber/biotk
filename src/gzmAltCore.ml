@@ -65,10 +65,12 @@ object (s)
   method clean = Sys.remove (path s)
 end
 
-let l1 id f (x :'a pipeline) : 'b pipeline = 
+let v0 id f = value id f []
+
+let v1 id f x = 
   value id (fun () -> f x#eval) [ x#descr ]
 
-let l2 id f x y = 
+let v2 id f x y = 
   value id (fun () -> f x#eval y#eval) [ x#descr ; y#descr ]
 
 type 'a file = File of string
