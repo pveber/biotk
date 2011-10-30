@@ -5,6 +5,7 @@ type id = string * param list
 val string : string -> string -> param
 
 type 'a pipeline
+val eval : 'a pipeline -> 'a
 
 val v0 : id -> (unit -> 'a) -> 'a pipeline
 val v1 : id -> ('a -> 'b) -> 'a pipeline -> 'b pipeline

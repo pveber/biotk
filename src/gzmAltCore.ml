@@ -15,6 +15,8 @@ type 'a pipeline = < clean : unit ;
                      descr : descr ;
 		     eval  : 'a >
 
+let eval x = x # eval
+
 let mkdir s = 
   if not (Sys.file_exists s) then 
     Unix.mkdir s 0o755

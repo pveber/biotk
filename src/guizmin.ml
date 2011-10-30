@@ -1,4 +1,4 @@
-include GzmCore
+include GzmAltCore
 
-module Makefile = GzmMakefile
+(*module Makefile = GzmMakefile *)
 module Ucsc = GzmUcsc
