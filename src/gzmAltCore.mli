@@ -8,12 +8,14 @@ val v1 : id -> ('a -> 'b) -> 'a pipeline -> 'b pipeline
 val v2 : id -> ('a -> 'b -> 'c) -> 'a pipeline -> 'b pipeline -> 'c pipeline
 
 type 'a file = private File of string
-val f0 : path -> 'a file pipeline
+val file : path -> 'a file pipeline
+val f0 : id -> (path -> unit) -> 'a file pipeline
 val f1 : id -> ('a -> path -> unit) -> 'a pipeline -> 'b file pipeline
 val f2 : id -> ('a -> 'b -> path -> unit) -> 'a pipeline -> 'b pipeline -> 'c file pipeline
 
 type 'a dir  = private Dir of string
-val d0 : path -> 'a dir pipeline
+val dir : path -> 'a dir pipeline
+val d0 : id -> (path -> unit) -> 'a dir pipeline
 val d1 : id -> ('a -> path -> unit) -> 'a pipeline -> 'b dir pipeline
 val d2 : id -> ('a -> 'b -> path -> unit) -> 'a pipeline -> 'b pipeline -> 'c dir pipeline
 

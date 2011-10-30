@@ -98,19 +98,22 @@ object (s)
   method clean = Sys.remove (path s)
 end
 
-let file x = File x
-let f0 = fs0 file
-let f1 id f x = 
-  fs id (f x#eval) [ x#descr ] file
-let f2 id f x y = 
-  fs id (f x#eval y#eval) [ x#descr ; y#descr ] file
+let fcons x = File x
+let file = fs0 fcons
 
-let dir x = Dir x
-let d0 = fs0 dir
+let f0 id f = fs id f [] fcons
+let f1 id f x = 
+  fs id (f x#eval) [ x#descr ] fcons
+let f2 id f x y = 
+  fs id (f x#eval y#eval) [ x#descr ; y#descr ] fcons
+
+let dcons x = Dir x
+let dir = fs0 dcons
+let d0 id f = fs id f [] dcons
 let d1 id f x = 
-  fs id (f x#eval) [ x#descr ] dir
+  fs id (f x#eval) [ x#descr ] dcons
 let d2 id f x y = 
-  fs id (f x#eval y#eval) [ x#descr ; y#descr ] dir
+  fs id (f x#eval y#eval) [ x#descr ; y#descr ] dcons
 
 let select x subpath = 
 object
