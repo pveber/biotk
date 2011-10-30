@@ -24,7 +24,7 @@ Description:
 
 Library guizmin
   Path:    src
-  Modules: GzmMakefile, GzmCore, GzmUcsc, Guizmin
+  Modules: GzmAltCore, GzmMakefile, GzmCore, GzmUcsc, Guizmin
   BuildDepends: batteries
   
 Library pa_guizmin
