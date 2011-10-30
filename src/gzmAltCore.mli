@@ -1,6 +1,9 @@
 type path = string
 type param = string * [`int of int | `string of string | `float of float | `bool of bool ]
 type id = string * param list
+
+val string : string -> string -> param
+
 type 'a pipeline
 
 val v0 : id -> (unit -> 'a) -> 'a pipeline

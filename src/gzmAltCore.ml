@@ -2,6 +2,8 @@ type path = string
 type param = string * [`int of int | `string of string | `float of float | `bool of bool ]
 type id = string * param list
 
+let string id v = id, `string v
+
 type descr = [
   `input of path 
 | `step of id * descr list
