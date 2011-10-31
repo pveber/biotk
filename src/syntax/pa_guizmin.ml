@@ -14,16 +14,13 @@ struct
   include Syntax
   open Ast
 
-  let param_abstract _loc arg body =
-    let arg = match arg with
-	`lab_param (lid,ty) -> 
-	  PaLab (_loc,lid, <:patt< ($lid: lid$ : $lid:ty$) >>)
-      | `anon_param (lid,ty) -> 
-	  <:patt< ($lid: lid$ : $lid:ty$) >>
-      | `opt_param (lid,ty,expr) -> 
-	  let e = <:expr< ( $expr$ : $lid:ty$) >> in
-	  PaOlbi (_loc, "", PaId (_loc, IdLid (_loc, lid)), e)
-     in <:expr< fun $arg$ -> $body$ >>
+  let param_abstract _loc arg body = match arg with
+      `lab_param (lid,ty) ->
+	<:expr< fun ~ ($lid:lid$ : $lid:ty$) -> $body$ >>
+    | `anon_param (lid,ty) ->
+	<:expr< fun ($lid:lid$ : $lid:ty$) -> $body$ >>
+    | `opt_param (lid,ty,expr) ->
+        <:expr< fun ? ($lid:lid$ : $lid:ty$ = $expr$) -> $body$ >>
 
   let dep_abstract _loc arg body =
     let arg = match arg with 
@@ -57,20 +54,31 @@ struct
 	 | `anon_list_dep lid -> 
 	     <:expr< (List.map (fun t -> t#term) $lid:lid$) @ $accu$ >>)
       deps <:expr< [] >>
+    
 
   let digest x = Digest.(to_hex (string (Marshal.to_string x [])))
 
+  let constructor _loc kind deps = match kind, List.length deps with 
+    | `file, 0 -> <:expr< f0 >>
+    | `file, 1 -> <:expr< f1 >>
+    | `file, 2 -> <:expr< f2 >>
+    | `value, 0 -> <:expr< v0 >>
+    | `value, 1 -> <:expr< v1 >>
+    | `value, 2 -> <:expr< v2 >>
+    | _ -> assert false
+
+
+  let identifier _loc (name, params) deps =
+    <:expr< ($str:name$,[]) >>
+
   let expand_pipeline kind _loc ~id ~deps ~body =
     abstract _loc
-      ~params:(snd id) ~deps
-      ~body:(<:expr< 
-	       (* let term = ($param_string _loc ~params$, *)
-	       (* 		   $dep_term_list _loc deps$, *)
-	       (* 		   $str:digest body$) in *)
-  	       (object
-		  (* method term = term *)
-		  method build = $body$
-		end)
+      ~params:(snd id) 
+      ~deps
+      ~body:(<:expr< Guizmin.(
+	$constructor _loc kind deps$
+	  $identifier _loc id deps$
+      )
 			 >>)
 
   let list_of_opt = function
