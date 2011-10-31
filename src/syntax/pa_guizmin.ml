@@ -47,24 +47,25 @@ struct
     in	  
     List.fold_right (aux _loc) params <:expr< [] >>
 
-  let dep_term_list _loc deps =
-    List.fold_right
-      (fun d accu -> match d with
-	   `anon_dep lid -> <:expr< $lid:lid$#term :: $accu$ >>
-	 | `anon_list_dep lid -> 
-	     <:expr< (List.map (fun t -> t#term) $lid:lid$) @ $accu$ >>)
-      deps <:expr< [] >>
-    
-
   let digest x = Digest.(to_hex (string (Marshal.to_string x [])))
 
-  let constructor _loc kind deps = match kind, List.length deps with 
-    | `file, 0 -> <:expr< f0 >>
-    | `file, 1 -> <:expr< f1 >>
-    | `file, 2 -> <:expr< f2 >>
-    | `value, 0 -> <:expr< v0 >>
-    | `value, 1 -> <:expr< v1 >>
-    | `value, 2 -> <:expr< v2 >>
+  let string_of_dep = function
+    | `anon_dep lid -> lid
+    | `anon_list_dep lid -> lid
+
+  let expr_of_dep _loc = function
+    | `anon_dep lid -> <:expr< $lid:lid$ >>
+    | `anon_list_dep lid -> <:expr< merge $lid:lid$ >>
+
+  let constructor _loc kind deps id body = match kind, deps with 
+    | `file, [] -> <:expr< f0 $id$ (fun _path -> $body$) >>
+    | `file, [ x ] -> <:expr< f1 $id$ (fun $lid:string_of_dep x$ _path -> $body$) >>
+    (* | `file, 2 -> <:expr< f2 >> *)
+    | `value, [] -> <:expr< v0 $id$ (fun () -> $body$) >>
+    (* | `value, 1 -> <:expr< v1 >> *)
+    | `value, [ x ; y ] -> 
+      let argx, argy = string_of_dep x, string_of_dep y in
+      <:expr< v2 $id$ (fun $lid:argx$ $lid:argy$ -> $body$) $expr_of_dep _loc x$ $expr_of_dep _loc y$ >>
     | _ -> assert false
 
 
@@ -75,11 +76,7 @@ struct
     abstract _loc
       ~params:(snd id) 
       ~deps
-      ~body:(<:expr< Guizmin.(
-	$constructor _loc kind deps$
-	  $identifier _loc id deps$
-      )
-			 >>)
+      ~body:(<:expr< Guizmin.($constructor _loc kind deps (identifier _loc id deps) body$) >>)
 
   let list_of_opt = function
       None -> []
