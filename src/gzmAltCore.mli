@@ -3,6 +3,9 @@ type param = string * [`int of int | `string of string | `float of float | `bool
 type id = string * param list
 
 val string : string -> string -> param
+val int : string -> int -> param
+val float : string -> float -> param
+val bool : string -> bool -> param
 
 type 'a pipeline
 val eval : 'a pipeline -> 'a

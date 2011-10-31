@@ -3,6 +3,9 @@ type param = string * [`int of int | `string of string | `float of float | `bool
 type id = string * param list
 
 let string id v = id, `string v
+let int id v = id, `int v
+let float id v = id, `float v
+let bool id b = id, `bool b
 
 type descr = [
   `input of path 
