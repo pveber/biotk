@@ -34,18 +34,18 @@ struct
     |> List.fold_right (param_abstract _loc) params 
 
 
-  let param_string _loc ~params = 
+  let param_list _loc params = 
     let aux _loc param accu = 
-      let lid, str_val = match param with
+      let x = match param with
 	| `lab_param (lid,"string") | `anon_param (lid,"string") 
-	| `opt_param (lid,"string",_) -> lid, <:expr< $lid:lid$ >>
+	| `opt_param (lid,"string",_) -> <:expr< string $str:lid$ $lid:lid$ >>
 
 	| `lab_param (lid,"int") | `anon_param (lid,"int") 
-	| `opt_param (lid,"int",_) -> lid, <:expr< (string_of_int $lid:lid$) >>
+	| `opt_param (lid,"int",_) -> <:expr< int $str:lid$ (string_of_int $lid:lid$) >>
 	| _ -> assert false
-      in <:expr< $str:lid ^ "="$ ^ $str_val$ ^ ";" ^ $accu$ >>
+      in <:expr< $x$ :: $accu$ >>
     in	  
-    List.fold_right (aux _loc) params <:expr< "" >>
+    List.fold_right (aux _loc) params <:expr< [] >>
 
   let dep_term_list _loc deps =
     List.fold_right
@@ -69,7 +69,7 @@ struct
 
 
   let identifier _loc (name, params) deps =
-    <:expr< ($str:name$,[]) >>
+    <:expr< ($str:name$, $param_list _loc params$) >>
 
   let expand_pipeline kind _loc ~id ~deps ~body =
     abstract _loc
