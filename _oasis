@@ -39,14 +39,14 @@ Library syntax
   XMETADescription:   Syntax extension for guizmin
 
 
-# Library bioinfo
-#   Path:			src/bioinfo
-#   Modules:		GzmUcsc, Guizmin_bioinfo
-#   FindlibParent:	guizmin
-#   FindlibName:		bioinfo
-#   BuildDepends:		camlp4, guizmin, syntax
-#   XMETARequires:	guizmin, guizmin.syntax
-#   XMETADescription:	Bioinformatics components for guizmin
+Library bioinfo
+  Path:			src/bioinfo
+  Modules:		GzmUcsc, Guizmin_bioinfo
+  FindlibParent:	guizmin
+  FindlibName:		bioinfo
+  BuildDepends:		camlp4, guizmin, syntax
+  XMETARequires:	guizmin, guizmin.syntax
+  XMETADescription:	Bioinformatics components for guizmin
 
 Executable "Tests"
   Path:         src
