@@ -21,4 +21,6 @@
 # Library guizmin
 "src": include
 # OASIS_STOP
-<src/syntax/*>: syntax_camlp4o
+<src/syntax/*>: syntax_camlp4o, pkg_camlp4
+<src/bioinfo/*>: syntax_camlp4o, pkg_camlp4
+<src/test_yeast.*>: syntax_camlp4o, pa_guizmin

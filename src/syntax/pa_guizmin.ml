@@ -41,7 +41,7 @@ struct
 	| `opt_param (lid,"string",_) -> <:expr< string $str:lid$ $lid:lid$ >>
 
 	| `lab_param (lid,"int") | `anon_param (lid,"int") 
-	| `opt_param (lid,"int",_) -> <:expr< int $str:lid$ (int_of_string $lid:lid$) >>
+	| `opt_param (lid,"int",_) -> <:expr< int $str:lid$ $lid:lid$ >>
 	| _ -> assert false
       in <:expr< $x$ :: $accu$ >>
     in	  

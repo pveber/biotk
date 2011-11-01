@@ -25,9 +25,9 @@ Description:
 Library guizmin
   Path:    src
   Modules: GzmUtils, GzmAltCore, GzmMakefile, GzmCore, Guizmin
-  BuildDepends: batteries, shell
+  BuildDepends: shell, batteries
   
-Library pa_guizmin
+Library syntax
   Path:               src/syntax
   Modules:            Pa_guizmin
   FindlibParent:      guizmin
@@ -38,20 +38,21 @@ Library pa_guizmin
   XMETARequires:      camlp4, guizmin
   XMETADescription:   Syntax extension for guizmin
 
-Library bioinfo
-  Path:			src/bioinfo
-  Modules:		GzmUcsc, Guizmin_bioinfo
-  FindlibParent:	guizmin
-  FindlibName:		bioinfo
-  BuildDepends:		pa_guizmin
-  XMETARequires:	guizmin, guizmin.syntax
-  XMETADescription:	Bioinformatics components for guizmin
+
+# Library bioinfo
+#   Path:			src/bioinfo
+#   Modules:		GzmUcsc, Guizmin_bioinfo
+#   FindlibParent:	guizmin
+#   FindlibName:		bioinfo
+#   BuildDepends:		camlp4, guizmin, syntax
+#   XMETARequires:	guizmin, guizmin.syntax
+#   XMETADescription:	Bioinformatics components for guizmin
 
 Executable "Tests"
   Path:         src
   BuildTools:   ocamlbuild
   MainIs:       test_yeast.ml
-  BuildDepends: threads, batteries, guizmin, guizmin.bioinfo
+  BuildDepends: threads, guizmin, camlp4.quotations.o
   Install:      false
 
 SourceRepository head
