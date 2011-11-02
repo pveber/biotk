@@ -1,25 +1,30 @@
 # OASIS_START
-# DO NOT EDIT (digest: 9d1724a962b17e4682a6527608b6d370)
-# Ignore VCS directories, you can use the same kind of rule outside 
-# OASIS_START/STOP if you want to exclude directories that contains 
-# useless stuff for the build process
-<**/.svn>: -traverse
-<**/.svn>: not_hygienic
-".bzr": -traverse
-".bzr": not_hygienic
-".hg": -traverse
-".hg": not_hygienic
-".git": -traverse
-".git": not_hygienic
-"_darcs": -traverse
-"_darcs": not_hygienic
-# Library pa_guizmin
+# DO NOT EDIT (digest: 67ce7266345812a52c171308ad46ce2c)
+# Library guizmin
+"src": include
+# Library syntax
 "src/syntax": include
 <src/syntax/*.ml{,i}>: pkg_camlp4.quotations.o
 <src/syntax/*.ml{,i}>: pkg_camlp4.lib
 <src/syntax/*.ml{,i}>: pkg_camlp4.extend
-# Library guizmin
-"src": include
+# Executable Tests
+"src/test_yeast.byte": use_guizmin
+"src/test_yeast.byte": pkg_threads
+"src/test_yeast.byte": pkg_shell
+"src/test_yeast.byte": pkg_camlp4.quotations.o
+"src/test_yeast.byte": pkg_batteries
+<src/*.ml{,i}>: use_guizmin
+<src/*.ml{,i}>: pkg_threads
+<src/*.ml{,i}>: pkg_shell
+<src/*.ml{,i}>: pkg_camlp4.quotations.o
+<src/*.ml{,i}>: pkg_batteries
+# Library bioinfo
+"src/bioinfo": include
+<src/bioinfo/*.ml{,i}>: use_guizmin
+<src/bioinfo/*.ml{,i}>: pkg_syntax
+<src/bioinfo/*.ml{,i}>: pkg_shell
+<src/bioinfo/*.ml{,i}>: pkg_camlp4
+<src/bioinfo/*.ml{,i}>: pkg_batteries
 # OASIS_STOP
 <src/syntax/*>: syntax_camlp4o, pkg_camlp4
 <src/bioinfo/*>: syntax_camlp4o, pa_guizmin
