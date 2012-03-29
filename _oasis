@@ -27,7 +27,7 @@ Library guizmin
   Modules: GzmUtils, GzmAltCore, Guizmin
   BuildDepends: shell, batteries
   
-Library "guizmin-syntax"
+Library syntax
   Path:               src/syntax
   Modules:            Pa_guizmin
   FindlibParent:      guizmin

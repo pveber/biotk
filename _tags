@@ -1,8 +1,8 @@
 # OASIS_START
-# DO NOT EDIT (digest: 814fa9cc050ce7fde48b8f2bd75a1cbe)
+# DO NOT EDIT (digest: d061b3f91eaccd7a7fd907ed8fae57db)
 # Library guizmin
 "src": include
-# Library guizmin-syntax
+# Library syntax
 "src/syntax": include
 <src/syntax/*.ml{,i}>: pkg_camlp4.quotations.o
 <src/syntax/*.ml{,i}>: pkg_camlp4.lib
@@ -20,7 +20,7 @@
 <src/*.ml{,i}>: pkg_batteries
 # Library bioinfo
 "src/bioinfo": include
-<src/bioinfo/*.ml{,i}>: use_guizmin-syntax
+<src/bioinfo/*.ml{,i}>: use_syntax
 <src/bioinfo/*.ml{,i}>: use_guizmin
 <src/bioinfo/*.ml{,i}>: pkg_shell
 <src/bioinfo/*.ml{,i}>: pkg_camlp4.quotations.o

@@ -1,5 +1,5 @@
 (* OASIS_START *)
-(* DO NOT EDIT (digest: 1ca14b35d8944d84a4d6390bc32b5b84) *)
+(* DO NOT EDIT (digest: d092dac1e6d95ecee191c3ce93c1817c) *)
 module OASISGettext = struct
 # 21 "/tmp/buildd/oasis-0.2.0/src/oasis/OASISGettext.ml"
   
@@ -454,7 +454,7 @@ let package_default =
      MyOCamlbuildBase.lib_ocaml =
        [
           ("src/guizmin", ["src"]);
-          ("src/syntax/guizmin-syntax", ["src/syntax"]);
+          ("src/syntax/syntax", ["src/syntax"]);
           ("src/bioinfo/bioinfo", ["src/bioinfo"])
        ];
      lib_c = [];
