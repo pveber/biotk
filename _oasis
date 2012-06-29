@@ -1,4 +1,4 @@
-OASISFormat:  0.2
+OASISFormat:  0.3
 OCamlVersion: >= 3.12
 Name:         guizmin
 Version:      1.0
@@ -6,7 +6,7 @@ Synopsis:     OCaml library for building (bioinformatics) pipelines
 Authors:      Philippe Veber
 License:      GPL
 LicenseFile:  LICENCE
-Plugins:      StdFiles (0.2), META (0.2)
+Plugins:      StdFiles (0.3), META (0.3), DevFiles (0.3)
 BuildTools:   ocamlbuild
 Homepage:     https://github.com/pveber/guizmin
 
@@ -24,7 +24,7 @@ Description:
 
 Library guizmin
   Path:    src
-  Modules: GzmUtils, GzmAltCore, Guizmin
+  Modules: GzmUtils, GzmCore, Guizmin
   BuildDepends: shell, batteries
   
 Library syntax

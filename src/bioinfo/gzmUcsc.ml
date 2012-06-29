@@ -1,5 +1,5 @@
 open GzmUtils
-open GzmAltCore
+open GzmCore
 
 type genome = [ `mm9 | `hg18 | `sacCer2 ]
 let string_of_genome = function
