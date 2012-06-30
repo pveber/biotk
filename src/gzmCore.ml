@@ -7,18 +7,6 @@ let int id v = id, `int v
 let float id v = id, `float v
 let bool id b = id, `bool b
 
-type descr = [
-  `input of path 
-| `step of id * descr list
-| `select of descr * path
-| `merge of descr list
-]
-
-type 'a pipeline = < clean : unit ; 
-                     descr : descr ;
-		     eval  : 'a >
-
-let eval x = x # eval
 
 let mkdir s = 
   if not (Sys.file_exists s) then 
@@ -38,13 +26,47 @@ let _ =
   mkdir build_dir ;
   mkdir tmp_dir
 
-let digest x = Digest.to_hex (Digest.string (Marshal.to_string x#descr []))
+let hash x = x # hash
 
 let path x = 
-  cache_dir ^ "/" ^ (digest x)
+  cache_dir ^ "/" ^ (hash x)
 
 let tmp_path x = 
-  tmp_dir ^ "/" ^ (digest x)
+  tmp_dir ^ "/" ^ (hash x)
+
+let touch fn =
+  ignore (Sys.command ("touch " ^ fn))
+
+class dep id kind deps = 
+object (self)
+  method deps : dep list = deps
+
+  method hash = 
+    let content = id, kind, List.map (fun x -> x#hash) deps in
+    Digest.to_hex (Digest.string (Marshal.to_string content []))
+
+  method path = 
+    cache_dir ^ "/" ^ (hash self)
+
+  method tmp_path = 
+    tmp_dir ^ "/" ^ (hash self)
+
+  method clean = 
+    Sys.remove self # path
+
+  method built =
+    Sys.file_exists self#path
+end
+
+let as_dep x = (x :> dep)
+
+class type ['a] pipeline = object
+  inherit dep
+  method eval : 'a
+end
+
+let eval x = x # eval
+
 
 let load_value path = 
   let ic = open_in path in 
@@ -56,91 +78,113 @@ let save_value v path =
   output_value oc v ;
   close_out oc 
 
-let value id f descr_children = 
-object (s)
-  method descr = `step (id, descr_children)
+let value id f deps = 
+object (self)
+  inherit dep id `value deps
   method eval = 
-    let dest = path s 
-    and tmp = tmp_path s in 
-    if not (Sys.file_exists dest) then (
+    let dest = self#path
+    and tmp = self#tmp_path in
+    if not self#built then (
       let r = f () in
       save_value r tmp ;
       Sys.rename tmp dest ;
       r
     )
-    else load_value dest
-  method clean = Sys.remove (path s)
+    else (
+      touch dest ;
+      load_value dest
+    )
 end
 
 let v0 id f = value id f []
 
 let v1 id f x = 
-  value id (fun () -> f x#eval) [ x#descr ]
+  value id (fun () -> f x#eval) [ as_dep x ]
 
 let v2 id f x y = 
-  value id (fun () -> f x#eval y#eval) [ x#descr ; y#descr ]
+  value id (fun () -> f x#eval y#eval) [ as_dep x ; as_dep y ]
 
-type 'a file = File of string
-type 'a dir  = Dir of string
+type 'a file = File of path
+type 'a dir  = Dir of path
 
-let fs0 cons path = object
-  method descr = `input path
+let path kind cons id f children =
+object (self)
+  inherit dep id kind children 
   method eval = 
-    assert (Sys.file_exists path) ;
-    cons path
-  method clean = ()
-end
-
-let fs id f descr_children cons =
-object (s)
-  method descr = `step (id, descr_children)
-  method eval = 
-    let dest = path s 
-    and tmp = tmp_path s in 
-    if not (Sys.file_exists dest) then (
+    let dest = self#path
+    and tmp = self#tmp_path in 
+    if not self#built then (
       f tmp ;
       Sys.rename tmp dest ;
     ) ;
+    touch dest ;
     cons dest
-  method clean = Sys.remove (path s)
+  method clean = Sys.remove (* FIXME (path s)*)""
 end
 
-let fcons x = File x
-let file = fs0 fcons
+let file_cons x = File x
 
-let f0 id f = fs id f [] fcons
+let file path = 
+object (self)
+  inherit dep ("guizmin.file.input", string path) `file []
+  method eval = 
+    assert self#built ;
+    File path
+end
+
+
+let f0 id f = path `file  file_cons id f []
 let f1 id f x = 
-  fs id (f x#eval) [ x#descr ] fcons
-let f2 id f x y = 
-  fs id (f x#eval y#eval) [ x#descr ; y#descr ] fcons
+  path 
+    `file file_cons id 
+    (fun path -> f x#eval path) 
+    [ as_dep x ]
 
-let dcons x = Dir x
-let dir = fs0 dcons
-let d0 id f = fs id f [] dcons
+let f2 id f x y = 
+  path
+    `file file_cons id 
+    (fun path -> f x#eval y#eval path) 
+    [ as_dep x ; as_dep y ]
+
+let dir path =
+object (self)
+  inherit dep ("guizmin.dir.input", string path) `dir []
+  method eval = 
+    assert self#built ;
+    Dir path
+end
+
+let dir_cons x = Dir x
+
+let d0 id f = 
+  path `dir dir_cons id f []
+
 let d1 id f x = 
-  fs id (f x#eval) [ x#descr ] dcons
+  path 
+    `dir dir_cons id 
+    (fun path -> f x#eval path) 
+    [ as_dep x ]
+
 let d2 id f x y = 
-  fs id (f x#eval y#eval) [ x#descr ; y#descr ] dcons
+  path 
+    `dir dir_cons id 
+    (fun path -> f x#eval y#eval path) 
+    [ as_dep x ; as_dep y ]
 
 let select x subpath = 
 object
-  method descr = `select (x#descr, subpath)
+  inherit dep ("guizmin.select", string subpath) `select [ as_dep x ]
   method eval = 
-    let p = (path x) ^ "/" ^ subpath in
+    let p = Filename.concat x#path subpath in
     assert (Sys.file_exists p) ;
     File p
-  method clean = ()
 end
 
 let merge l = 
 object
-  method descr = `merge (List.map (fun x -> x#descr) l)
+  inherit dep "guizmin.merge" `merge (List.map as_dep l)
   method eval = List.map (fun x -> x#eval) l
-  method clean = ()
 end
-
-
-let descr x = x#descr
 
 (* type _ pipeline = *)
 (*     Input  : path -> (unit, 'a) pipeline *)
