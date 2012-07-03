@@ -175,7 +175,8 @@ let select x subpath =
 object
   inherit dep ("guizmin.select", string subpath) `select [ as_dep x ]
   method eval = 
-    let p = Filename.concat x#path subpath in
+    let Dir x_path = x#eval in 
+    let p = Filename.concat x_path subpath in
     assert (Sys.file_exists p) ;
     File p
 end
