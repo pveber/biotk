@@ -1,3 +1,5 @@
+open Printf
+
 type path = string
 type param = string * [`int of int | `string of string | `float of float | `bool of bool ]
 type id = string * param list
@@ -177,8 +179,12 @@ object
   method eval = 
     let Dir x_path = x#eval in 
     let p = Filename.concat x_path subpath in
-    assert (Sys.file_exists p) ;
-    File p
+    if Sys.file_exists p 
+    then File p
+    else (
+      let msg = sprintf "Tried to access %s in %s but there is no such file or directory." subpath x_path in
+      failwith msg
+    )
 end
 
 let merge l = 
