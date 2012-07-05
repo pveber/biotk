@@ -1,5 +1,5 @@
 # OASIS_START
-# DO NOT EDIT (digest: 3df556d8e821c54876847fd89125c6d1)
+# DO NOT EDIT (digest: 8241222d7f2e2af737d4534bcc8791fe)
 # Ignore VCS directories, you can use the same kind of rule outside 
 # OASIS_START/STOP if you want to exclude directories that contains 
 # useless stuff for the build process
@@ -31,8 +31,8 @@
 <src/*.ml{,i}>: pkg_shell
 <src/*.ml{,i}>: pkg_camlp4.quotations.o
 <src/*.ml{,i}>: pkg_batteries
-# Library unix
-"src/unix/unix.cmxs": use_unix
+# Library guizmin_unix
+"src/unix/guizmin_unix.cmxs": use_guizmin_unix
 <src/unix/*.ml{,i}>: use_syntax
 <src/unix/*.ml{,i}>: use_guizmin
 <src/unix/*.ml{,i}>: pkg_threads
@@ -42,8 +42,8 @@
 <src/unix/*.ml{,i}>: pkg_camlp4.extend
 <src/unix/*.ml{,i}>: pkg_camlp4
 <src/unix/*.ml{,i}>: pkg_batteries
-# Library bioinfo
-"src/bioinfo/bioinfo.cmxs": use_bioinfo
+# Library guizmin_bioinfo
+"src/bioinfo/guizmin_bioinfo.cmxs": use_guizmin_bioinfo
 <src/bioinfo/*.ml{,i}>: use_syntax
 <src/bioinfo/*.ml{,i}>: use_guizmin
 <src/bioinfo/*.ml{,i}>: pkg_threads

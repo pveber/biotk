@@ -1,5 +1,5 @@
 (* OASIS_START *)
-(* DO NOT EDIT (digest: 5b1f0f7fce51720687716fa7c911f8ce) *)
+(* DO NOT EDIT (digest: 3f8475962f58ccad6969b95a8a0094a3) *)
 module OASISGettext = struct
 # 21 "/home/pveber/usr/ocamlbrew/ocaml-3.12.1/build/odb/install-oasis/oasis-0.3.0~rc3/src/oasis/OASISGettext.ml"
 
@@ -550,8 +550,8 @@ let package_default =
        [
           ("guizmin", ["src"]);
           ("syntax", ["src/syntax"]);
-          ("unix", ["src/unix"]);
-          ("bioinfo", ["src/bioinfo"])
+          ("guizmin_unix", ["src/unix"]);
+          ("guizmin_bioinfo", ["src/bioinfo"])
        ];
      lib_c = [];
      flags = [];

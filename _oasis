@@ -39,7 +39,7 @@ Library syntax
   XMETADescription:   Syntax extension for guizmin
 
 
-Library bioinfo
+Library guizmin_bioinfo
   Path:			src/bioinfo
   Modules:		GzmUcsc, Guizmin_bioinfo, GzmMBSchema
   FindlibParent:	guizmin
@@ -48,7 +48,7 @@ Library bioinfo
   XMETARequires:	guizmin, guizmin.syntax
   XMETADescription:	Bioinformatics components for guizmin
 
-Library unix
+Library guizmin_unix
   Path:			src/unix
   Modules:		Guizmin_unix
   FindlibParent:	guizmin
