@@ -48,6 +48,15 @@ Library bioinfo
   XMETARequires:	guizmin, guizmin.syntax
   XMETADescription:	Bioinformatics components for guizmin
 
+Library unix
+  Path:			src/unix
+  Modules:		Guizmin_unix
+  FindlibParent:	guizmin
+  FindlibName:		unix
+  BuildDepends:		threads,batteries,camlp4, guizmin, guizmin.syntax
+  XMETARequires:	guizmin, guizmin.syntax
+  XMETADescription:	Unix components for guizmin
+
 Executable "Tests"
   Path:         src
   BuildTools:   ocamlbuild

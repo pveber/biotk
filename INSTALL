@@ -1,5 +1,5 @@
 (* OASIS_START *)
-(* DO NOT EDIT (digest: 2c10ba96b54c5e23d8f32ce052a7dc07) *)
+(* DO NOT EDIT (digest: 8cd47452f6bc9922a433082a161e5cf4) *)
 This is the INSTALL file for the guizmin distribution.
 
 This package uses OASIS to generate its build system. See section OASIS for
@@ -12,7 +12,7 @@ In order to compile this package, you will need:
 * ocaml (>= 3.12)
 * findlib
 * shell for library guizmin
-* batteries for library bioinfo, library guizmin
+* batteries for library bioinfo, library guizmin, library unix
 * biocaml for library bioinfo
 
 Installing
