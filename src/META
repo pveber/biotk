@@ -1,5 +1,5 @@
 # OASIS_START
-# DO NOT EDIT (digest: b47fdc00d47692e6ece371cf1a4ea86c)
+# DO NOT EDIT (digest: d157973b3934655997f06c39dd320d6f)
 version = "1.0"
 description = "OCaml library for building (bioinformatics) pipelines"
 requires = "shell batteries"
@@ -9,7 +9,7 @@ exists_if = "guizmin.cma"
 package "bioinfo" (
  version = "1.0"
  description = "Bioinformatics components for guizmin"
- requires = "guizmin guizmin.syntax"
+ requires = "guizmin guizmin.syntax biocaml"
  archive(byte) = "guizmin_bioinfo.cma"
  archive(native) = "guizmin_bioinfo.cmxa"
  exists_if = "guizmin_bioinfo.cma"
