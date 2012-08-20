@@ -57,7 +57,7 @@ Library guizmin_unix
   XMETARequires:	guizmin, guizmin.syntax
   XMETADescription:	Unix components for guizmin
 
-Executable "Tests"
+Executable test_yeast
   Path:         src
   BuildTools:   ocamlbuild
   MainIs:       test_yeast.ml
