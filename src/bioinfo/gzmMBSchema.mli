@@ -33,7 +33,7 @@ module Transcript : sig
     id : string ;
     gene_id : string ;
     strand : [`Sense | `Antisense] ;
-    exons : Location.t list
+    exons : Location.t list (** Exons are sorted according to their number, not their location *)
   }
 
   val tss : t -> Location.t
