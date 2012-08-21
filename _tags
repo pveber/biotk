@@ -59,3 +59,5 @@
 <src/bioinfo/*>: syntax_camlp4o, pa_guizmin
 <src/unix/*>: syntax_camlp4o, pa_guizmin
 <src/test_yeast.*>: syntax_camlp4o, pa_guizmin
+true: annot, debug
+

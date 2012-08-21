@@ -128,7 +128,9 @@ let file_cons x = File x
 
 let file path = 
 object (self)
-  inherit dep ("guizmin.file.input", string path) `file []
+  inherit dep ("guizmin.file.input", string "path" path) `file []
+  method clean = ()
+  method built = Sys.file_exists path
   method eval = 
     assert self#built ;
     File path
