@@ -26,14 +26,23 @@ let genome_sequence org =
       bash [ sp "cat %s/{chr?.fa,chr??.fa,chr???.fa,chr????.fa} > %s" gp path ])
     (chromosome_sequences org)
 
-let genome_2bit_sequence org = 
+
+(* UGLY hack due to twoBitToFa: this tool requires that the 2bit
+   sequence should be put in a file with extension 2bit. So I'm forced
+   to create first a directory and then to select the unique file in it...*)
+let genome_2bit_sequence_dir org = 
   let org = string_of_genome org in 
-  f0
+  d0
     ("guizmin.bioinfo.ucsc.genome_sequence[1]", [ string "org" org ])
     (fun path ->
       bash [
-        sp "wget -O %s ftp://hgdownload.cse.ucsc.edu/goldenPath/%s/bigZips/%s.2bit" path org org
+        sp "mkdir %s" path ;
+        sp "cd %s" path ;
+        sp "wget ftp://hgdownload.cse.ucsc.edu/goldenPath/%s/bigZips/%s.2bit" org org
       ])
+
+let genome_2bit_sequence org = 
+  select (genome_2bit_sequence_dir org) ((string_of_genome org) ^ ".2bit")
 
 let fasta_of_bed org bed = 
   let seq2b = genome_2bit_sequence org in
