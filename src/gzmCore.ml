@@ -177,7 +177,7 @@ let d2 id f x y =
 
 let select x subpath = 
 object
-  inherit dep ("guizmin.select", string subpath) `select [ as_dep x ]
+  inherit dep ("guizmin.select", string "subpath" subpath) `select [ as_dep x ]
   method eval = 
     let Dir x_path = x#eval in 
     let p = Filename.concat x_path subpath in
