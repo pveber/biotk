@@ -39,7 +39,7 @@ let tmp_path x =
 let touch fn =
   ignore (Sys.command ("touch " ^ fn))
 
-class dep id kind deps = 
+class dep (id : id) kind deps = 
 object (self)
   method deps : dep list = deps
 
@@ -128,7 +128,7 @@ let file_cons x = File x
 
 let file path = 
 object (self)
-  inherit dep ("guizmin.file.input", string "path" path) `file []
+  inherit dep ("guizmin.file.input", [ string "path" path ]) `file []
   method clean = ()
   method built = Sys.file_exists path
   method eval = 
@@ -152,7 +152,7 @@ let f2 id f x y =
 
 let dir path =
 object (self)
-  inherit dep ("guizmin.dir.input", string path) `dir []
+  inherit dep ("guizmin.dir.input", [ string "path" path ]) `dir []
   method eval = 
     assert self#built ;
     Dir path
@@ -177,7 +177,7 @@ let d2 id f x y =
 
 let select x subpath = 
 object
-  inherit dep ("guizmin.select", string "subpath" subpath) `select [ as_dep x ]
+  inherit dep ("guizmin.select", [string "subpath" subpath]) `select [ as_dep x ]
   method eval = 
     let Dir x_path = x#eval in 
     let p = Filename.concat x_path subpath in
@@ -191,7 +191,7 @@ end
 
 let merge l = 
 object
-  inherit dep "guizmin.merge" `merge (List.map as_dep l)
+  inherit dep ("guizmin.merge", []) `merge (List.map as_dep l)
   method eval = List.map (fun x -> x#eval) l
 end
 
