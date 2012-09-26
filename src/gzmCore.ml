@@ -8,7 +8,12 @@ let string id v = id, `string v
 let int id v = id, `int v
 let float id v = id, `float v
 let bool id b = id, `bool b
+let opt f id v =
+  Core.Option.map v ~f:(f id)
 
+let (+?) l = function
+  | Some x -> x :: l
+  | None -> l
 
 let mkdir s = 
   if not (Sys.file_exists s) then 

@@ -25,7 +25,7 @@ Description:
 Library guizmin
   Path:    src
   Modules: GzmUtils, GzmCore, Guizmin
-  BuildDepends: shell, batteries
+  BuildDepends: shell, batteries, core
   
 Library syntax
   Path:               src/syntax
@@ -41,10 +41,10 @@ Library syntax
 
 Library guizmin_bioinfo
   Path:			src/bioinfo
-  Modules:		GzmUcsc, Guizmin_bioinfo, GzmMBSchema
+  Modules:		Guizmin_bioinfo, GzmBowtie, GzmMBSchema, GzmUcsc
   FindlibParent:	guizmin
   FindlibName:		bioinfo
-  BuildDepends:		threads,batteries,biocaml,camlp4, guizmin, guizmin.syntax
+  BuildDepends:		threads,batteries,biocaml,camlp4, guizmin, guizmin.syntax, format
   XMETARequires:	guizmin, guizmin.syntax,biocaml
   XMETADescription:	Bioinformatics components for guizmin
 

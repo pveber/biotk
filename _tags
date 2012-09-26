@@ -56,7 +56,7 @@
 <src/bioinfo/*.ml{,i}>: pkg_batteries
 # OASIS_STOP
 <src/syntax/*>: syntax_camlp4o, pkg_camlp4
-<src/bioinfo/*>: syntax_camlp4o, pa_guizmin
+<src/bioinfo/*>: syntax_camlp4o, pa_guizmin, pkg_format.syntax
 <src/unix/*>: syntax_camlp4o, pa_guizmin
 <src/test_yeast.*>: syntax_camlp4o, pa_guizmin
 true: annot, debug

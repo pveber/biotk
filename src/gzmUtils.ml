@@ -7,7 +7,8 @@ let sh fmt =
   in Printf.ksprintf shell fmt
 
 
-let bash cmds = 
+let bash ?(debug = false) cmds = 
+  if debug then List.iter prerr_endline cmds ;
   Shell.(call [
     cmd "bash" [ "-c" ; String.concat " && " cmds ]
   ])
