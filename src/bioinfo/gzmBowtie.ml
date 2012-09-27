@@ -45,3 +45,22 @@ let align ?n ?l ?e ?m ?p ?qual_kind index fastq_files =
                         $s:path$ >>
       ])
     index (merge fastq_files)
+
+let align2 = 
+  file pipeline "guizmin.bioinfo.bowtie.align[r1]" 
+    ?(n:int) ?(l:int) ?(e:int) ?(m:int) ?(p:int)
+    uses index fastq_files* -> (
+      let qual_kind = None in
+      let File index = index in
+      bash ~debug:true [
+	<:sprint<bowtie $? n <- n${-n $d:n$} \
+                        $? l <- l${-l $d:l$} \
+                        $? e <- e${-e $d:e$} \
+                        $? m <- m${-m $d:m$} \
+                        $? p <- p${-p $d:p$} \
+	                $? q <- qual_kind${qual_option q} \
+	                $s:index$ \ 
+	                $!File f <- fastq_files ${$s:f$}{,} \
+                        $s:_path$ >>
+      ]
+    )

@@ -19,8 +19,10 @@ struct
 	<:expr< fun ~ ($lid:lid$ : $lid:ty$) -> $body$ >>
     | `anon_param (lid,ty) ->
 	<:expr< fun ($lid:lid$ : $lid:ty$) -> $body$ >>
-    | `opt_param (lid,ty,expr) ->
+    | `opt_param_default (lid,ty,expr) ->
         <:expr< fun ? ($lid:lid$ : $lid:ty$ = $expr$) -> $body$ >>
+    | `opt_param (lid,ty) ->
+        <:expr< fun ? ($lid:lid$ : $lid:ty$ option) -> $body$ >>
 
   let dep_abstract _loc arg body =
     let arg = match arg with 
@@ -38,12 +40,13 @@ struct
     let aux _loc param accu = 
       let x = match param with
 	| `lab_param (lid,"string") | `anon_param (lid,"string") 
-	| `opt_param (lid,"string",_) -> <:expr< string $str:lid$ $lid:lid$ >>
+	| `opt_param_default (lid,"string",_) -> <:expr< string $str:lid$ $lid:lid$ >>
 
 	| `lab_param (lid,"int") | `anon_param (lid,"int") 
-	| `opt_param (lid,"int",_) -> <:expr< int $str:lid$ $lid:lid$ >>
+	| `opt_param_default (lid,"int",_) -> <:expr< int $str:lid$ $lid:lid$ >>
+	| `opt_param (lid,"int") -> <:expr< opt int $str:lid$ $lid:lid$ >>
 	| _ -> assert false
-      in <:expr< $x$ :: $accu$ >>
+      in <:expr< $accu$ +? $x$ >>
     in	  
     List.fold_right (aux _loc) params <:expr< [] >>
 
@@ -60,6 +63,9 @@ struct
   let constructor _loc kind deps id body = match kind, deps with 
     | `file, [] -> <:expr< f0 $id$ (fun _path -> $body$) >>
     | `file, [ x ] -> <:expr< f1 $id$ (fun $lid:string_of_dep x$ _path -> $body$) >>
+    | `file, [ x ; y ] -> 
+      let argx, argy = string_of_dep x, string_of_dep y in
+      <:expr< f2 $id$ (fun $lid:argx$ $lid:argy$ _path -> $body$) $expr_of_dep _loc x$ $expr_of_dep _loc y$ >>
     (* | `file, 2 -> <:expr< f2 >> *)
     | `value, [] -> <:expr< v0 $id$ (fun () -> $body$) >>
     (* | `value, 1 -> <:expr< v1 >> *)
@@ -67,7 +73,6 @@ struct
       let argx, argy = string_of_dep x, string_of_dep y in
       <:expr< v2 $id$ (fun $lid:argx$ $lid:argy$ -> $body$) $expr_of_dep _loc x$ $expr_of_dep _loc y$ >>
     | _ -> assert false
-
 
   let identifier _loc (name, params) deps =
     <:expr< ($str:name$, $param_list _loc params$) >>
@@ -99,7 +104,8 @@ struct
     param: [
       [ "~" ; "(" ; lid = LIDENT ; ":" ; ty = param_type ; ")" -> `lab_param (lid,ty)
       | lid = LIDENT ; ":" ; ty = param_type -> `anon_param (lid, ty)
-      | "?" ; "(" ; lid = LIDENT ; ":" ; ty = param_type ; "=" ; e = expr ; ")" -> `opt_param (lid,ty,e) ]
+      | "?" ; "(" ; lid = LIDENT ; ":" ; ty = param_type ; ")" -> `opt_param (lid,ty)
+      | "?" ; "(" ; lid = LIDENT ; ":" ; ty = param_type ; "=" ; e = expr ; ")" -> `opt_param_default (lid,ty,e) ]
     ];
     param_type: [
       [ LIDENT "string" -> "string"
