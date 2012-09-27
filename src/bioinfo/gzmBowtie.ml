@@ -44,4 +44,4 @@ let align ?n ?l ?e ?m ?p ?qual_kind index fastq_files =
 	                $!File f <- fastq_files ${$s:f$}{,} \
                         $s:path$ >>
       ])
-    index fastq_files
+    index (merge fastq_files)

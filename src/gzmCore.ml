@@ -111,8 +111,10 @@ let v1 id f x =
 let v2 id f x y = 
   value id (fun () -> f x#eval y#eval) [ as_dep x ; as_dep y ]
 
-type 'a file = File of path
-type 'a dir  = Dir of path
+type 'a file_path = File of path
+type 'a file = 'a file_path pipeline
+type 'a dir_path  = Dir of path
+type 'a dir = 'a dir_path pipeline
 
 let path kind cons id f children =
 object (self)
