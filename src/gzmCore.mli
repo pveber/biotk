@@ -8,6 +8,7 @@ val float : string -> float -> param
 val bool : string -> bool -> param
 val opt : (string -> 'a -> param) -> string -> 'a option -> param option
 val ( +? ) : 'a list -> 'a option -> 'a list
+val ( ++ ) : 'a list -> 'a -> 'a list
 
 type 'a pipeline
 val eval : 'a pipeline -> 'a

@@ -15,6 +15,8 @@ let (+?) l = function
   | Some x -> x :: l
   | None -> l
 
+let ( ++ ) l x = x :: l
+
 let mkdir s = 
   if not (Sys.file_exists s) then 
     Unix.mkdir s 0o755

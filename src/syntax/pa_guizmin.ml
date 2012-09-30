@@ -38,15 +38,19 @@ struct
 
   let param_list _loc params = 
     let aux _loc param accu = 
-      let x = match param with
+      match param with
 	| `lab_param (lid,"string") | `anon_param (lid,"string") 
-	| `opt_param_default (lid,"string",_) -> <:expr< string $str:lid$ $lid:lid$ >>
+	| `opt_param_default (lid,"string",_) -> 
+	  <:expr< $accu$ ++ (string $str:lid$ $lid:lid$) >>
 
 	| `lab_param (lid,"int") | `anon_param (lid,"int") 
-	| `opt_param_default (lid,"int",_) -> <:expr< int $str:lid$ $lid:lid$ >>
-	| `opt_param (lid,"int") -> <:expr< opt int $str:lid$ $lid:lid$ >>
+	| `opt_param_default (lid,"int",_) -> 
+	  <:expr< $accu$ ++ (int $str:lid$ $lid:lid$) >>
+
+	| `opt_param (lid,"int") -> 
+	  <:expr< $accu$ +? (opt int $str:lid$ $lid:lid$) >>
+
 	| _ -> assert false
-      in <:expr< $accu$ +? $x$ >>
     in	  
     List.fold_right (aux _loc) params <:expr< [] >>
 
