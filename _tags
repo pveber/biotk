@@ -1,63 +1,8 @@
 # OASIS_START
-# DO NOT EDIT (digest: 8241222d7f2e2af737d4534bcc8791fe)
-# Ignore VCS directories, you can use the same kind of rule outside 
-# OASIS_START/STOP if you want to exclude directories that contains 
-# useless stuff for the build process
-<**/.svn>: -traverse
-<**/.svn>: not_hygienic
-".bzr": -traverse
-".bzr": not_hygienic
-".hg": -traverse
-".hg": not_hygienic
-".git": -traverse
-".git": not_hygienic
-"_darcs": -traverse
-"_darcs": not_hygienic
-# Library guizmin
-"src/guizmin.cmxs": use_guizmin
-# Library syntax
-"src/syntax/syntax.cmxs": use_syntax
-<src/syntax/*.ml{,i}>: pkg_camlp4.quotations.o
-<src/syntax/*.ml{,i}>: pkg_camlp4.lib
-<src/syntax/*.ml{,i}>: pkg_camlp4.extend
-# Executable Tests
-"src/test_yeast.byte": use_guizmin
-"src/test_yeast.byte": pkg_threads
-"src/test_yeast.byte": pkg_shell
-"src/test_yeast.byte": pkg_camlp4.quotations.o
-"src/test_yeast.byte": pkg_batteries
-<src/*.ml{,i}>: use_guizmin
-<src/*.ml{,i}>: pkg_threads
-<src/*.ml{,i}>: pkg_shell
-<src/*.ml{,i}>: pkg_camlp4.quotations.o
-<src/*.ml{,i}>: pkg_batteries
-# Library guizmin_unix
-"src/unix/guizmin_unix.cmxs": use_guizmin_unix
-<src/unix/*.ml{,i}>: use_syntax
-<src/unix/*.ml{,i}>: use_guizmin
-<src/unix/*.ml{,i}>: pkg_threads
-<src/unix/*.ml{,i}>: pkg_shell
-<src/unix/*.ml{,i}>: pkg_camlp4.quotations.o
-<src/unix/*.ml{,i}>: pkg_camlp4.lib
-<src/unix/*.ml{,i}>: pkg_camlp4.extend
-<src/unix/*.ml{,i}>: pkg_camlp4
-<src/unix/*.ml{,i}>: pkg_batteries
-# Library guizmin_bioinfo
-"src/bioinfo/guizmin_bioinfo.cmxs": use_guizmin_bioinfo
-<src/bioinfo/*.ml{,i}>: use_syntax
-<src/bioinfo/*.ml{,i}>: use_guizmin
-<src/bioinfo/*.ml{,i}>: pkg_threads
-<src/bioinfo/*.ml{,i}>: pkg_shell
-<src/bioinfo/*.ml{,i}>: pkg_camlp4.quotations.o
-<src/bioinfo/*.ml{,i}>: pkg_camlp4.lib
-<src/bioinfo/*.ml{,i}>: pkg_camlp4.extend
-<src/bioinfo/*.ml{,i}>: pkg_camlp4
-<src/bioinfo/*.ml{,i}>: pkg_biocaml
-<src/bioinfo/*.ml{,i}>: pkg_batteries
 # OASIS_STOP
 <src/syntax/*>: syntax_camlp4o, pkg_camlp4
 <src/bioinfo/*>: syntax_camlp4o, pa_guizmin, pkg_format.syntax
-<src/unix/*>: syntax_camlp4o, pa_guizmin
+<src/tools/*>: syntax_camlp4o, pa_guizmin
 <src/test_yeast.*>: syntax_camlp4o, pa_guizmin
 true: annot, debug
 

@@ -44,18 +44,18 @@ Library guizmin_bioinfo
   Modules:		Guizmin_bioinfo, GzmBowtie, GzmMBSchema, GzmUcsc
   FindlibParent:	guizmin
   FindlibName:		bioinfo
-  BuildDepends:		threads,batteries,biocaml,camlp4, guizmin, guizmin.syntax, format
+  BuildDepends:		threads,batteries,biocaml,camlp4, guizmin, guizmin.syntax, format.syntax
   XMETARequires:	guizmin, guizmin.syntax,biocaml
   XMETADescription:	Bioinformatics components for guizmin
 
-Library guizmin_unix
-  Path:			src/unix
+Library guizmin_tools
+  Path:			src/tools
   Modules:		Guizmin_unix
   FindlibParent:	guizmin
-  FindlibName:		unix
+  FindlibName:		tools
   BuildDepends:		threads,batteries,camlp4, guizmin, guizmin.syntax
   XMETARequires:	guizmin, guizmin.syntax
-  XMETADescription:	Unix components for guizmin
+  XMETADescription:	Pervasives components for guizmin
 
 Executable test_yeast
   Path:         src
