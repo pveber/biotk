@@ -50,10 +50,10 @@ Library guizmin_bioinfo
 
 Library guizmin_tools
   Path:			src/tools
-  Modules:		Guizmin_unix
+  Modules:		Guizmin_table, Guizmin_unix
   FindlibParent:	guizmin
   FindlibName:		tools
-  BuildDepends:		threads,batteries,camlp4, guizmin, guizmin.syntax
+  BuildDepends:		batteries, camlp4, core, guizmin, guizmin.syntax, threads
   XMETARequires:	guizmin, guizmin.syntax
   XMETADescription:	Pervasives components for guizmin
 
