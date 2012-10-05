@@ -141,7 +141,10 @@ object (self)
   method clean = ()
   method built = Sys.file_exists path
   method eval = 
-    assert self#built ;
+    if not self#built then (
+      fprintf stderr "File %s is declared as an input of a pipeline but does not exist." path ;
+      assert false
+    ) ;
     File path
 end
 
