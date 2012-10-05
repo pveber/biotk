@@ -50,7 +50,7 @@ let map id f file =
               output_line oc (f !i (input_line ic)) ;
               incr i
             done 
-          with Not_found -> ()
+          with End_of_file -> ()
         )
       )
     )
