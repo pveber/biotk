@@ -45,8 +45,10 @@ let map id f file =
       In_channel.with_file input ~f:(fun ic ->
         Out_channel.with_file output ~f:(fun oc ->
           try 
+            let i = ref 0 in
             while true do
-              output_line oc (f (input_line ic))
+              output_line oc (f !i (input_line ic)) ;
+              incr i
             done 
           with Not_found -> ()
         )

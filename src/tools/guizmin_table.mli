@@ -1,6 +1,6 @@
 open Guizmin
 
-val map : string -> (string array -> string array) -> 'a file -> 'b file
+val map : string -> (int -> string array -> string array) -> 'a file -> 'b file
 
 
 
