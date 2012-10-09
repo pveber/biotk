@@ -65,17 +65,17 @@ struct
     | `anon_list_dep lid -> <:expr< merge $lid:lid$ >>
 
   let constructor _loc kind deps id body = match kind, deps with 
-    | `file, [] -> <:expr< f0 $id$ (fun _path -> $body$) >>
-    | `file, [ x ] -> <:expr< f1 $id$ (fun $lid:string_of_dep x$ _path -> $body$) >>
+    | `file, [] -> <:expr< f0 $id$ (fun _env _path -> $body$) >>
+    | `file, [ x ] -> <:expr< f1 $id$ (fun _env $lid:string_of_dep x$ _path -> $body$) >>
     | `file, [ x ; y ] -> 
       let argx, argy = string_of_dep x, string_of_dep y in
-      <:expr< f2 $id$ (fun $lid:argx$ $lid:argy$ _path -> $body$) $expr_of_dep _loc x$ $expr_of_dep _loc y$ >>
+      <:expr< f2 $id$ (fun _env $lid:argx$ $lid:argy$ _path -> $body$) $expr_of_dep _loc x$ $expr_of_dep _loc y$ >>
     (* | `file, 2 -> <:expr< f2 >> *)
-    | `value, [] -> <:expr< v0 $id$ (fun () -> $body$) >>
+    | `value, [] -> <:expr< v0 $id$ (fun _env -> $body$) >>
     (* | `value, 1 -> <:expr< v1 >> *)
     | `value, [ x ; y ] -> 
       let argx, argy = string_of_dep x, string_of_dep y in
-      <:expr< v2 $id$ (fun $lid:argx$ $lid:argy$ -> $body$) $expr_of_dep _loc x$ $expr_of_dep _loc y$ >>
+      <:expr< v2 $id$ (fun _env $lid:argx$ $lid:argy$ -> $body$) $expr_of_dep _loc x$ $expr_of_dep _loc y$ >>
     | _ -> assert false
 
   let identifier _loc (name, params) deps =

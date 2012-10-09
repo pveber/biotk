@@ -5,8 +5,8 @@ let index ?(packed = false) fasta =
   let full_index = 
     d1
       ("guizmin.bioinfo.bowtie.index[r1]", [ bool "packed" packed ])
-      (fun (File fa) path ->
-	bash [
+      (fun env (File fa) path ->
+	env.bash [
 	  sp "mkdir %s" path ;
 	  sp "bowtie-build %s -f %s %s/index" 
 	    (if packed then "-a -p" else "") fa path ;
@@ -32,8 +32,8 @@ let align ?n ?l ?e ?m ?p ?qual_kind index fastq_files =
         +? opt int "m" m 
         +? opt int "p" p
         +? opt qual_param "qual_kind" qual_kind)
-    (fun (File index) fastq_files path ->
-      bash ~debug:true [
+    (fun env (File index) fastq_files path ->
+      env.bash [
 	<:sprint<bowtie $? n <- n${-n $d:n$} \
                         $? l <- l${-l $d:l$} \
                         $? e <- e${-e $d:e$} \
@@ -52,7 +52,7 @@ let align2 =
     uses index fastq_files* -> (
       let qual_kind = None in
       let File index = index in
-      bash ~debug:true [
+      _env.bash [
 	<:sprint<bowtie $? n <- n${-n $d:n$} \
                         $? l <- l${-l $d:l$} \
                         $? e <- e${-e $d:e$} \
@@ -64,3 +64,12 @@ let align2 =
                         $s:_path$ >>
       ]
     )
+
+
+
+
+
+
+
+
+

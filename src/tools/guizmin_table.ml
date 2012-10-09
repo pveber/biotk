@@ -41,7 +41,7 @@ let output_line oc = function
 let map id f file = 
   f1
     ("guizmin.tools.table", [string "mapping" id])
-    (fun (File input) output ->
+    (fun _ (File input) output ->
       In_channel.with_file input ~f:(fun ic ->
         Out_channel.with_file output ~f:(fun oc ->
           try 

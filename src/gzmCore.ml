@@ -69,12 +69,23 @@ end
 
 let as_dep x = (x :> dep)
 
+type env = {
+  bash : string list -> unit ;
+  stdout : out_channel ;
+  stderr : out_channel ;
+  np : int ; 
+}
+
 class type ['a] pipeline = object
   inherit dep
-  method eval : 'a
+  method eval : env -> 'a
 end
 
-let eval x = x # eval
+let eval ?(stdout = stdout) ?(stderr = stderr) x = 
+  let env = { stderr ; stdout ; 
+              np = 1 ; 
+              bash = fun l -> GzmUtils.bash ~stdout ~stderr l } in
+  x # eval env
 
 
 let load_value path = 
@@ -90,11 +101,11 @@ let save_value v path =
 let value id f deps = 
 object (self)
   inherit dep id `value deps
-  method eval = 
+  method eval env = 
     let dest = self#path
     and tmp = self#tmp_path in
     if not self#built then (
-      let r = f () in
+      let r = f env in
       save_value r tmp ;
       Sys.rename tmp dest ;
       r
@@ -108,10 +119,10 @@ end
 let v0 id f = value id f []
 
 let v1 id f x = 
-  value id (fun () -> f x#eval) [ as_dep x ]
+  value id (fun env -> f env (x#eval env)) [ as_dep x ]
 
 let v2 id f x y = 
-  value id (fun () -> f x#eval y#eval) [ as_dep x ; as_dep y ]
+  value id (fun env -> f env (x#eval env) (y#eval env)) [ as_dep x ; as_dep y ]
 
 type 'a file_path = File of path
 type 'a file = 'a file_path pipeline
@@ -121,11 +132,11 @@ type 'a dir = 'a dir_path pipeline
 let path kind cons id f children =
 object (self)
   inherit dep id kind children 
-  method eval = 
+  method eval env = 
     let dest = self#path
     and tmp = self#tmp_path in 
     if not self#built then (
-      f tmp ;
+      f env tmp ;
       Sys.rename tmp dest ;
     ) ;
     touch dest ;
@@ -140,11 +151,12 @@ object (self)
   inherit dep ("guizmin.file.input", [ string "path" path ]) `file []
   method clean = ()
   method built = Sys.file_exists path
-  method eval = 
+  method eval env = 
     if not self#built then (
-      fprintf stderr "File %s is declared as an input of a pipeline but does not exist." path ;
+      fprintf env.stderr "File %s is declared as an input of a pipeline but does not exist." path ;
       assert false
     ) ;
+    (* FIXME: we should also check that [path] is indeed a regular file *)
     File path
 end
 
@@ -153,20 +165,24 @@ let f0 id f = path `file  file_cons id f []
 let f1 id f x = 
   path 
     `file file_cons id 
-    (fun path -> f x#eval path) 
+    (fun env path -> f env (x#eval env) path) 
     [ as_dep x ]
 
 let f2 id f x y = 
   path
     `file file_cons id 
-    (fun path -> f x#eval y#eval path) 
+    (fun env path -> f env (x#eval env) (y#eval env) path) 
     [ as_dep x ; as_dep y ]
 
 let dir path =
 object (self)
   inherit dep ("guizmin.dir.input", [ string "path" path ]) `dir []
-  method eval = 
-    assert self#built ;
+  method eval env = 
+    if not self#built then (
+      fprintf env.stderr "Directory %s is declared as an input of a pipeline but does not exist." path ;
+      assert false
+    ) ;
+    (* FIXME: we should also check that [path] is indeed a directory *)
     Dir path
 end
 
@@ -178,20 +194,20 @@ let d0 id f =
 let d1 id f x = 
   path 
     `dir dir_cons id 
-    (fun path -> f x#eval path) 
+    (fun env path -> f env (x#eval env) path) 
     [ as_dep x ]
 
 let d2 id f x y = 
   path 
     `dir dir_cons id 
-    (fun path -> f x#eval y#eval path) 
+    (fun env path -> f env (x#eval env) (y#eval env) path) 
     [ as_dep x ; as_dep y ]
 
 let select x subpath = 
 object
   inherit dep ("guizmin.select", [string "subpath" subpath]) `select [ as_dep x ]
-  method eval = 
-    let Dir x_path = x#eval in 
+  method eval env = 
+    let Dir x_path = x#eval env in 
     let p = Filename.concat x_path subpath in
     if Sys.file_exists p 
     then File p
@@ -204,7 +220,7 @@ end
 let merge l = 
 object
   inherit dep ("guizmin.merge", []) `merge (List.map as_dep l)
-  method eval = List.map (fun x -> x#eval) l
+  method eval env = List.map (fun x -> x#eval env) l
 end
 
 (* type _ pipeline = *)
@@ -215,6 +231,13 @@ end
 (*   | Value2 : string * param list * (('a * 'b) -> 'c) * 'a pipeline * 'b pipeline -> ('a * 'b,'c) pipeline *)
 (*   | Select : path * 'a pipeline -> 'b pipeline *)
 (*   | Merge  : 'a pipeline list -> 'a list pipeline *)
+
+
+
+
+
+
+
 
 
 
