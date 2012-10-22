@@ -7,11 +7,16 @@ let sh fmt =
   in Printf.ksprintf shell fmt
 
 
-let bash ?(debug = false) cmds = 
+let bash ?(debug = false) ?(stdout = stdout) ?(stderr = stderr) cmds = 
+  let open Shell in
   if debug then List.iter prerr_endline cmds ;
-  Shell.(call [
-    cmd "bash" [ "-c" ; String.concat " && " cmds ]
-  ])
+  call [ cmd "bash" [ "-c" ; String.concat " && " cmds ] ]
+
+
+
+
+
+
 
 
 
