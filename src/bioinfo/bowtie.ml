@@ -1,6 +1,8 @@
 open GzmUtils
 open GzmCore
 
+type index
+
 let index ?(packed = false) fasta = 
   let full_index = 
     d1

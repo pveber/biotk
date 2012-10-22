@@ -42,7 +42,7 @@ Library syntax
 Library guizmin_bioinfo
   Path:			src/bioinfo
   Pack:			true
-  Modules:		Bed, Bowtie, Htseq, Macs#, MBSchema, Ucsc
+  Modules:		Bed, Bowtie, Htseq, Macs#, MBSchema, Tophat, Ucsc
   FindlibParent:	guizmin
   FindlibName:		bioinfo
   BuildDepends:		batteries, biocaml, camlp4, core, format.syntax,

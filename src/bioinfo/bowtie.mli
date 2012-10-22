@@ -1,6 +1,8 @@
 open GzmCore
 
-val index : ?packed:bool -> [`fasta] file -> [`bowtie_index] file
+type index
+
+val index : ?packed:bool -> [`fasta] file -> index file
 
 val align :
   ?n:int -> ?l:int -> ?e:int -> ?m:int -> ?p:int ->
