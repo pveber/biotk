@@ -1,5 +1,5 @@
 open Guizmin
-open GzmMBSchema
+open MBSchema
 
 type output
 

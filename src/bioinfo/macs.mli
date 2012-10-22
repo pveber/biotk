@@ -1,5 +1,5 @@
 open Guizmin
-open GzmMBSchema
+open MBSchema
 
 type output
 
@@ -21,4 +21,4 @@ type peak = private {
 val peaks : output dir -> peak Guizmin_table.file
 val peak_parser : peak Guizmin_table.file_path -> peak BatEnum.t
 
-val bed : output dir -> GzmBed.file
+val bed : output dir -> Bed.file

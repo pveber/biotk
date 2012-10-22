@@ -25,7 +25,7 @@ Description:
 Library guizmin
   Path:    src
   Modules: GzmUtils, GzmCore, Guizmin
-  BuildDepends: shell, batteries, core
+  BuildDepends:       batteries, core, shell
   
 Library syntax
   Path:               src/syntax
@@ -35,17 +35,20 @@ Library syntax
   BuildDepends:       camlp4.lib, camlp4.quotations.o, camlp4.extend
   CompiledObject:     byte
   XMETAType:          syntax
-  XMETARequires:      camlp4, guizmin
+#  XMETARequires:      camlp4, guizmin
   XMETADescription:   Syntax extension for guizmin
 
 
 Library guizmin_bioinfo
   Path:			src/bioinfo
-  Modules:		Guizmin_bioinfo, GzmBed, GzmBowtie, GzmHtseq, GzmMacs, GzmMBSchema, GzmUcsc
+  Pack:			true
+  Modules:		Bed, Bowtie, Htseq, Macs#, MBSchema, Ucsc
   FindlibParent:	guizmin
   FindlibName:		bioinfo
-  BuildDepends:		threads,batteries,biocaml,camlp4, guizmin, guizmin.syntax, format.syntax, guizmin.tools
-  XMETARequires:	guizmin, guizmin.syntax,biocaml
+  BuildDepends:		batteries, biocaml, camlp4, core, format.syntax,
+                        guizmin, guizmin.syntax, guizmin.tools,
+                        threads
+#  XMETARequires:	guizmin, guizmin.syntax,biocaml
   XMETADescription:	Bioinformatics components for guizmin
 
 Library guizmin_tools
