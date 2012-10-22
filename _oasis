@@ -41,7 +41,7 @@ Library syntax
 
 Library guizmin_bioinfo
   Path:			src/bioinfo
-  Modules:		Guizmin_bioinfo, GzmBowtie, GzmHtseq, GzmMacs, GzmMBSchema, GzmUcsc
+  Modules:		Guizmin_bioinfo, GzmBed, GzmBowtie, GzmHtseq, GzmMacs, GzmMBSchema, GzmUcsc
   FindlibParent:	guizmin
   FindlibName:		bioinfo
   BuildDepends:		threads,batteries,biocaml,camlp4, guizmin, guizmin.syntax, format.syntax, guizmin.tools

@@ -1,8 +1,13 @@
+open BatEnum.Infix
 open Core
 open Guizmin
 
-type 'a ty
-type 'a file = 'a ty Guizmin.file
+type 'a line
+type 'a line_parser = string array -> 'a
+type 'a file_path = 'a line Guizmin.file_path
+type 'a file = 'a line Guizmin.file
+
+let ( |> ) = BatPervasives.( |> )
 
 let count_occurences ch s =
   let accu = ref 0 in
@@ -59,18 +64,9 @@ let map id f file =
     )
     file
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+let parse ?(header = false) lp (File f) =
+  (BatFile.lines_of f
+     // (fun l -> not (Core_string.is_prefix ~prefix:"#" l))
+     |> BatEnum.skip (if header then 1 else 0))
+  /@ split ~on:'\t'
+  /@ lp
