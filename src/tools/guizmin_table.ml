@@ -1,6 +1,9 @@
 open Core
 open Guizmin
 
+type 'a ty
+type 'a file = 'a ty Guizmin.file
+
 let count_occurences ch s =
   let accu = ref 0 in
   for i = 0 to String.length s - 1 do
