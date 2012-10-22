@@ -10,8 +10,8 @@ let run14 ~genomesize ~tagsize ~bandwidth ~pvalue ?input chIP =
 	("guizmin.bioinfo.gzmMacs.run14[r1]", 
 	 [ int "tagsize" tagsize ; int "bandwidth" bandwidth ;
 	   float "pvalue" pvalue ])
-	(fun (* FIXME env *) genomesize (File chIP) path ->
-	  GzmUtils.bash (* FIXME ~env *) [
+	(fun env genomesize (File chIP) path ->
+	  env.bash [
 	    <:sprint<mkdir $s:path$>> ;
 	    <:sprint<macs14 --name=$s:path$/macs --gsize=$d:70 * genomesize / 100$ \
                      --tsize=$d:tagsize$ --bw=$d:bandwidth$ --pvalue=$g:pvalue$ \
