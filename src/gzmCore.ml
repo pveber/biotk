@@ -91,7 +91,7 @@ let eval ?(stdout = stdout) ?(stderr = stderr) x =
 let load_value path = 
   let ic = open_in path in 
   let r = input_value ic in
-  close_in r ; r
+  close_in ic ; r
 
 let save_value v path = 
   let oc = open_out path in 
