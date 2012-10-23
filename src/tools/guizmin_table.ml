@@ -2,8 +2,8 @@ open BatEnum.Infix
 open Core
 open Guizmin
 
-type 'a line
-type 'a line_parser = string array -> 'a
+type 'a line = Line of string array
+type ('a, 'b) line_parser = 'a line -> 'b
 type 'a file_path = 'a line Guizmin.file_path
 type 'a file = 'a line Guizmin.file
 
@@ -69,4 +69,14 @@ let parse ?(header = false) lp (File f) =
      // (fun l -> not (Core_string.is_prefix ~prefix:"#" l))
      |> BatEnum.skip (if header then 1 else 0))
   /@ split ~on:'\t'
-  /@ lp
+  /@ (fun x -> lp (Line x))
+
+
+
+
+
+
+
+
+
+

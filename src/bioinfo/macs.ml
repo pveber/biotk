@@ -52,7 +52,7 @@ type peak = {
   fdr : float option ;
 }
 
-let peak_line_parser f = {
+let peak_line_parser (Guizmin_table.Line f) = {
   loc = (
     Location.make f.(0) (max 1 (int_of_string f.(1))) (int_of_string f.(2)) 
     (* shitty macs that may return negative coordinates !!! *)
