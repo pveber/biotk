@@ -6,22 +6,5 @@ val sh : ('a,unit,string,unit) format4 -> 'a
 
 val bash : ?debug:bool -> ?stdout:out_channel -> ?stderr:out_channel -> string list -> unit
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+val save : string -> 'a -> unit
+val load : string -> 'a
