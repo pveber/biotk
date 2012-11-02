@@ -42,18 +42,3 @@ val d2 : id -> (env -> 'a -> 'b -> path -> unit) -> 'a pipeline -> 'b pipeline -
 
 val select : 'a dir -> path -> 'b file
 val merge : 'a pipeline list -> 'a list pipeline
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

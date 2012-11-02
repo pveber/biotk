@@ -50,3 +50,42 @@ module Gene : sig
 
   val symbol : t -> string option
 end
+
+module ConfigFile : sig
+  open Sexplib.Std
+
+  type t = statement list
+  and statement = 
+    | Condition of string
+    | Sample of sample
+    | Model of string
+  and sample = {
+    sample_id : string ;
+    sample_type : sample_type ;
+    sample_file : string list ;
+    sample_model : string ;
+    sample_condition : string ;
+  }
+  and sample_type =
+    | ChIP_seq of string
+    | RNA_seq of string
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

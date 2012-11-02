@@ -48,7 +48,7 @@ Library guizmin_bioinfo
   FindlibName:		bioinfo
   BuildDepends:		batteries, biocaml, camlp4, core, format.syntax,
                         guizmin, guizmin.syntax, guizmin.tools,
-                        threads
+                        sexplib.syntax, threads
 #  XMETARequires:	guizmin, guizmin.syntax,biocaml
   XMETADescription:	Bioinformatics components for guizmin
 
