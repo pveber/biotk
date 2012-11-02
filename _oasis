@@ -68,6 +68,13 @@ Executable test_yeast
   BuildDepends: threads, guizmin, camlp4.quotations.o
   Install:      false
 
+Executable guizmin_mb_pipeline
+  Path:         src
+  MainIs:       guizmin_mb_pipeline.ml
+  BuildDepends: cmdliner, guizmin.bioinfo
+  Install:      false
+
+
 SourceRepository head
   Type: git
   Location: git://github.com/pveber/guizmin.git
