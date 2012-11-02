@@ -1,4 +1,6 @@
-let execute_pipeline config_file = ()
+let execute_pipeline config_file =
+  let config = Guizmin_bioinfo.MBSchema.ConfigFile.load config_file in
+  ignore config
 
 let execute_pipeline_term = Cmdliner.(
   let config_file = 

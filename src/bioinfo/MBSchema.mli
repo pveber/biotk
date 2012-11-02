@@ -69,6 +69,8 @@ module ConfigFile : sig
   and sample_type =
     | ChIP_seq of string
     | RNA_seq of string
+
+  val load : string -> t
 end
 
 

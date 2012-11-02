@@ -132,4 +132,16 @@ module ConfigFile = struct
     | RNA_seq of string
   with sexp
 
+  let load path =
+    Sexplib.Sexp.load_sexp_conv_exn path t_of_sexp
 end
+
+
+
+
+
+
+
+
+
+
