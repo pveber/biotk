@@ -2,6 +2,7 @@ open GzmUtils
 open GzmCore
 
 type bigWig
+type wig
 type genome = [ `mm9 | `hg18 | `hg19 | `sacCer2 ]
 
 let string_of_genome = function
@@ -50,7 +51,7 @@ let genome_2bit_sequence org =
 
 
 let wg_encode_crg_mappability n org =
-  let url = sp "ftp://hgdownload.cse.ucsc.edu/gbdb/%s/bbi/wgEncodeCrgMapabilityAlign%dmer.bw" (string_of_genome org) n in
+  let url = sp "ftp://hgdownload.cse.ucsc.edu/gbdb/%s/bbi/wgEncodeCrgMapabilityAlign%dmer.bigWig" (string_of_genome org) n in
   Guizmin_unix.wget url
 
 let wg_encode_crg_mappability_36 org = wg_encode_crg_mappability 36 org
@@ -67,15 +68,15 @@ let fasta_of_bed org bed =
       sh "twoBitToFa -bed=%s %s %s" bed seq2b path)
     seq2b bed
 
-
-
-
-
-
-
-
-
-
+let wig_of_bigWig bigWig = 
+  f1
+    ("guizmin.bioinfo.ucsc.wig_of_bigWig[r1]", [])
+    (fun env (File bigWig) path ->
+      env.bash [
+        sp "bigWigToWig %s %s" bigWig path
+      ]
+    )
+    bigWig
 
 
 

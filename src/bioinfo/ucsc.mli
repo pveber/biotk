@@ -1,6 +1,7 @@
 open GzmCore
 
 type bigWig
+type wig
 
 type genome = [ `mm9 | `hg18 | `hg19 | `sacCer2 ]
 
@@ -15,6 +16,8 @@ val wg_encode_crg_mappability_75  : [`mm9 | `hg18 | `hg19] -> bigWig file
 val wg_encode_crg_mappability_100 : [`mm9 | `hg18 | `hg19] -> bigWig file
 
 val fasta_of_bed : genome -> 'a Bed.file -> Fasta.file
+
+val wig_of_bigWig : bigWig file -> wig file
 
 
 
