@@ -117,24 +117,35 @@ module ConfigFile = struct
 
   type t = statement list
   and statement = 
-    | Condition of string
+    | Condition of condition
     | Sample of sample
-    | Model of string
+    | Model of model
+  and condition = string
   and sample = {
     sample_id : string ;
     sample_type : sample_type ;
-    sample_file : string list ;
+    sample_files : string list ;
     sample_model : string ;
     sample_condition : string ;
   }
   and sample_type =
-    | ChIP_seq of string
+    | ChIP_seq_input
+    | TF_ChIP_seq of string
     | RNA_seq of string
+  and model = {
+    model_id : string ;
+    model_genome : genome ;
+  }
+  and genome = [`mm9]
   with sexp
 
   let load path =
     Sexplib.Sexp.load_sexp_conv_exn path t_of_sexp
 end
+
+
+
+
 
 
 

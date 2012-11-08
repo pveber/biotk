@@ -42,14 +42,15 @@ Library syntax
 Library guizmin_bioinfo
   Path:			src/bioinfo
   Pack:			true
-  Modules:		Bed, Bowtie, Fasta, Htseq, Jaspar,
-                        Macs, MBSchema, Tophat, Ucsc
+  Modules:		Bam, Bed, Bowtie, Fasta, Htseq, Jaspar,
+                        Macs, MBPipeline, MBSchema, Tophat, 
+                        Ucsc
   FindlibParent:	guizmin
   FindlibName:		bioinfo
   BuildDepends:		batteries, biocaml, camlp4, core, format.syntax,
                         guizmin, guizmin.syntax, guizmin.tools,
                         sexplib.syntax, threads
-#  XMETARequires:	guizmin, guizmin.syntax,biocaml
+  XMETARequires:	guizmin, guizmin.syntax,biocaml
   XMETADescription:	Bioinformatics components for guizmin
 
 Library guizmin_tools
@@ -70,8 +71,9 @@ Executable test_yeast
 
 Executable guizmin_mb_pipeline
   Path:         src
+  BuildTools:   ocamlbuild
   MainIs:       guizmin_mb_pipeline.ml
-  BuildDepends: cmdliner, guizmin.bioinfo
+  BuildDepends: cmdliner, guizmin, guizmin.bioinfo
   Install:      false
 
 

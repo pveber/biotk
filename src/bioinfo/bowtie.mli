@@ -2,16 +2,36 @@ open GzmCore
 
 type index
 
-val index : ?packed:bool -> [`fasta] file -> index file
+val index : ?packed:bool -> Fasta.file -> index file
+
+val align_with_maq_policy :
+  ?l:int -> ?e:int -> ?m:int ->
+  ?qual_kind:[`phred33|`phred64|`solexa] ->
+  n:int -> index file -> [ `fastq] file list ->
+  Bam.file
 
 val align :
-  ?n:int -> ?l:int -> ?e:int -> ?m:int -> ?p:int ->
+  ?m:int ->
   ?qual_kind:[`phred33|`phred64|`solexa] ->
-  [`bowtie_index] file -> [ `fastq] file list ->
-  [`bam ] file
+  v:int -> index file -> [ `fastq] file list ->
+  Bam.file
 
-(* val align_nomaq :  *)
-(*   ?v:int -> ?m:int -> ?p:int ->  *)
-(*   [`bowtie_index] file pipeline -> [ `fastq] file list pipeline ->  *)
-(*   [`sam ] file format *)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

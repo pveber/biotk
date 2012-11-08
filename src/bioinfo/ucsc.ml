@@ -1,10 +1,13 @@
 open GzmUtils
 open GzmCore
 
-type genome = [ `mm9 | `hg18 | `sacCer2 ]
+type bigWig
+type genome = [ `mm9 | `hg18 | `hg19 | `sacCer2 ]
+
 let string_of_genome = function
     `mm9 -> "mm9"
   | `hg18 -> "hg18"
+  | `hg19 -> "hg19"
   | `sacCer2 -> "sacCer2"
 
 let chromosome_sequences org =
@@ -43,6 +46,18 @@ let genome_2bit_sequence_dir org =
 
 let genome_2bit_sequence org = 
   select (genome_2bit_sequence_dir org) ((string_of_genome org) ^ ".2bit")
+
+
+
+let wg_encode_crg_mappability n org =
+  let url = sp "ftp://hgdownload.cse.ucsc.edu/gbdb/%s/bbi/wgEncodeCrgMapabilityAlign%dmer.bw" (string_of_genome org) n in
+  Guizmin_unix.wget url
+
+let wg_encode_crg_mappability_36 org = wg_encode_crg_mappability 36 org
+let wg_encode_crg_mappability_40 org = wg_encode_crg_mappability 40 org
+let wg_encode_crg_mappability_50 org = wg_encode_crg_mappability 50 org
+let wg_encode_crg_mappability_75 org = wg_encode_crg_mappability 75 org
+let wg_encode_crg_mappability_100 org = wg_encode_crg_mappability 100 org
 
 let fasta_of_bed org bed = 
   let seq2b = genome_2bit_sequence org in
