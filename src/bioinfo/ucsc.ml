@@ -27,7 +27,10 @@ let genome_sequence org =
   f1
     ("guizmin.bioinfo.ucsc.genome_sequence[1]", [])
     (fun env (Dir gp) path ->
-      env.bash [ sp "cat %s/{chr?.fa,chr??.fa,chr???.fa,chr????.fa} > %s" gp path ])
+      env.bash [ 
+        "shopt -s nullglob" ;
+        sp "cat %s/{chr?.fa,chr??.fa,chr???.fa,chr????.fa} > %s" gp path 
+      ])
     (chromosome_sequences org)
 
 
