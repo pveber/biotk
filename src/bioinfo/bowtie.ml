@@ -4,19 +4,16 @@ open GzmCore
 type index
 
 let index ?(packed = false) fasta = 
-  let full_index = 
-    d1
-      ("guizmin.bioinfo.bowtie.index[r1]", [ bool "packed" packed ])
-      (fun env (File fa) path ->
-	env.bash [
-	  sp "mkdir %s" path ;
-	  sp "bowtie-build %s -f %s %s/index" 
-	    (if packed then "-a -p" else "") fa path ;
-	  sp "ln -s %s index.fa" fa
-	])
-      fasta
-  in
-  select full_index "index"
+  d1
+    ("guizmin.bioinfo.bowtie.index[r1]", [ bool "packed" packed ])
+    (fun env (File fa) path ->
+      env.bash [
+	sp "mkdir %s" path ;
+	sp "bowtie-build %s -f %s %s/index" 
+	  (if packed then "-a -p" else "") fa path ;
+	sp "ln -s %s index.fa" fa
+      ])
+    fasta
 
 let qual_option = function
   | `solexa  -> "--solexa-quals"
@@ -33,7 +30,7 @@ let align_with_maq_policy ?l ?e ?m ?qual_kind ~n index fastq_files =
         +? opt int "e" e 
         +? opt int "m" m 
         +? opt qual_param "qual_kind" qual_kind)
-    (fun env (File index) fastq_files path ->
+    (fun env (Dir index) fastq_files path ->
       env.bash [
 	<:sprint<bowtie -n $d:n$ \
                         $? l <- l${-l $d:l$} \
@@ -41,7 +38,7 @@ let align_with_maq_policy ?l ?e ?m ?qual_kind ~n index fastq_files =
                         $? m <- m${-m $d:m$} \
 	                $? q <- qual_kind${qual_option q} \
                         -p $d:env.np$ \
-	                $s:index$ \ 
+	                $s:index$/index \ 
 	                $!File f <- fastq_files ${$s:f$}{,} \
                         $s:path$ >>
       ])
@@ -72,17 +69,26 @@ let align ?m ?qual_kind ~v index fastq_files =
      [ int "v" v ]
         +? opt int "m" m 
         +? opt qual_param "qual_kind" qual_kind)
-    (fun env (File index) fastq_files path ->
-      env.bash [
-	<:sprint<bowtie -v $d:v$ \
-                        $? m <- m${-m $d:m$} \
-	                $? q <- qual_kind${qual_option q} \
-                        -p $d:env.np$ \
-	                $s:index$ \ 
-	                $!File f <- fastq_files ${$s:f$}{,} \
-                        $s:path$ >>
-      ])
+    (fun env (Dir index) fastq_files path ->
+      let cmd = 
+	<:sprint<bowtie -v $d:v$ $? m <- m${-m $d:m$} $? q <- qual_kind${qual_option q} -p $d:env.np$ $s:index$/index $!File f <- fastq_files ${$s:f$}{,} $s:path$ >>
+      in
+      print_endline cmd ;
+      env.bash [ cmd ])
     index (merge fastq_files)
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

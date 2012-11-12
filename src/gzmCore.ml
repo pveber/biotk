@@ -81,9 +81,8 @@ class type ['a] pipeline = object
   method eval : env -> 'a
 end
 
-let eval ?(stdout = stdout) ?(stderr = stderr) x = 
-  let env = { stderr ; stdout ; 
-              np = 1 ; 
+let eval ?(stdout = stdout) ?(stderr = stderr) ?(np = 1) x = 
+  let env = { stderr ; stdout ; np ; 
               bash = fun l -> GzmUtils.bash ~stdout ~stderr l } in
   x # eval env
 
@@ -202,6 +201,12 @@ let d2 id f x y =
     `dir dir_cons id 
     (fun env path -> f env (x#eval env) (y#eval env) path) 
     [ as_dep x ; as_dep y ]
+
+let d3 id f x y z = 
+  path 
+    `dir dir_cons id 
+    (fun env path -> f env (x#eval env) (y#eval env) (z#eval env) path) 
+    [ as_dep x ; as_dep y ; as_dep z ]
 
 let select x subpath = 
 object

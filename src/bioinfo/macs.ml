@@ -3,8 +3,8 @@ open MBSchema
 
 type output
 
-let run14 ~genomesize ~tagsize ~bandwidth ~pvalue ?input chIP =
-  match input with 
+let run14 ~genomesize ~tagsize ~bandwidth ~pvalue ?control chIP =
+  match control with 
     | None -> 
       d2 
 	("guizmin.bioinfo.gzmMacs.run14[r1]", 
@@ -18,8 +18,19 @@ let run14 ~genomesize ~tagsize ~bandwidth ~pvalue ?input chIP =
                      -t $s:chIP$>> ;
 	  ])
 	genomesize chIP
-    | Some input ->
-      assert false
+    | Some control ->
+      d3
+	("guizmin.bioinfo.gzmMacs.run14[r1]", 
+	 [ int "tagsize" tagsize ; int "bandwidth" bandwidth ;
+	   float "pvalue" pvalue ])
+	(fun env genomesize (File chIP) (File control) path ->
+	  env.bash [
+	    <:sprint<mkdir $s:path$>> ;
+	    <:sprint<macs14 --name=$s:path$/macs --gsize=$d:genomesize$ \
+                     --tsize=$d:tagsize$ --bw=$d:bandwidth$ --pvalue=$g:pvalue$ \
+                     -t $s:chIP$ -c $s:control$>> ;
+	  ])
+	genomesize chIP control
 	    
   (* (object  *)
   (*    method id =  *)

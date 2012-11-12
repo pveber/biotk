@@ -19,7 +19,7 @@ type env = private {
 
 type 'a pipeline
 val eval : 
-  ?stdout:out_channel -> ?stderr:out_channel -> 
+  ?stdout:out_channel -> ?stderr:out_channel -> ?np:int ->
   'a pipeline -> 'a
 
 val v0 : id -> (env -> 'a) -> 'a pipeline
@@ -39,6 +39,24 @@ val dir : path -> 'a dir
 val d0 : id -> (env -> path -> unit) -> 'a dir
 val d1 : id -> (env -> 'a -> path -> unit) -> 'a pipeline -> 'b dir
 val d2 : id -> (env -> 'a -> 'b -> path -> unit) -> 'a pipeline -> 'b pipeline -> 'c dir
+val d3 : id -> (env -> 'a -> 'b -> 'c -> path -> unit) -> 'a pipeline -> 'b pipeline -> 'c pipeline -> 'd dir
 
 val select : 'a dir -> path -> 'b file
 val merge : 'a pipeline list -> 'a list pipeline
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

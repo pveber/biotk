@@ -13,7 +13,7 @@ sig
   val genomes : genome list
 
   module Genome : sig
-    val bowtie_index : (genome, Bowtie.index file) assoc
+    val bowtie_index : (genome, Bowtie.index dir) assoc
   end
 
   module TF_ChIP_seq : sig
