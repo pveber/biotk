@@ -18,7 +18,7 @@ sig
 
   module TF_ChIP_seq : sig
     val samples : sample list
-    val aligned_reads : (sample, Bam.file) assoc
+    val aligned_reads : (sample, Sam.file) assoc
   end
 end
 
