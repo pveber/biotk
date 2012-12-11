@@ -39,6 +39,15 @@ Library syntax
   XMETADescription:   Syntax extension for guizmin
 
 
+Library guizmin_tools
+  Path:			src/tools
+  Modules:		Guizmin_table, Guizmin_unix
+  FindlibParent:	guizmin
+  FindlibName:		tools
+  BuildDepends:		batteries, camlp4, core, guizmin, guizmin.syntax, threads
+  XMETARequires:	guizmin, guizmin.syntax
+  XMETADescription:	Pervasives components for guizmin
+
 Library guizmin_bioinfo
   Path:			src/bioinfo
   Pack:			true
@@ -50,17 +59,9 @@ Library guizmin_bioinfo
   BuildDepends:		batteries, biocaml, camlp4, core, format.syntax,
                         guizmin, guizmin.syntax, guizmin.tools,
                         sexplib.syntax, threads
-  XMETARequires:	guizmin, guizmin.syntax,biocaml
+  XMETARequires:	guizmin, guizmin.tools, guizmin.syntax,biocaml
   XMETADescription:	Bioinformatics components for guizmin
 
-Library guizmin_tools
-  Path:			src/tools
-  Modules:		Guizmin_table, Guizmin_unix
-  FindlibParent:	guizmin
-  FindlibName:		tools
-  BuildDepends:		batteries, camlp4, core, guizmin, guizmin.syntax, threads
-  XMETARequires:	guizmin, guizmin.syntax
-  XMETADescription:	Pervasives components for guizmin
 
 Executable test_yeast
   Path:         src
