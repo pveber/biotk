@@ -21,6 +21,7 @@ type 'a pipeline
 val eval : 
   ?stdout:out_channel -> ?stderr:out_channel -> ?np:int ->
   'a pipeline -> 'a
+val path : 'a pipeline -> string
 
 val v0 : id -> (env -> 'a) -> 'a pipeline
 val v1 : id -> (env -> 'a -> 'b) -> 'a pipeline -> 'b pipeline

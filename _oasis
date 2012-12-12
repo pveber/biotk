@@ -41,7 +41,7 @@ Library syntax
 
 Library guizmin_tools
   Path:			src/tools
-  Modules:		Guizmin_table, Guizmin_unix
+  Modules:		Guizmin_repo, Guizmin_table, Guizmin_unix
   FindlibParent:	guizmin
   FindlibName:		tools
   BuildDepends:		batteries, camlp4, core, guizmin, guizmin.syntax, threads

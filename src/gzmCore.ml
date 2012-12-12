@@ -128,7 +128,7 @@ type 'a file = 'a file_path pipeline
 type 'a dir_path  = Dir of path
 type 'a dir = 'a dir_path pipeline
 
-let path kind cons id f children =
+let path_pipeline kind cons id f children =
 object (self)
   inherit dep id kind children 
   method eval env = 
@@ -160,15 +160,15 @@ object (self)
 end
 
 
-let f0 id f = path `file  file_cons id f []
+let f0 id f = path_pipeline `file  file_cons id f []
 let f1 id f x = 
-  path 
+  path_pipeline 
     `file file_cons id 
     (fun env path -> f env (x#eval env) path) 
     [ as_dep x ]
 
 let f2 id f x y = 
-  path
+  path_pipeline
     `file file_cons id 
     (fun env path -> f env (x#eval env) (y#eval env) path) 
     [ as_dep x ; as_dep y ]
@@ -188,22 +188,22 @@ end
 let dir_cons x = Dir x
 
 let d0 id f = 
-  path `dir dir_cons id f []
+  path_pipeline `dir dir_cons id f []
 
 let d1 id f x = 
-  path 
+  path_pipeline 
     `dir dir_cons id 
     (fun env path -> f env (x#eval env) path) 
     [ as_dep x ]
 
 let d2 id f x y = 
-  path 
+  path_pipeline 
     `dir dir_cons id 
     (fun env path -> f env (x#eval env) (y#eval env) path) 
     [ as_dep x ; as_dep y ]
 
 let d3 id f x y z = 
-  path 
+  path_pipeline 
     `dir dir_cons id 
     (fun env path -> f env (x#eval env) (y#eval env) (z#eval env) path) 
     [ as_dep x ; as_dep y ; as_dep z ]
