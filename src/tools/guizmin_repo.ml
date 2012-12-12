@@ -7,7 +7,7 @@ let item ~descr path pipeline = Item (pipeline, descr, path)
 
 type t = item list
 
-let create ?(force = false) items base_path =
+let create ?(force = false) base_path items =
   sh "rm -rf %s" base_path ;
   sh "mkdir -p %s" base_path ;
   List.iter
