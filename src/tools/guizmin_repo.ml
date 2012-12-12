@@ -1,9 +1,9 @@
-open Guizmin.Utils
+open GzmUtils
 
 type path = string list
 type item = 
   | Item : 'a Guizmin.pipeline * string * path -> item
-let item ~descr path pipeline = Item (pipeline, descr, path)
+let item ?(descr = "") path pipeline = Item (pipeline, descr, path)
 
 type t = item list
 

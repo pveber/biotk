@@ -1,5 +1,4 @@
 include GzmCore
-module Utils = GzmUtils
 
 type 'a value
 
