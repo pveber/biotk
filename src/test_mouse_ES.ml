@@ -1,3 +1,21 @@
+(**
+   Study of the dataset presented in 
+   {v
+@article{chen2008integration,
+  title={Integration of external signaling pathways with the core transcriptional network in embryonic stem cells},
+  author={Chen, X. and Xu, H. and Yuan, P. and Fang, F. and Huss, M. and Vega, V.B. and Wong, E. and Orlov, Y.L. and Zhang, W. and Jiang, J. and others},
+  journal={Cell},
+  volume={133},
+  number={6},
+  pages={1106--1117},
+  year={2008},
+  publisher={Elsevier}
+}
+v}
+
+   The ChIP-seq data is described in the associated {{http://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE11431}GEO page}.
+*)
+
 #use "topfind"
 #thread
 #require "guizmin.bioinfo"
@@ -21,8 +39,15 @@ let sox2_peaks = Macs.(
     sox2_bam
 )
 
+let wget_gzipped_bed url : Bed.file = Guizmin_unix.(
+  gunzip (wget url)
+)
+
+let published_sox2_peaks =
+  wget_gzipped_bed "http://www.ncbi.nlm.nih.gov/geosuppl/?acc=GSM288347&file=GSM288347%5FES%5FSox2%2Etxt%2Egz"
+
 let () = Guizmin.(
-  let File p = eval ~np:7 (Macs.peaks sox2_peaks) in
+  let File p = eval ~np:2 (Macs.peaks sox2_peaks) in
   print_endline p
 )
 
