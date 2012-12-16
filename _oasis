@@ -25,7 +25,7 @@ Description:
 Library guizmin
   Path:               src
   Modules:            GzmUtils, GzmCore, Guizmin
-  BuildDepends:       batteries, core, shell
+  BuildDepends:       batteries, core, shell, threads
   
 Library syntax
   Path:               src/syntax
@@ -64,7 +64,7 @@ Library guizmin_bioinfo
 
 
 Executable test_yeast
-  Path:         src
+  Path:         src/examples
   BuildTools:   ocamlbuild
   MainIs:       test_yeast.ml
   BuildDepends: threads, guizmin, camlp4.quotations.o

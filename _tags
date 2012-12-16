@@ -3,6 +3,6 @@
 <src/syntax/*>: syntax_camlp4o, pkg_camlp4
 <src/bioinfo/*>: syntax_camlp4o, pa_guizmin, pkg_format.syntax
 <src/tools/*>: syntax_camlp4o, pa_guizmin
-<src/test_yeast.*>: syntax_camlp4o, pa_guizmin
+<src/examples/test_yeast.*>: syntax_camlp4o, pa_guizmin
 true: annot, debug
 
