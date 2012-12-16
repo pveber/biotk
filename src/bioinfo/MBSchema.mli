@@ -26,6 +26,10 @@ module Location : sig
 
   val to_string : t -> string
   (** String representation of a location, as <chr>:<start>-<end> *)
+
+  val of_string : string -> t
+(** Parses a string representation of a location, as
+    <chr>:<start>-<end> *)
 end
 
 module Transcript : sig

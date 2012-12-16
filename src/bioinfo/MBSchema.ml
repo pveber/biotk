@@ -74,6 +74,9 @@ let size (_,r) = Range.size r
 
 let to_string (chr, { Range.lo ; hi }) = 
   sprintf "%s:%d-%d" chr lo hi
+
+let of_string s =
+  Scanf.sscanf s "%s@:%d@-%d" make
 end
 
 module Transcript = struct

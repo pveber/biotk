@@ -81,6 +81,58 @@ let wig_of_bigWig bigWig =
     )
     bigWig
 
+module Lift_over = struct
+  open Printf
+  open Core.Std
+  open Biocaml_stream.Infix
+  open MBSchema
+
+  type chain_file = [`lift_over_chain] file
+
+  let chain_file ~org_from ~org_to =
+    let org_from = string_of_genome org_from
+    and org_to = string_of_genome org_to in
+    let url = 
+      sprintf 
+        "ftp://hgdownload.cse.ucsc.edu/goldenPath/%s/liftOver/%sTo%s.over.chain.gz" 
+        org_from org_from (String.capitalize org_to)
+    in
+    Guizmin_unix.(gunzip (wget url))
+
+  let create_input_file xs =
+    let fn = Filename.temp_file "gzm" ".locations" in
+    xs /@ Location.to_string
+    |! lines_to_file fn ;
+    fn
+    
+  let conversion (File lift_over_chain) xs =
+    let old_locs_fn = create_input_file xs in
+    let new_locs_fn = Filename.temp_file "gzm" ".locations"
+    and unmp_locs_fn = (* unmapped locations *)
+      Filename.temp_file "gzm" ".locations" in
+    sh 
+      "liftOver -positions %s %s %s %s"
+      old_locs_fn lift_over_chain new_locs_fn unmp_locs_fn ;
+    let new_locs = 
+      List.map (lines_of_file new_locs_fn) ~f:Location.of_string
+    and unmp_locs =
+      List.map (lines_of_file unmp_locs_fn) ~f:Location.of_string
+    in
+    sh "rm -f %s %s %s liftOver_*" old_locs_fn new_locs_fn unmp_locs_fn ;
+    new_locs, unmp_locs
+
+  let bed_conversion chain_file bed = assert false
+
+end
+
+
+
+
+
+
+
+
+
 
 
 

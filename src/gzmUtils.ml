@@ -22,6 +22,25 @@ let save fn v =
   Marshal.to_channel oc v [] ;
   close_out oc
 
+let lines_to_file dest xs =
+  BatFile.write_lines dest (BatStream.enum xs)
+  (* Core.Std.Out_channel.with_file  *)
+  (*   dest  *)
+  (*   ~f:(Biocaml.Stream.lines_to_channel xs) *)
+
+let lines_of_file path = 
+  BatList.of_enum (BatFile.lines_of path)
+  (* Core.Std.In_channel.with_file *)
+  (*   path *)
+  (*   ~f:Biocaml.Stream.( *)
+  (*     fun ic -> to_list (lines_of_channel ic) *)
+  (*   ) *)
+
+
+
+
+
+
 
 
 

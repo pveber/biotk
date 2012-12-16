@@ -19,6 +19,21 @@ val fasta_of_bed : genome -> 'a Bed.file -> Fasta.file
 
 val wig_of_bigWig : bigWig file -> wig file
 
+module Lift_over : sig
+  open MBSchema
+
+  type chain_file = [`lift_over_chain] file
+  val chain_file : org_from:genome -> org_to:genome -> chain_file
+
+  (** [conversion fp xs] returns a pair of location lists, mapped and
+      unmapped locations. *)
+  val conversion : 
+    [`lift_over_chain] file_path -> 
+    Location.t Stream.t ->
+    Location.t list * Location.t list
+
+  val bed_conversion : chain_file -> 'a Bed.file -> 'b Bed.file
+end
 
 
 

@@ -8,3 +8,26 @@ val bash : ?debug:bool -> ?stdout:out_channel -> ?stderr:out_channel -> string l
 
 val save : string -> 'a -> unit
 val load : string -> 'a
+
+val lines_of_file : string -> string list
+val lines_to_file : string -> string Stream.t -> unit
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
