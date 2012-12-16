@@ -33,6 +33,7 @@ val file : path -> 'a file
 val f0 : id -> (env -> path -> unit) -> 'a file
 val f1 : id -> (env -> 'a -> path -> unit) -> 'a pipeline -> 'b file
 val f2 : id -> (env -> 'a -> 'b -> path -> unit) -> 'a pipeline -> 'b pipeline -> 'c file
+val f3 : id -> (env -> 'a -> 'b -> 'c -> path -> unit) -> 'a pipeline -> 'b pipeline -> 'c pipeline -> 'd file
 
 type 'a dir_path  = private Dir of path
 type 'a dir = 'a dir_path pipeline

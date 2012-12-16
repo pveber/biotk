@@ -173,6 +173,12 @@ let f2 id f x y =
     (fun env path -> f env (x#eval env) (y#eval env) path) 
     [ as_dep x ; as_dep y ]
 
+let f3 id f x y z = 
+  path_pipeline
+    `file file_cons id 
+    (fun env path -> f env (x#eval env) (y#eval env) (z#eval env) path) 
+    [ as_dep x ; as_dep y ; as_dep y ]
+
 let dir path =
 object (self)
   inherit dep ("guizmin.dir.input", [ string "path" path ]) `dir []
