@@ -112,7 +112,7 @@ module Lift_over = struct
     and unmp_locs_fn = (* unmapped locations *)
       Filename.temp_file "gzm" ".locations" in
     sh 
-      "liftOver -positions %s %s %s %s"
+      "liftOver -positions %s %s %s %s 2> /dev/null"
       old_locs_fn lift_over_chain new_locs_fn unmp_locs_fn ;
     let new_locs = 
       List.map (lines_of_file new_locs_fn) ~f:Location.of_string
@@ -122,6 +122,8 @@ module Lift_over = struct
     sh "rm -f %s %s %s liftOver_*" old_locs_fn new_locs_fn unmp_locs_fn ;
     new_locs, unmp_locs
 
+  (* when implementing this, check if liftOver is able to read bed
+     files directly *)
   let bed_conversion chain_file bed = assert false
 
 end
