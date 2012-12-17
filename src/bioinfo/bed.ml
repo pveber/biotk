@@ -35,12 +35,11 @@ type table compact = {
 
 include Guizmin_table.NEWAPI.Impl
 
-type minimal_file = Minimal.f file
-module type Minimal_sig = module type of Minimal
-let minimal : Minimal.f ty = (module Minimal)
+type minimal_file = Minimal.s file
+let minimal : Minimal.s format = (module Minimal)
 
-type stranded_file = Stranded.f file
-let stranded : Stranded.f ty = (module Stranded)
+type stranded_file = Stranded.s file
+let stranded : Stranded.s format = (module Stranded)
 
 (*
 type 'a ty
