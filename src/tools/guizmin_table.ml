@@ -75,12 +75,12 @@ module NEWAPI = struct
   module type Format = sig
     type row
     type table
-    (* Signature *)
-    type s
+    (* Format *)
+    type f
   end
 
-  type ('s,'r,'t) full_ty = (module Format with type s = 's and type row = 'r and type table = 't)
-  type 's ty = ('s, 'r, 't) full_ty constraint 's = < row : 'r ; table : 't >
+  type ('s,'r,'t) full_ty = (module Format with type f = 's and type row = 'r and type table = 't)
+  type 's constrained_ty = ('s, 'r, 't) full_ty constraint 's = < row : 'r ; table : 't >
 
   class type ['a] row = object
     method row : 'a
@@ -89,17 +89,31 @@ module NEWAPI = struct
   class type ['a] table = object
     method table : 'a
   end
-    
-  type 'a file_path = 'a ty Guizmin.file_path
-  type 'a file = 'a ty Guizmin.file
+
+  module type S = sig
+    type 'a ty = private 'a constrained_ty
+    type 'a file_path = 'a ty Guizmin.file_path
+    type 'a file = 'a ty Guizmin.file
+
+    val to_stream : ('a #row as 'b) ty -> 'b file_path -> 'a Stream.t
+    val load : ('a #table as 'b) ty -> 'b file_path -> 'a
+  end
+
+  module Impl = struct
+    type 'a ty = 'a constrained_ty
+    type 'a file_path = 'a ty Guizmin.file_path
+    type 'a file = 'a ty Guizmin.file
         
-  let to_stream (format : ('a #row as 'b) ty) (File f : 'b file_path) =
-    assert false
+    let to_stream (format : ('a #row as 'b) ty) (File f : 'b file_path) =
+      assert false
+        
+    let load (format : ('a #table as 'b) ty) (File f : 'b file_path) =
+      assert false
+  end
 
-  let load (format : ('a #table as 'b) ty) (File f : 'b file_path) =
-    assert false
-
+  include Impl
 end
+
 
 
 

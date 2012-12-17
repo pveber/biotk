@@ -20,8 +20,11 @@ type table compact = {
   loc : Location
 }
 
-val minimal : Minimal.s Guizmin_table.NEWAPI.ty
-val stranded : Stranded.s Guizmin_table.NEWAPI.ty
+include Guizmin_table.NEWAPI.S
+
+type minimal_file = Minimal.f file
+val minimal : Minimal.f ty
+val stranded : Stranded.f ty
 
 (*
 type 'a ty
@@ -29,16 +32,6 @@ type 'a file_path = 'a ty Guizmin_table.file_path
 type 'a file = 'a ty Guizmin_table.file
 
 val basic_parse : ?header:bool -> 'a file_path -> Location.t BatEnum.t
-
-type track
 *)
 
-
-
-
-
-
-
-
-
-
+type track
