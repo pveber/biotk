@@ -4,5 +4,6 @@
 <src/bioinfo/*>: syntax_camlp4o, pa_guizmin, pkg_format.syntax
 <src/tools/*>: syntax_camlp4o, pa_guizmin
 <src/examples/test_yeast.*>: syntax_camlp4o, pa_guizmin
+<src/examples/ucsc_lift_over.ml>: syntax_camlp4o
 true: annot, debug
 

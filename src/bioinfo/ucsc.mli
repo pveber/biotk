@@ -3,7 +3,7 @@ open GzmCore
 type bigWig
 type wig
 
-type genome = [ `mm9 | `hg18 | `hg19 | `sacCer2 ]
+type genome = [ `mm8 | `mm9 | `hg18 | `hg19 | `sacCer2 ]
 
 val chromosome_sequences : genome -> [`ucsc_chromosome_sequences] dir
 val genome_sequence : [< genome] -> Fasta.file

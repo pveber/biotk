@@ -3,13 +3,14 @@ open GzmCore
 
 type bigWig
 type wig
-type genome = [ `mm9 | `hg18 | `hg19 | `sacCer2 ]
+type genome = [ `mm8 | `mm9 | `hg18 | `hg19 | `sacCer2 ]
 
 let string_of_genome = function
-    `mm9 -> "mm9"
-  | `hg18 -> "hg18"
-  | `hg19 -> "hg19"
-  | `sacCer2 -> "sacCer2"
+|  `mm8 -> "mm8"
+|  `mm9 -> "mm9"
+| `hg18 -> "hg18"
+| `hg19 -> "hg19"
+| `sacCer2 -> "sacCer2"
 
 let chromosome_sequences org =
   let org = string_of_genome org in 

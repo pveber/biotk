@@ -70,6 +70,13 @@ Executable test_yeast
   BuildDepends: threads, guizmin, camlp4.quotations.o
   Install:      false
 
+Executable test_ucsc_lift_over
+  Path:         src/examples
+  BuildTools:   ocamlbuild
+  MainIs:       ucsc_lift_over.ml
+  BuildDepends: guizmin.bioinfo,table.syntax,threads
+  Install:      false
+
 Executable guizmin_mb_pipeline
   Path:         src
   BuildTools:   ocamlbuild
