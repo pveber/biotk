@@ -51,8 +51,9 @@ Library guizmin_tools
 Library guizmin_bioinfo
   Path:			src/bioinfo
   Pack:			true
-  Modules:		Bam, Bed, Bowtie, Fasta, Htseq, Jaspar,
-                        Macs, MBPipeline, MBSchema, Sra, Tophat, 
+  Modules:		Bam, Bed, Bowtie, Fasta, Gcf, 
+                        Htseq, Jaspar, Macs, MBPipeline, 
+                        MBSchema, Sra, Tophat, 
                         Ucsc
   FindlibParent:	guizmin
   FindlibName:		bioinfo
