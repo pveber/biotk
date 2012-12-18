@@ -20,6 +20,13 @@ type table minimal = {
   chromEnd : int 
 }
 
+type table named = {
+  chrom : string ;
+  chromStart : int ;
+  chromEnd : int ;
+  name : string ;
+}
+
 type table stranded = {
   chrom : string ;
   chromStart : int ;
@@ -37,6 +44,9 @@ include Guizmin_table.NEWAPI.Impl
 
 type minimal_file = Minimal.s file
 let minimal : Minimal.s format = (module Minimal)
+
+type named_file = Named.s file
+let named : Named.s format = (module Named)
 
 type stranded_file = Stranded.s file
 let stranded : Stranded.s format = (module Stranded)
