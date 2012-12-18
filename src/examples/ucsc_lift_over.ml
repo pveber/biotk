@@ -17,7 +17,7 @@ let chain_file =
     
 let load_table x =
   let File f = eval x in
-  In_channel.with_file f ~f:Peak.input
+  In_channel.with_file f ~f:Peak.table_of_channel
 
 let mm9_peaks, unmapped_peaks =
   Ucsc.Lift_over.conversion

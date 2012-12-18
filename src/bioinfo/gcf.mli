@@ -9,4 +9,16 @@ type table genomic_coordinate = {
   loc : Location
 }
 
-include Guizmin_table.NEWAPI.S
+type file = Genomic_coordinate.s Guizmin_table.NEWAPI.file
+
+val to_bed : file -> Bed.minimal_file
+
+
+
+
+
+
+
+
+
+

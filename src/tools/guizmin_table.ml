@@ -72,11 +72,17 @@ let parse ?(header = false) lp (File f) =
   /@ (fun x -> lp (Line x))
 
 module NEWAPI = struct
+  open Core.Std
+
   module type Format = sig
     type row
     type table
-    (* Signature *)
     type s
+    val stream_of_channel : 
+      ?line_numbers:bool ->
+      ?header:bool ->
+      ?sep:char ->
+      in_channel -> row Stream.t
   end
 
   type ('s,'r,'t) full_format = (module Format with type s = 's and type row = 'r and type table = 't)
@@ -95,8 +101,10 @@ module NEWAPI = struct
     type 'a file_path = 'a format Guizmin.file_path
     type 'a file = 'a format Guizmin.file
 
-    val to_stream : ('a #row as 'b) format -> 'b file_path -> 'a Stream.t
+    val stream_of_channel : 'a #row format -> in_channel -> 'a Stream.t
+    val stream_to_file : ('a #row as 'b) format -> string -> 'a Stream.t -> unit
     val load : ('a #table as 'b) format -> 'b file_path -> 'a
+    val save : ('a #table as 'b) format -> string -> 'a -> unit
   end
 
   module Impl = struct
@@ -104,20 +112,34 @@ module NEWAPI = struct
     type 'a file_path = 'a format Guizmin.file_path
     type 'a file = 'a format Guizmin.file
         
-    let to_stream (format : ('a #row as 'b) format) (File f : 'b file_path) =
-      assert false
+    let stream_of_channel
+        (type row) (type table) 
+        (module F : Format with type s = < row : row ; table : table > 
+                           and type row = row
+                           and type table = table) 
+        ic 
+        =
+      F.stream_of_channel ic
         
+    let stream_to_file
+        (type row) (type table) 
+        (module F : Format with type s = < row : row ; table : table > 
+                           and type row = row
+                           and type table = table) 
+        path
+        =
+      assert false
+
     let load (format : ('a #table as 'b) format) (File f : 'b file_path) =
       assert false
+
+    let save (format : ('a #table as 'b) format) path =
+      assert false
+
   end
 
   include Impl
 end
-
-
-
-
-
 
 
 
