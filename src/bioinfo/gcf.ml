@@ -23,8 +23,10 @@ let to_bed gcf =
       In_channel.with_file gcf ~f:(fun ic ->
         Genomic_coordinate.stream_of_channel ic
         /@ bed_row_of_genomic_coordinate
-        |! Bed.Minimal.stream_to_channel
-        |! fun f -> Out_channel.with_file path ~f))
+        |! fun x -> Out_channel.with_file path ~f:(fun oc -> 
+          Bed.Minimal.stream_to_channel oc x
+        )
+      ))
     gcf
 
 
