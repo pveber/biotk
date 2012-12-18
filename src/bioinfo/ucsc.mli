@@ -32,7 +32,11 @@ module Lift_over : sig
     Location.t Stream.t ->
     Location.t list * Location.t list
 
-  val bed_conversion : chain_file -> 'a Bed.file -> 'b Bed.file
+  (** liftOver preserves {b more or less} the input BED: columns are
+      conserved but fields may be changed (floats truncated to integers) *)
+  val bed_conversion : org_from:genome -> org_to:genome -> 'a Bed.file -> [`ucsc_lift_over of 'a] dir
+  val mapped : [`ucsc_lift_over of 'a] dir -> 'a Bed.file
+  val unmapped : [`ucsc_lift_over of 'a] dir -> 'a Bed.file
 end
 
 

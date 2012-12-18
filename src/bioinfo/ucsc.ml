@@ -105,28 +105,43 @@ module Lift_over = struct
     xs /@ Location.to_string
     |! lines_to_file fn ;
     fn
-    
-  let conversion (File lift_over_chain) xs =
-    let old_locs_fn = create_input_file xs in
-    let new_locs_fn = Filename.temp_file "gzm" ".locations"
-    and unmp_locs_fn = (* unmapped locations *)
-      Filename.temp_file "gzm" ".locations" in
+
+  let liftOver_cmd ~chain_file ~old_locs ~new_locs ~unmapped_locs = 
     sh 
       "liftOver -positions %s %s %s %s 2> /dev/null"
-      old_locs_fn lift_over_chain new_locs_fn unmp_locs_fn ;
+      old_locs chain_file new_locs unmapped_locs
+    
+  let conversion (File chain_file) xs =
+    let old_locs_fn = create_input_file xs in
+    let new_locs_fn = Filename.temp_file "gzm" ".locations"
+    and unmapped_locs_fn = (* unmapped locations *)
+      Filename.temp_file "gzm" ".locations" in
+    liftOver_cmd ~chain_file ~old_locs:old_locs_fn ~new_locs:new_locs_fn ~unmapped_locs:unmapped_locs_fn ;
     let new_locs = 
       List.map (lines_of_file new_locs_fn) ~f:Location.of_string
     and unmp_locs =
-      List.map (lines_of_file unmp_locs_fn) ~f:Location.of_string
+      List.map (lines_of_file unmapped_locs_fn) ~f:Location.of_string
     in
-    sh "rm -f %s %s %s liftOver_*" old_locs_fn new_locs_fn unmp_locs_fn ;
+    sh "rm -f %s %s %s liftOver_*" old_locs_fn new_locs_fn unmapped_locs_fn ;
     new_locs, unmp_locs
 
-  (* when implementing this, check if liftOver is able to read bed
-     files directly *)
-  let bed_conversion chain_file bed = assert false
+  let bed_conversion ~org_from ~org_to bed =
+    let chain_file = chain_file ~org_from ~org_to in
+    d2
+      ("guizmin.bioinfo.ucsc.bed_conversion", [])
+      (fun env (File chain_file) (File bed) path ->
+        sh "mkdir -p %s" path ;
+        liftOver_cmd 
+          ~chain_file 
+          ~old_locs:bed
+          ~new_locs:(path ^ "/mapped.bed") 
+          ~unmapped_locs:(path ^ "unmapped.bed"))
+      chain_file bed
 
+  let mapped x = select x "mapped.bed"
+  let unmapped x = select x "unmapped.bed"
 end
+
 
 
 
