@@ -45,7 +45,7 @@ Library guizmin_tools
   FindlibParent:	guizmin
   FindlibName:		tools
   BuildDepends:		batteries, camlp4, core, guizmin, guizmin.syntax, threads
-  XMETARequires:	guizmin, guizmin.syntax
+  XMETARequires:	guizmin, guizmin.syntax, table, table.syntax
   XMETADescription:	Pervasives components for guizmin
 
 Library guizmin_bioinfo
