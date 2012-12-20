@@ -16,3 +16,30 @@ let gunzip x =
 	sh "gunzip -c %s > %s" f path
     )
     x
+
+let crlf2lf x =
+  f1
+    ("guizmin.unix.crlf2lf[r2]", [])
+    (fun env (File f) path ->
+      sh "tr -d '\r' < %s > %s" f path)
+    x
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
