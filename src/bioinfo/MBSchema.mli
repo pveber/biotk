@@ -82,6 +82,7 @@ module ConfigFile : sig
   and genome = [`mm9]
 
   val load : string -> t
+  val save : t -> string -> unit
 end
 
 

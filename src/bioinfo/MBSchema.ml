@@ -147,6 +147,9 @@ module ConfigFile = struct
 
   let load path =
     Sexplib.Sexp.load_sexp_conv_exn path t_of_sexp
+
+  let save cfg path =
+    Sexplib.Sexp.save_hum path (sexp_of_t cfg)
 end
 
 
