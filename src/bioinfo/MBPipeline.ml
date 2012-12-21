@@ -2,7 +2,7 @@ open Core.Std
 
 type ('a, 'b) assoc = ('a * 'b) list
 let assoc l ~f = List.map ~f:(fun x -> x, f x) l
-let ( @ ) l x = List.Assoc.find_exn l x
+let ( & ) l x = List.Assoc.find_exn l x
 
 type genome = MBSchema.ConfigFile.genome
 
@@ -41,7 +41,7 @@ struct
     let sequence = assoc genomes ~f:Ucsc.genome_sequence
 
     let bowtie_index = assoc genomes ~f:(
-      fun g -> Bowtie.index ~packed:true (sequence @ g)
+      fun g -> Bowtie.index ~packed:true (sequence & g)
     )
   end
 
@@ -61,7 +61,7 @@ struct
     let aligned_reads = assoc samples (
       fun s -> 
         let genome = (model s.sample_model).model_genome in
-        Bowtie.align ~v:2 ~m:1 (Genome.bowtie_index @ genome) (fastq_files @ s)
+        Bowtie.align ~v:2 ~m:1 (Genome.bowtie_index & genome) (fastq_files & s)
     )
   end
 
