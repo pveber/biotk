@@ -17,24 +17,3 @@ let create ?(force = false) base_path items =
       sh "mkdir -p %s" (Filename.dirname abs_path) ;
       sh "ln -s %s %s" (Guizmin.path pipeline) abs_path)
     items
-        
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

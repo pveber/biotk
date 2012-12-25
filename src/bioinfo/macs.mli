@@ -49,10 +49,3 @@ module With_control : sig
 end
 
 val bed : 'a output dir -> Bed.Minimal.file
-
-
-
-
-
-
-
