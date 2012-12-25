@@ -10,11 +10,11 @@ open Guizmin
 
 (* let _ = Misc.wget "xx" *)
 
-let _ = v2
+(* let _ = v2 *)
 
-let _ =
-  value pipeline "mon.pipeline.2.0"
-    ~(x:int) ?(y:string = "1") z:string
-    uses foo bar* -> (
-      1 + 1
-    )
+(* let _ = *)
+(*   value pipeline "mon.pipeline.2.0" *)
+(*     ~(x:int) ?(y:string = "1") z:string *)
+(*     uses foo bar* -> ( *)
+(*       1 + 1 *)
+(*     ) *)

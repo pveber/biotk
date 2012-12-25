@@ -1,50 +1,57 @@
 open Guizmin
-open MBSchema
 
-type table minimal = {
-  chrom : string ;
-  chromStart : int ;
-  chromEnd : int 
-}
 
-type table named = {
-  chrom : string ;
-  chromStart : int ;
-  chromEnd : int ;
-  name : string ;
-}
+module Minimal : sig
+  type tabular data = {
+    chrom : string ;
+    chromStart : int ;
+    chromEnd : int 
+  }
+  type file = Obj.t Guizmin_table.file
+  val with_rows : 
+    ?header:bool ->
+    ?sep:char ->
+    #Obj.t Guizmin_table.file_path -> f:(Row.t Stream.t -> 'b) -> 'b
+  val load : 
+    ?header:bool ->
+    ?sep:char ->
+    #Obj.t Guizmin_table.file_path -> Table.t
 
-type table stranded = {
-  chrom : string ;
-  chromStart : int ;
-  chromEnd : int ;
-  name : string ;
-  score : float ;
-  strand : [`sense "+" | `antisense "-"] ;
-}
+end
 
-type table compact = {
-  loc : Location
-}
+module Named : sig
+  type tabular data = {
+    chrom : string ;
+    chromStart : int ;
+    chromEnd : int ;
+    name : string ;
+  }
+  type file = Obj.t Guizmin_table.file
+  val with_rows : 
+    ?header:bool ->
+    ?sep:char ->
+    #Obj.t Guizmin_table.file_path -> f:(Row.t Stream.t -> 'b) -> 'b
+end
 
-include Guizmin_table.NEWAPI.S
+module Stranded : sig
+  type tabular data = {
+    chrom : string ;
+    chromStart : int ;
+    chromEnd : int ;
+    name : string ;
+    score : float ;
+    strand : [`sense "+" | `antisense "-"] ;
+  }
+  type file = Obj.t Guizmin_table.file
+  val with_rows : 
+    ?header:bool ->
+    ?sep:char ->
+    #Obj.t Guizmin_table.file_path -> f:(Row.t Stream.t -> 'b) -> 'b
+end
 
-type minimal_file = Minimal.s file
-val minimal : Minimal.s format
-
-type named_file = Named.s file
-val named : Named.s format
-
-type stranded_file = Stranded.s file
-val stranded : Stranded.s format
-
-(*
-type 'a ty
-type 'a file_path = 'a ty Guizmin_table.file_path
-type 'a file = 'a ty Guizmin_table.file
-
-val basic_parse : ?header:bool -> 'a file_path -> Location.t BatEnum.t
-*)
+type 'a file = (#Minimal.Obj.t as 'a) Guizmin_table.file
+type 'a named_file = (#Named.Obj.t as 'a) Guizmin_table.file
+type 'a stranded_file = (#Stranded.Obj.t as 'a) Guizmin_table.file
 
 type track
 

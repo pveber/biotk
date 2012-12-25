@@ -4,26 +4,23 @@ open Guizmin
 open Guizmin_bioinfo
 open Guizmin_bioinfo.MBSchema
 
-type table peak = {
-  loc : Location ;
-}
-
 let url = "ftp://ftp.ncbi.nlm.nih.gov/pub/geo/DATA/supplementary/samples/GSM288nnn/GSM288345/GSM288345_ES_Nanog.txt.gz"
 
-let mm8_peaks : Peak.table file = Guizmin_unix.(gunzip (wget url))
+let mm8_peaks : Gcf.file = Guizmin_unix.(gunzip (wget url))
 
 let chain_file = 
   Ucsc.Lift_over.chain_file ~org_from:`mm8 ~org_to:`mm9
     
 let load_table x =
-  let File f = eval x in
-  In_channel.with_file f ~f:Peak.table_of_channel
+  Guizmin_table.load
+    (module Gcf.Row) (module Gcf.Table)
+    (eval x)
 
 let mm9_peaks, unmapped_peaks =
   Ucsc.Lift_over.conversion
     (eval chain_file)
     (let mm8_peaks = load_table mm8_peaks in
-     mm8_peaks # stream /@ (fun x -> x.Peak.loc))
+     mm8_peaks # stream /@ (fun x -> x.Gcf.loc))
 
 let () =
   print_endline "Report" ;

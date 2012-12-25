@@ -1,12 +1,15 @@
 open Guizmin
 open GzmUtils
 
-let wget = 
-  file pipeline "guizmin.unix.wget[r1]" url:string -> (
-    Shell.(call [
-      cmd "wget" [ "-O" ; _path ; url ]
-    ])
-  )
+let wget url = 
+  f0
+    Param.("guizmin.unix.wget[r1]", [string "url" url])
+    Shell.(
+      fun env path ->
+        call [
+          cmd "wget" [ "-O" ; path ; url ]
+        ]
+    )
 
 let gunzip x =
   f1

@@ -3,13 +3,13 @@ open Biocaml_stream.Infix
 open Guizmin
 open MBSchema
 
-type table genomic_coordinate = {
+type tabular data = {
   loc : Location
 }
 
-type file = Genomic_coordinate.s Guizmin_table.NEWAPI.file
+type file = Row.t Guizmin_table.file
 
-let bed_row_of_genomic_coordinate { Genomic_coordinate.loc = (chrom, { Biocaml.Range.lo ; hi } ) } =
+let bed_row_of_genomic_coordinate { loc = (chrom, { Biocaml.Range.lo ; hi } ) } =
   {
     Bed.Minimal.chrom ;
     chromStart = lo ;
@@ -21,10 +21,10 @@ let to_bed gcf =
     ("guizmin.bioinfo.gcf.to_bed[r1]", [])
     (fun env (File gcf) path ->
       In_channel.with_file gcf ~f:(fun ic ->
-        Genomic_coordinate.stream_of_channel ic
+        Row.stream_of_channel ic
         /@ bed_row_of_genomic_coordinate
         |! fun x -> Out_channel.with_file path ~f:(fun oc -> 
-          Bed.Minimal.stream_to_channel oc x
+          Bed.Minimal.Row.stream_to_channel oc x
         )
       ))
     gcf

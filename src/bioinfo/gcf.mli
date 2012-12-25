@@ -5,13 +5,22 @@
 open Guizmin
 open MBSchema
 
-type table genomic_coordinate = {
+type tabular data = {
   loc : Location
 }
 
-type file = Genomic_coordinate.s Guizmin_table.NEWAPI.file
+type file = Row.t Guizmin_table.file
 
-val to_bed : file -> Bed.minimal_file
+val to_bed : file -> 'a Bed.file
+
+
+
+
+
+
+
+
+
 
 
 

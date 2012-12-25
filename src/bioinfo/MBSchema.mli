@@ -80,6 +80,7 @@ module ConfigFile : sig
     model_genome : genome ;
   }
   and genome = [`mm9]
+  with sexp
 
   val load : string -> t
   val save : t -> string -> unit

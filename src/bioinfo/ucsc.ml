@@ -15,7 +15,7 @@ let string_of_genome = function
 let chromosome_sequences org =
   let org = string_of_genome org in 
   d0
-    ("guizmin.bioinfo.ucsc.chromosome_sequences[1]", [ string "org" org ])
+    ("guizmin.bioinfo.ucsc.chromosome_sequences[1]", [ Param.string "org" org ])
     (fun env path ->
       env.bash [
 	sp "mkdir -p %s" path;
@@ -41,7 +41,7 @@ let genome_sequence org =
 let genome_2bit_sequence_dir org = 
   let org = string_of_genome org in 
   d0
-    ("guizmin.bioinfo.ucsc.genome_sequence[1]", [ string "org" org ])
+    ("guizmin.bioinfo.ucsc.genome_sequence[1]", [ Param.string "org" org ])
     (fun env path ->
       env.bash [
         sp "mkdir %s" path ;

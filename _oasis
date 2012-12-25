@@ -41,11 +41,12 @@ Library syntax
 
 Library guizmin_tools
   Path:			src/tools
-  Modules:		Guizmin_repo, Guizmin_table, Guizmin_unix
+  Modules:		Guizmin_repo, Guizmin_table, Guizmin_table_sig,
+                        Guizmin_unix
   FindlibParent:	guizmin
   FindlibName:		tools
   BuildDepends:		batteries, camlp4, core, guizmin, guizmin.syntax, threads
-  XMETARequires:	guizmin, guizmin.syntax, table, table.syntax
+  XMETARequires:	guizmin, guizmin.syntax, tabular, tabular.syntax
   XMETADescription:	Pervasives components for guizmin
 
 Library guizmin_bioinfo
@@ -59,7 +60,7 @@ Library guizmin_bioinfo
   FindlibName:		bioinfo
   BuildDepends:		batteries, biocaml, camlp4, core, format.syntax,
                         guizmin, guizmin.syntax, guizmin.tools,
-                        sexplib.syntax, table.syntax, threads
+                        sexplib.syntax, tabular.syntax, threads
   XMETARequires:	guizmin, guizmin.tools, guizmin.syntax,biocaml
   XMETADescription:	Bioinformatics components for guizmin
 
@@ -75,7 +76,7 @@ Executable test_ucsc_lift_over
   Path:         src/examples
   BuildTools:   ocamlbuild
   MainIs:       ucsc_lift_over.ml
-  BuildDepends: guizmin.bioinfo,table.syntax,threads
+  BuildDepends: guizmin.bioinfo,tabular.syntax,threads
   Install:      false
 
 Executable guizmin_mb_pipeline

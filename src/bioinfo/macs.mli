@@ -1,35 +1,54 @@
 open Guizmin
-open MBSchema
 
-type output
+type 'a output
 
-val run14 : 
-  genomesize:int pipeline -> tagsize:int -> bandwidth:int -> 
-  pvalue:float -> 
-  ?control:Bam.file -> Bam.file -> output dir
+module Wo_control : sig
+  module Peak : sig
+    type tabular t = {
+      chrom : string ;
+      chromStart : int ;
+      chromEnd : int ;
+      summit : int ;
+      tags : int ;
+      pvalue : float ;
+      fold : float ;
+    }
+    type file = Row.t Guizmin_table.file
+  end
+  val run :
+    ?tagsize:int -> ?bandwidth:int -> 
+    genome:[< Ucsc.genome] -> pvalue:float -> 
+    Bam.file -> [`wo_control] output dir
 
-type peak = private {
-  loc : Location.t ;
-  length : int ;
-  summit : int ;
-  tags : int ;
-  pvalue : float ;
-  fold : float ;
-  fdr : float option ;
-}
+  val peaks : [`wo_control] output dir -> Peak.file
+end
 
-val peaks : output dir -> peak Guizmin_table.file
-val peak_parser : peak Guizmin_table.file_path -> peak BatEnum.t
+module With_control : sig
+  module Peak : sig
+    type tabular t = {
+      chrom : string ;
+      chromStart : int ;
+      chromEnd : int ;
+      summit : int ;
+      tags : int ;
+      pvalue : float ;
+      fold : float ;
+      fdr : float ;
+    }
+    type file = Row.t Guizmin_table.file
+  end
 
-val bed : output dir -> Bed.minimal_file
+  val run : 
+    ?tagsize:int -> ?bandwidth:int -> 
+    genome:[< Ucsc.genome] -> 
+    pvalue:float -> 
+    control:Bam.file ->
+    Bam.file -> [`with_control] output dir
 
+  val peaks : [`with_control] output dir -> Peak.file
+end
 
-
-
-
-
-
-
+val bed : 'a output dir -> Bed.Minimal.file
 
 
 

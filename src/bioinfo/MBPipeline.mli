@@ -19,7 +19,10 @@ sig
   module TF_ChIP_seq : sig
     val samples : sample list
     val aligned_reads : (sample, Sam.file) assoc
+    val macs_peaks_wo_control : (sample, Macs.Wo_control.Peak.file) assoc
   end
+
+  val repo : Guizmin_repo.item list
 end
 
 

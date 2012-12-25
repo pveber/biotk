@@ -61,24 +61,30 @@ struct
     let aligned_reads = assoc samples (
       fun s -> 
         let genome = (model s.sample_model).model_genome in
-        Bowtie.align ~v:2 ~m:1 (Genome.bowtie_index & genome) (fastq_files & s)
+        Bowtie.align ~v:2 ~m:1 Genome.(bowtie_index & genome) (fastq_files & s)
     )
+
+    let macs_peaks_wo_control = assoc samples (fun s ->
+      let genome = (model s.sample_model).model_genome in
+      Macs.Wo_control.(
+        run 
+          ~genome:genome ~pvalue:1e-3 
+          ((assert false) (aligned_reads & s))
+        |! peaks
+      )
+    )
+
   end
 
   let samples =
     List.concat [
       TF_ChIP_seq.samples
     ]
+
+  let repo = List.concat Guizmin_repo.([
+    
+  ])
 end
-
-
-
-
-
-
-
-
-
 
 
 

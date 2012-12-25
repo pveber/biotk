@@ -1,14 +1,15 @@
 type path = string
-type param = string * [`int of int | `string of string | `float of float | `bool of bool ]
-type id = string * param list
 
-val string : string -> string -> param
-val int : string -> int -> param
-val float : string -> float -> param
-val bool : string -> bool -> param
-val opt : (string -> 'a -> param) -> string -> 'a option -> param option
-val ( +? ) : 'a list -> 'a option -> 'a list
-val ( ++ ) : 'a list -> 'a -> 'a list
+module Param : sig
+  type t
+  val string : string -> string -> t
+  val int : string -> int -> t
+  val float : string -> float -> t
+  val bool : string -> bool -> t
+  val opt : (string -> 'a -> t) -> string -> 'a option -> t
+end
+
+type id = string * Param.t list
 
 type env = private {
   bash : string list -> unit ;

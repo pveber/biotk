@@ -1,21 +1,22 @@
 open Printf
 
 type path = string
-type param = string * [`int of int | `string of string | `float of float | `bool of bool ]
-type id = string * param list
 
-let string id v = id, `string v
-let int id v = id, `int v
-let float id v = id, `float v
-let bool id b = id, `bool b
-let opt f id v =
-  Core.Option.map v ~f:(f id)
+module Param = struct
+  type t =
+    | Int : string * int -> t
+    | String : string * string -> t
+    | Float : string * float -> t
+    | Bool : string * bool -> t
+    | Option : (string -> 'a -> t) * string * 'a option -> t
 
-let (+?) l = function
-  | Some x -> x :: l
-  | None -> l
-
-let ( ++ ) l x = x :: l
+  let string id v = String (id, v)
+  let int id v = Int (id, v)
+  let float id v = Float (id, v)
+  let bool id b = Bool (id, b)
+  let opt f id v = Option (f, id, v)
+end
+type id = string * Param.t list
 
 let mkdir s = 
   if not (Sys.file_exists s) then 
@@ -147,7 +148,7 @@ let file_cons x = File x
 
 let file path = 
 object (self)
-  inherit dep ("guizmin.file.input", [ string "path" path ]) `file []
+  inherit dep ("guizmin.file.input", [ Param.string "path" path ]) `file []
   method clean = ()
   method built = Sys.file_exists path
   method eval env = 
@@ -181,7 +182,7 @@ let f3 id f x y z =
 
 let dir path =
 object (self)
-  inherit dep ("guizmin.dir.input", [ string "path" path ]) `dir []
+  inherit dep ("guizmin.dir.input", [ Param.string "path" path ]) `dir []
   method eval env = 
     if not self#built then (
       fprintf env.stderr "Directory %s is declared as an input of a pipeline but does not exist." path ;
@@ -216,7 +217,7 @@ let d3 id f x y z =
 
 let select x subpath = 
 object
-  inherit dep ("guizmin.select", [string "subpath" subpath]) `select [ as_dep x ]
+  inherit dep ("guizmin.select", [Param.string "subpath" subpath]) `select [ as_dep x ]
   method eval env = 
     let Dir x_path = x#eval env in 
     let p = Filename.concat x_path subpath in

@@ -1,3 +1,12 @@
 open Guizmin
 
-val count : ?feature:string -> [`sam] file -> [`gtf] file -> (string * int) Guizmin_table.file
+module Output : sig
+  type tabular data = {
+    id : string ;
+    count : int
+  }
+  type format
+  type file = format Guizmin_table.file
+end
+
+val count : ?feature:string -> Sam.file -> [`gtf] file -> Output.file

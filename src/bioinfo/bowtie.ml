@@ -5,7 +5,7 @@ type index
 
 let index ?(packed = false) fasta = 
   d1
-    ("guizmin.bioinfo.bowtie.index[r1]", [ bool "packed" packed ])
+    ("guizmin.bioinfo.bowtie.index[r1]", [ Param.bool "packed" packed ])
     (fun env (File fa) path ->
       env.bash [
 	sp "mkdir %s" path ;
@@ -20,16 +20,15 @@ let qual_option = function
   | `phred33 -> "--phred33-quals"
   | `phred64 -> "--phred64-quals"
 
-let qual_param id v = string id (qual_option v)
+let qual_param id v = Param.string id (qual_option v)
 
 let align_with_maq_policy ?l ?e ?m ?qual_kind ~n index fastq_files =
   f2
-    ("guizmin.bioinfo.bowtie.align_with_maq_policy[r1]", 
-     [ int "n" n ]
-        +? opt int "l" l 
-        +? opt int "e" e 
-        +? opt int "m" m 
-        +? opt qual_param "qual_kind" qual_kind)
+    Param.(
+      "guizmin.bioinfo.bowtie.align_with_maq_policy[r1]", 
+      [ int "n" n ; opt int "l" l ; opt int "e" e ; opt int "m" m ;
+        opt qual_param "qual_kind" qual_kind]
+    )
     (fun env (Dir index) fastq_files path ->
       env.bash [
 	<:sprint<bowtie -n $d:n$ \
@@ -65,10 +64,11 @@ let align_with_maq_policy ?l ?e ?m ?qual_kind ~n index fastq_files =
 
 let align ?m ?qual_kind ~v index fastq_files =
   f2
-    ("guizmin.bioinfo.bowtie.align[r1]", 
-     [ int "v" v ]
-        +? opt int "m" m 
-        +? opt qual_param "qual_kind" qual_kind)
+    Param.(
+      "guizmin.bioinfo.bowtie.align[r1]", 
+      [ int "v" v ; opt int "m" m ;
+        opt qual_param "qual_kind" qual_kind ]
+    )
     (fun env (Dir index) fastq_files path ->
       let cmd = 
 	<:sprint<bowtie -v $d:v$ $? m <- m${-m $d:m$} $? q <- qual_kind${qual_option q} -p $d:env.np$ $s:index$/index $!File f <- fastq_files ${$s:f$}{,} $s:path$ >>
