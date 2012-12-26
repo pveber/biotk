@@ -9,7 +9,8 @@ module Param : sig
   val opt : (string -> 'a -> t) -> string -> 'a option -> t
 end
 
-type id = string * Param.t list
+type id = string
+type params = Param.t list
 
 type env = private {
   bash : string list -> unit ;
@@ -24,7 +25,8 @@ val eval :
   'a pipeline -> 'a
 val path : 'a pipeline -> string
 
-val v0 : id -> (env -> 'a) -> 'a pipeline
+val const : 'a -> 'a pipeline
+val v0 : id -> params -> (env -> 'a) -> 'a pipeline
 val v1 : id -> (env -> 'a -> 'b) -> 'a pipeline -> 'b pipeline
 val v2 : id -> (env -> 'a -> 'b -> 'c) -> 'a pipeline -> 'b pipeline -> 'c pipeline
 

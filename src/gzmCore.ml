@@ -16,7 +16,45 @@ module Param = struct
   let bool id b = Bool (id, b)
   let opt f id v = Option (f, id, v)
 end
-type id = string * Param.t list
+
+type 'a file_path = File of path
+type 'a dir_path  = Dir of path
+
+type env = {
+  bash : string list -> unit ;
+  stdout : out_channel ;
+  stderr : out_channel ;
+  np : int ; 
+}
+  
+type _ pipeline =
+  | Const : 'a descr * 'a -> 'a pipeline
+  | Value : 'a descr * (env -> 'a) -> 'a pipeline
+  | File_input : 'a file_path descr * path -> 'a file_path pipeline
+  | File : 'a file_path descr * (env -> path -> unit) -> 'a file_path pipeline
+  | Dir_input : 'a dir_path descr * path -> 'a dir_path pipeline
+  | Dir : 'a dir_path descr * (env -> path -> unit) -> 'a dir_path pipeline
+  | Select : 'b file_path descr * path * 'a dir_path pipeline -> 'b file_path pipeline
+  | Merge : 'a list descr * 'a pipeline list -> 'a list pipeline
+and 'a descr = {
+  id : string ;
+  params : Param.t list ;
+  hash : string ;
+  deps : dep list
+}
+and dep = Dep : 'a pipeline -> dep
+
+(* type _ pipeline = *)
+(*     Input  : path -> (unit, 'a) pipeline *)
+(*   | File   : string * param list * (unit -> unit) * 'a pipeline -> ('a, path) pipeline *)
+(*   | File2  : string * param list * (unit -> unit) * 'a pipeline * 'b pipeline -> ('a * 'b, path) pipeline *)
+(*   | Value  : string * param list * ('a -> 'b) * 'a pipeline -> ('a,'b) pipeline *)
+(*   | Value2 : string * param list * (('a * 'b) -> 'c) * 'a pipeline * 'b pipeline -> ('a * 'b,'c) pipeline *)
+(*   | Select : path * 'a pipeline -> 'b pipeline *)
+(*   | Merge  : 'a pipeline list -> 'a list pipeline *)
+
+type 'a file = 'a file_path pipeline
+type 'a dir = 'a dir_path pipeline
 
 let mkdir s = 
   if not (Sys.file_exists s) then 
@@ -36,7 +74,18 @@ let _ =
   mkdir build_dir ;
   mkdir tmp_dir
 
-let hash x = x # hash
+let descr : type a. a pipeline -> a descr = function
+| Const (descr,_)
+| Value (descr,_) -> descr
+| Merge (descr,_) -> descr
+| Select (descr,_,_) -> descr
+| File_input (descr,_) -> descr
+| Dir_input (descr,_) -> descr
+| File (descr,_) -> descr
+| Dir (descr,_) -> descr
+
+
+let hash x = (descr x).hash
 
 let path x = 
   cache_dir ^ "/" ^ (hash x)
@@ -46,6 +95,39 @@ let tmp_path x =
 
 let touch fn =
   ignore (Sys.command ("touch " ^ fn))
+
+
+let eval : type a. a pipeline -> a = function
+| Const (_,x) -> x
+| Value (_
+
+
+let hash_of_dep (Dep d) = hash d
+
+let digest x =
+  Digest.to_hex (Digest.string (Marshal.to_string x []))
+
+let make_hash id params kind deps =
+  let content = id, params, kind, List.map hash_of_dep deps in
+  digest content
+
+let make_descr id params kind deps =
+  { 
+    id ; params ; deps ;
+    hash = make_hash id params kind [] ;
+  }
+
+let const x =
+  let id = "guizmin.const" in
+  let params = [ Param.string "md5sum" (digest x) ] in
+  Const (make_descr id params `const [], x)
+
+let v0 id params f =
+  Value (make_descr id params `value [], f)
+
+let v1 id params x f =
+  Value (make_descr id params `value [ Dep x ],
+         fun env x -> f x
 
 class dep (id : id) kind deps = 
 object (self)
@@ -70,12 +152,6 @@ end
 
 let as_dep x = (x :> dep)
 
-type env = {
-  bash : string list -> unit ;
-  stdout : out_channel ;
-  stderr : out_channel ;
-  np : int ; 
-}
 
 class type ['a] pipeline = object
   inherit dep
@@ -123,11 +199,6 @@ let v1 id f x =
 
 let v2 id f x y = 
   value id (fun env -> f env (x#eval env) (y#eval env)) [ as_dep x ; as_dep y ]
-
-type 'a file_path = File of path
-type 'a file = 'a file_path pipeline
-type 'a dir_path  = Dir of path
-type 'a dir = 'a dir_path pipeline
 
 let path_pipeline kind cons id f children =
 object (self)
