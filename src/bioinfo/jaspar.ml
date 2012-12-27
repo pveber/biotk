@@ -5,7 +5,7 @@ open GzmUtils
 type db
 
 let mirror = d0
-  ("guizmin.bioinfo.jaspar.mirror", [])
+  "guizmin.bioinfo.jaspar.mirror" []
   (fun env path ->
     env.bash [
       sp "mkdir -p %s" path ;
@@ -16,10 +16,10 @@ let mirror = d0
     ])
 
 let core = v1
-  ("guizmin.bioinfo.jaspar.core", [])
+  "guizmin.bioinfo.jaspar.core" []
+  mirror
   (fun env (Dir mirror) ->
     Biocaml.Jaspar.load (sp "%s/jaspar_CORE/non_redundant/all_species/FlatFileDir" mirror))
-  mirror
 
 
 

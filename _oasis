@@ -69,7 +69,8 @@ Executable test_yeast
   Path:         src/examples
   BuildTools:   ocamlbuild
   MainIs:       test_yeast.ml
-  BuildDepends: threads, guizmin, camlp4.quotations.o
+  BuildDepends: threads, tabular, guizmin, camlp4.quotations.o, 
+                biocaml
   Install:      false
 
 Executable test_ucsc_lift_over

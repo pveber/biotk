@@ -18,7 +18,8 @@ let bed_row_of_genomic_coordinate { loc = (chrom, { Biocaml.Range.lo ; hi } ) } 
 
 let to_bed gcf =
   f1
-    ("guizmin.bioinfo.gcf.to_bed[r1]", [])
+    "guizmin.bioinfo.gcf.to_bed[r1]" []
+    gcf
     (fun env (File gcf) path ->
       In_channel.with_file gcf ~f:(fun ic ->
         Row.stream_of_channel ic
@@ -27,7 +28,6 @@ let to_bed gcf =
           Bed.Minimal.Row.stream_to_channel oc x
         )
       ))
-    gcf
 
 
 

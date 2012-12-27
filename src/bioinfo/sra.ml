@@ -12,7 +12,18 @@ let sample id =
 
 let fastq_dump sra =
   f1
-    ("guizmin.bioinfo.sra.fastq_dump[r1]",[])
+    "guizmin.bioinfo.sra.fastq_dump[r1]" []
+    sra
     (fun env (File sra) path ->
       env.bash [ sp "fastq-dump -Z %s > %s" sra path ])
-    sra
+
+
+
+
+
+
+
+
+
+
+

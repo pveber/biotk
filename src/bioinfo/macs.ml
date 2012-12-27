@@ -13,11 +13,14 @@ let run14 ~genome ?tagsize ?bandwidth ~pvalue ?control chIP =
   match control with 
     | None -> 
       d1 
-	Param.(
-          "guizmin.bioinfo.gzmMacs.run14[r2]", 
-	  [ int "gsize" gsize ; opt int "tagsize" tagsize ; 
-            opt int "bandwidth" bandwidth ; float "pvalue" pvalue ]
-        )
+        "guizmin.bioinfo.gzmMacs.run14[r2]"
+        Param.([ 
+          int "gsize" gsize ; 
+          opt int "tagsize" tagsize ; 
+          opt int "bandwidth" bandwidth ; 
+          float "pvalue" pvalue 
+        ])
+        chIP
 	(fun env (File chIP) path ->
 	  env.bash [
 	    <:sprint<mkdir $s:path$>> ;
@@ -27,13 +30,16 @@ let run14 ~genome ?tagsize ?bandwidth ~pvalue ?control chIP =
                      --pvalue=$g:pvalue$ \
                      -t $s:chIP$>> ;
 	  ])
-	chIP
     | Some control ->
       d2
-	Param.(
-          "guizmin.bioinfo.gzmMacs.run14[r2]", 
-	  [ int "gsize" gsize ; opt int "tagsize" tagsize ; 
-            opt int "bandwidth" bandwidth ; float "pvalue" pvalue ])
+	"guizmin.bioinfo.gzmMacs.run14[r2]"
+	Param.([ 
+          int "gsize" gsize ; 
+          opt int "tagsize" tagsize ; 
+          opt int "bandwidth" bandwidth ; 
+          float "pvalue" pvalue 
+        ])
+	chIP control
 	(fun env (File chIP) (File control) path ->
 	  env.bash [
 	    <:sprint<mkdir $s:path$>> ;
@@ -43,7 +49,6 @@ let run14 ~genome ?tagsize ?bandwidth ~pvalue ?control chIP =
                      --pvalue=$g:pvalue$ \
                      -t $s:chIP$ -c $s:control$>> ;
 	  ])
-	chIP control
 
 module Wo_control = struct
   module Peak = struct

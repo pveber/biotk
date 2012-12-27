@@ -17,6 +17,9 @@ module Param = struct
   let opt f id v = Option (f, id, v)
 end
 
+type id = string
+type params = Param.t list
+
 type 'a file_path = File of path
 type 'a dir_path  = Dir of path
 
@@ -26,23 +29,34 @@ type env = {
   stderr : out_channel ;
   np : int ; 
 }
-  
-type _ pipeline =
-  | Const : 'a descr * 'a -> 'a pipeline
-  | Value : 'a descr * (env -> 'a) -> 'a pipeline
-  | File_input : 'a file_path descr * path -> 'a file_path pipeline
-  | File : 'a file_path descr * (env -> path -> unit) -> 'a file_path pipeline
-  | Dir_input : 'a dir_path descr * path -> 'a dir_path pipeline
-  | Dir : 'a dir_path descr * (env -> path -> unit) -> 'a dir_path pipeline
-  | Select : 'b file_path descr * path * 'a dir_path pipeline -> 'b file_path pipeline
-  | Merge : 'a list descr * 'a pipeline list -> 'a list pipeline
-and 'a descr = {
+
+type 'a pipeline = {
   id : string ;
   params : Param.t list ;
   hash : string ;
-  deps : dep list
+  kind : 'a kind ;
 }
-and dep = Dep : 'a pipeline -> dep
+and _ kind =
+  | Val0 : (env -> 'a) -> 'a kind
+  | Val1 : 'b pipeline * (env -> 'b -> 'a) -> 'a kind
+  | Val2 : 'b pipeline * 'c pipeline * (env -> 'b -> 'c -> 'a) -> 'a kind
+  | Val3 : 'b pipeline * 'c pipeline * 'd pipeline * (env -> 'b -> 'c -> 'd -> 'a) -> 'a kind
+
+  | File_input : path -> 'a file_path kind
+  | File0 : (env -> path -> unit) -> 'a file_path kind
+  | File1 : 'b pipeline * (env -> 'b -> path -> unit) -> 'a file_path kind
+  | File2 : 'b pipeline * 'c pipeline * (env -> 'b -> 'c -> path -> unit) -> 'a file_path kind
+  | File3 : 'b pipeline * 'c pipeline * 'd pipeline * (env -> 'b -> 'c -> 'd -> path -> unit) -> 'a file_path kind
+
+  | Dir_input : path -> 'a dir_path kind
+  | Dir0 : (env -> path -> unit) -> 'a dir_path kind
+  | Dir1 : 'b pipeline * (env -> 'b -> path -> unit) -> 'a dir_path kind
+  | Dir2 : 'b pipeline * 'c pipeline * (env -> 'b -> 'c -> path -> unit) -> 'a dir_path kind
+  | Dir3 : 'b pipeline * 'c pipeline * 'd pipeline * (env -> 'b -> 'c -> 'd -> path -> unit) -> 'a dir_path kind
+
+  | Select : path * 'a dir_path pipeline -> 'b file_path kind
+
+  | Merge : 'a pipeline list -> 'a list kind
 
 (* type _ pipeline = *)
 (*     Input  : path -> (unit, 'a) pipeline *)
@@ -74,18 +88,7 @@ let _ =
   mkdir build_dir ;
   mkdir tmp_dir
 
-let descr : type a. a pipeline -> a descr = function
-| Const (descr,_)
-| Value (descr,_) -> descr
-| Merge (descr,_) -> descr
-| Select (descr,_,_) -> descr
-| File_input (descr,_) -> descr
-| Dir_input (descr,_) -> descr
-| File (descr,_) -> descr
-| Dir (descr,_) -> descr
-
-
-let hash x = (descr x).hash
+let hash x = x.hash
 
 let path x = 
   cache_dir ^ "/" ^ (hash x)
@@ -97,72 +100,114 @@ let touch fn =
   ignore (Sys.command ("touch " ^ fn))
 
 
-let eval : type a. a pipeline -> a = function
-| Const (_,x) -> x
-| Value (_
-
-
-let hash_of_dep (Dep d) = hash d
-
 let digest x =
   Digest.to_hex (Digest.string (Marshal.to_string x []))
 
-let make_hash id params kind deps =
-  let content = id, params, kind, List.map hash_of_dep deps in
+let make_hash id params kind deps_hash =
+  let content = id, params, kind, deps_hash in
   digest content
 
-let make_descr id params kind deps =
-  { 
-    id ; params ; deps ;
-    hash = make_hash id params kind [] ;
+let v0 id params f = {
+  id ; params ;
+  hash = make_hash id params `value [] ;
+  kind = Val0 f
+}
+
+let v1 id params x f = {
+  id ; params ;
+  hash = make_hash id params `value [ hash x ] ;
+  kind = Val1 (x, f)
+}
+
+let v2 id params x y f = {
+  id ; params ;
+  hash = make_hash id params `value [ hash x ; hash y ] ;
+  kind = Val2 (x, y, f)
+}
+
+let file path = 
+  let id = "guizmin.file.input" in
+  let params = [ Param.string "path" path ] in 
+  {
+    id ; params ;
+    hash = make_hash id params `file_input [] ;
+    kind = File_input path
   }
 
-let const x =
-  let id = "guizmin.const" in
-  let params = [ Param.string "md5sum" (digest x) ] in
-  Const (make_descr id params `const [], x)
+let f0 id params f = {
+  id ; params ;
+  hash = make_hash id params `file [] ;
+  kind = File0 f
+}
 
-let v0 id params f =
-  Value (make_descr id params `value [], f)
+let f1 id params x f = {
+  id ; params ;
+  hash = make_hash id params `file [ hash x ] ;
+  kind = File1 (x, f)
+}
 
-let v1 id params x f =
-  Value (make_descr id params `value [ Dep x ],
-         fun env x -> f x
+let f2 id params x y f = {
+  id ; params ;
+  hash = make_hash id params `file [ hash x ; hash y ] ;
+  kind = File2 (x, y, f)
+}
 
-class dep (id : id) kind deps = 
-object (self)
-  method deps : dep list = deps
-
-  method hash = 
-    let content = id, kind, List.map (fun x -> x#hash) deps in
-    Digest.to_hex (Digest.string (Marshal.to_string content []))
-
-  method path = 
-    cache_dir ^ "/" ^ (hash self)
-
-  method tmp_path = 
-    tmp_dir ^ "/" ^ (hash self)
-
-  method clean = 
-    Sys.remove self # path
-
-  method built =
-    Sys.file_exists self#path
-end
-
-let as_dep x = (x :> dep)
+let f3 id params x y z f = {
+  id ; params ;
+  hash = make_hash id params `file [ hash x ; hash y ; hash z ] ;
+  kind = File3 (x, y, z, f)
+}
 
 
-class type ['a] pipeline = object
-  inherit dep
-  method eval : env -> 'a
-end
+let dir path = 
+  let id = "guizmin.dir.input" in
+  let params = [ Param.string "path" path ] in 
+  {
+    id ; params ;
+    hash = make_hash id params `file_input [] ;
+    kind = Dir_input path
+  }
 
-let eval ?(stdout = stdout) ?(stderr = stderr) ?(np = 1) x = 
-  let env = { stderr ; stdout ; np ; 
-              bash = fun l -> GzmUtils.bash ~stdout ~stderr l } in
-  x # eval env
+let d0 id params f = {
+  id ; params ;
+  hash = make_hash id params `dir [] ;
+  kind = Dir0 f
+}
 
+let d1 id params x f = {
+  id ; params ;
+  hash = make_hash id params `dir [ hash x ] ;
+  kind = Dir1 (x, f)
+}
+
+let d2 id params x y f = {
+  id ; params ;
+  hash = make_hash id params `dir [ hash x ; hash y ] ;
+  kind = Dir2 (x, y, f)
+}
+
+let d3 id params x y z f = {
+  id ; params ;
+  hash = make_hash id params `dir [ hash x ; hash y ; hash z ] ;
+  kind = Dir3 (x, y, z, f)
+}
+
+let select dir subpath = 
+  let id = "guizmin.select" in
+  let params = [Param.string "subpath" subpath] in
+  {
+    id ; params ;
+    hash = make_hash id params `select [ hash dir ] ;
+    kind = Select (subpath, dir)
+  }
+
+let merge files =
+  let id = "guizmin.merge" in
+  {
+    id ; params = [] ;
+    hash = make_hash id [] `merge [] ;
+    kind = Merge files
+  }
 
 let load_value path = 
   let ic = open_in path in 
@@ -174,13 +219,19 @@ let save_value v path =
   output_value oc v ;
   close_out oc 
 
-let value id f deps = 
-object (self)
-  inherit dep id `value deps
-  method eval env = 
-    let dest = self#path
-    and tmp = self#tmp_path in
-    if not self#built then (
+(* FIXME: we should also check that [path] is indeed a regular file *)
+let file_exists path = Sys.file_exists path
+
+(* FIXME: we should also check that [path] is indeed a directory *)
+let dir_exists path = Sys.file_exists path
+
+let rec eval : type a. a pipeline -> a = function x ->
+  let env = { stderr ; stdout ; np = 1 ; 
+              bash = fun l -> GzmUtils.bash ~stdout ~stderr l } in
+  let val_wrap x f () =
+    let dest = path x in
+    let tmp = tmp_path x in
+    if not (file_exists dest) then (
       let r = f env in
       save_value r tmp ;
       Sys.rename tmp dest ;
@@ -190,130 +241,79 @@ object (self)
       touch dest ;
       load_value dest
     )
-end
+  in
 
-let v0 id f = value id f []
-
-let v1 id f x = 
-  value id (fun env -> f env (x#eval env)) [ as_dep x ]
-
-let v2 id f x y = 
-  value id (fun env -> f env (x#eval env) (y#eval env)) [ as_dep x ; as_dep y ]
-
-let path_pipeline kind cons id f children =
-object (self)
-  inherit dep id kind children 
-  method eval env = 
-    let dest = self#path
-    and tmp = self#tmp_path in 
-    if not self#built then (
+  let path_wrap cons x f () =
+    let dest = path x in
+    let tmp = tmp_path x in 
+    if not (Sys.file_exists dest) then (
       f env tmp ;
       Sys.rename tmp dest ;
     ) ;
     touch dest ;
     cons dest
-  method clean = Sys.remove (* FIXME (path s)*)""
-end
+  in
+  let file_wrap = path_wrap (fun x -> File x) in
+  let dir_wrap = path_wrap (fun x -> Dir x) in
+  
+  let f : unit -> a = match x.kind with
+  | Val0 f -> val_wrap x f
+  | Val1 (x1, f) -> val_wrap x (fun env -> f env (eval x1))
+  | Val2 (x1, x2, f) -> val_wrap x (fun env -> f env (eval x1) (eval x2))
+  | Val3 (x1, x2, x3, f) -> val_wrap x (fun env -> f env (eval x1) (eval x2) (eval x3))
 
-let file_cons x = File x
+  | File_input path ->
+      fun () -> 
+        if not (file_exists path) then (
+          fprintf env.stderr "File %s is declared as an input of a pipeline but does not exist." path ;
+          assert false
+        ) ;
+        File path
+      
+  | File0 f -> file_wrap x f
+  | File1 (x1, f) -> file_wrap x (fun env -> f env (eval x1))
+  | File2 (x1, x2, f) -> file_wrap x (fun env -> f env (eval x1) (eval x2))
+  | File3 (x1, x2, x3, f) -> file_wrap x (fun env -> f env (eval x1) (eval x2) (eval x3))
 
-let file path = 
-object (self)
-  inherit dep ("guizmin.file.input", [ Param.string "path" path ]) `file []
-  method clean = ()
-  method built = Sys.file_exists path
-  method eval env = 
-    if not self#built then (
-      fprintf env.stderr "File %s is declared as an input of a pipeline but does not exist." path ;
-      assert false
-    ) ;
-    (* FIXME: we should also check that [path] is indeed a regular file *)
-    File path
-end
+  | Dir_input path ->
+      fun () -> 
+        if not (dir_exists path) then (
+          fprintf env.stderr "Directory %s is declared as an input of a pipeline but does not exist." path ;
+          assert false
+        ) ;
+        Dir path
+
+  | Dir0 f -> dir_wrap x f
+  | Dir1 (x1, f) -> dir_wrap x (fun env -> f env (eval x1))
+  | Dir2 (x1, x2, f) -> dir_wrap x (fun env -> f env (eval x1) (eval x2))
+  | Dir3 (x1, x2, x3, f) -> dir_wrap x (fun env -> f env (eval x1) (eval x2) (eval x3))
+
+  | Select (subpath, dir) ->
+      fun () ->
+        let Dir dir_path = eval dir in 
+        let p = Filename.concat dir_path subpath in
+        if Sys.file_exists p 
+        then File p
+        else (
+          let msg = sprintf "Tried to access %s in %s but there is no such file or directory." subpath dir_path in
+          failwith msg
+        )
+
+  | Merge xs ->
+      fun () -> List.map eval xs
+
+  in
+  f ()
 
 
-let f0 id f = path_pipeline `file  file_cons id f []
-let f1 id f x = 
-  path_pipeline 
-    `file file_cons id 
-    (fun env path -> f env (x#eval env) path) 
-    [ as_dep x ]
 
-let f2 id f x y = 
-  path_pipeline
-    `file file_cons id 
-    (fun env path -> f env (x#eval env) (y#eval env) path) 
-    [ as_dep x ; as_dep y ]
 
-let f3 id f x y z = 
-  path_pipeline
-    `file file_cons id 
-    (fun env path -> f env (x#eval env) (y#eval env) (z#eval env) path) 
-    [ as_dep x ; as_dep y ; as_dep y ]
 
-let dir path =
-object (self)
-  inherit dep ("guizmin.dir.input", [ Param.string "path" path ]) `dir []
-  method eval env = 
-    if not self#built then (
-      fprintf env.stderr "Directory %s is declared as an input of a pipeline but does not exist." path ;
-      assert false
-    ) ;
-    (* FIXME: we should also check that [path] is indeed a directory *)
-    Dir path
-end
 
-let dir_cons x = Dir x
 
-let d0 id f = 
-  path_pipeline `dir dir_cons id f []
 
-let d1 id f x = 
-  path_pipeline 
-    `dir dir_cons id 
-    (fun env path -> f env (x#eval env) path) 
-    [ as_dep x ]
 
-let d2 id f x y = 
-  path_pipeline 
-    `dir dir_cons id 
-    (fun env path -> f env (x#eval env) (y#eval env) path) 
-    [ as_dep x ; as_dep y ]
 
-let d3 id f x y z = 
-  path_pipeline 
-    `dir dir_cons id 
-    (fun env path -> f env (x#eval env) (y#eval env) (z#eval env) path) 
-    [ as_dep x ; as_dep y ; as_dep z ]
-
-let select x subpath = 
-object
-  inherit dep ("guizmin.select", [Param.string "subpath" subpath]) `select [ as_dep x ]
-  method eval env = 
-    let Dir x_path = x#eval env in 
-    let p = Filename.concat x_path subpath in
-    if Sys.file_exists p 
-    then File p
-    else (
-      let msg = sprintf "Tried to access %s in %s but there is no such file or directory." subpath x_path in
-      failwith msg
-    )
-end
-
-let merge l = 
-object
-  inherit dep ("guizmin.merge", []) `merge (List.map as_dep l)
-  method eval env = List.map (fun x -> x#eval env) l
-end
-
-(* type _ pipeline = *)
-(*     Input  : path -> (unit, 'a) pipeline *)
-(*   | File   : string * param list * (unit -> unit) * 'a pipeline -> ('a, path) pipeline *)
-(*   | File2  : string * param list * (unit -> unit) * 'a pipeline * 'b pipeline -> ('a * 'b, path) pipeline *)
-(*   | Value  : string * param list * ('a -> 'b) * 'a pipeline -> ('a,'b) pipeline *)
-(*   | Value2 : string * param list * (('a * 'b) -> 'c) * 'a pipeline * 'b pipeline -> ('a * 'b,'c) pipeline *)
-(*   | Select : path * 'a pipeline -> 'b pipeline *)
-(*   | Merge  : 'a pipeline list -> 'a list pipeline *)
 
 
 

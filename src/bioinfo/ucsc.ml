@@ -15,7 +15,8 @@ let string_of_genome = function
 let chromosome_sequences org =
   let org = string_of_genome org in 
   d0
-    ("guizmin.bioinfo.ucsc.chromosome_sequences[1]", [ Param.string "org" org ])
+    "guizmin.bioinfo.ucsc.chromosome_sequences[1]"
+    [ Param.string "org" org ]
     (fun env path ->
       env.bash [
 	sp "mkdir -p %s" path;
@@ -26,13 +27,13 @@ let chromosome_sequences org =
 
 let genome_sequence org = 
   f1
-    ("guizmin.bioinfo.ucsc.genome_sequence[1]", [])
+    "guizmin.bioinfo.ucsc.genome_sequence[1]" []
+    (chromosome_sequences org)
     (fun env (Dir gp) path ->
       env.bash [ 
         "shopt -s nullglob" ;
         sp "cat %s/{chr?.fa,chr??.fa,chr???.fa,chr????.fa} > %s" gp path 
       ])
-    (chromosome_sequences org)
 
 
 (* UGLY hack due to twoBitToFa: this tool requires that the 2bit
@@ -41,7 +42,8 @@ let genome_sequence org =
 let genome_2bit_sequence_dir org = 
   let org = string_of_genome org in 
   d0
-    ("guizmin.bioinfo.ucsc.genome_sequence[1]", [ Param.string "org" org ])
+    "guizmin.bioinfo.ucsc.genome_sequence[1]"
+    [ Param.string "org" org ]
     (fun env path ->
       env.bash [
         sp "mkdir %s" path ;
@@ -67,20 +69,20 @@ let wg_encode_crg_mappability_100 org = wg_encode_crg_mappability 100 org
 let fasta_of_bed org bed = 
   let seq2b = genome_2bit_sequence org in
   f2
-    ("guizmin.bioinfo.ucsc.fasta_of_bed[1]", [])
+    "guizmin.bioinfo.ucsc.fasta_of_bed[1]" []
+    seq2b bed
     (fun env (File seq2b) (File bed) path ->
       sh "twoBitToFa -bed=%s %s %s" bed seq2b path)
-    seq2b bed
 
 let wig_of_bigWig bigWig = 
   f1
-    ("guizmin.bioinfo.ucsc.wig_of_bigWig[r1]", [])
+    "guizmin.bioinfo.ucsc.wig_of_bigWig[r1]" []
+    bigWig
     (fun env (File bigWig) path ->
       env.bash [
         sp "bigWigToWig %s %s" bigWig path
       ]
     )
-    bigWig
 
 module Lift_over = struct
   open Printf
@@ -133,7 +135,8 @@ module Lift_over = struct
   let bed_conversion ~org_from ~org_to bed =
     let chain_file = chain_file ~org_from ~org_to in
     d2
-      ("guizmin.bioinfo.ucsc.bed_conversion[r2]", [])
+      "guizmin.bioinfo.ucsc.bed_conversion[r2]" []
+      chain_file bed
       (fun env (File chain_file) (File bed) path ->
         sh "mkdir -p %s" path ;
         liftOver_cmd
@@ -142,7 +145,6 @@ module Lift_over = struct
           ~old_locs:bed
           ~new_locs:(path ^ "/mapped.bed") 
           ~unmapped_locs:(path ^ "/unmapped.bed"))
-      chain_file bed
 
   let mapped x = select x "mapped.bed"
   let unmapped x = select x "unmapped.bed"

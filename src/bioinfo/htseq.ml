@@ -11,15 +11,13 @@ end
 
 let count ?(feature = "exon") sam gtf = 
   f2
-    Param.(
-      "guizmin.bioinfo.htseq.count[r1]", 
-      [ string "feature" feature ]
-    )
+    "guizmin.bioinfo.htseq.count[r1]"      
+    [ Param.string "feature" feature ]
+    sam gtf
     (fun env (File sam) (File gtf) path ->
 	env.bash [
 	  <:sprint<htseq-count -t $s:feature$ $s:sam$ $s:gtf$ > $s:path$>>
 	])
-    sam gtf
 
 
 

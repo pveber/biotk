@@ -5,7 +5,9 @@ type index
 
 let index ?(packed = false) fasta = 
   d1
-    ("guizmin.bioinfo.bowtie.index[r1]", [ Param.bool "packed" packed ])
+    "guizmin.bioinfo.bowtie.index[r1]"
+    [ Param.bool "packed" packed ]
+    fasta
     (fun env (File fa) path ->
       env.bash [
 	sp "mkdir %s" path ;
@@ -13,7 +15,6 @@ let index ?(packed = false) fasta =
 	  (if packed then "-a -p" else "") fa path ;
 	sp "ln -s %s index.fa" fa
       ])
-    fasta
 
 let qual_option = function
   | `solexa  -> "--solexa-quals"
@@ -24,11 +25,12 @@ let qual_param id v = Param.string id (qual_option v)
 
 let align_with_maq_policy ?l ?e ?m ?qual_kind ~n index fastq_files =
   f2
+    "guizmin.bioinfo.bowtie.align_with_maq_policy[r1]"
     Param.(
-      "guizmin.bioinfo.bowtie.align_with_maq_policy[r1]", 
       [ int "n" n ; opt int "l" l ; opt int "e" e ; opt int "m" m ;
         opt qual_param "qual_kind" qual_kind]
     )
+    index (merge fastq_files)
     (fun env (Dir index) fastq_files path ->
       env.bash [
 	<:sprint<bowtie -n $d:n$ \
@@ -41,7 +43,6 @@ let align_with_maq_policy ?l ?e ?m ?qual_kind ~n index fastq_files =
 	                $!File f <- fastq_files ${$s:f$}{,} \
                         $s:path$ >>
       ])
-    index (merge fastq_files)
 
 (* let align2 =  *)
 (*   file pipeline "guizmin.bioinfo.bowtie.align[r1]"  *)
@@ -64,18 +65,18 @@ let align_with_maq_policy ?l ?e ?m ?qual_kind ~n index fastq_files =
 
 let align ?m ?qual_kind ~v index fastq_files =
   f2
+    "guizmin.bioinfo.bowtie.align[r1]"
     Param.(
-      "guizmin.bioinfo.bowtie.align[r1]", 
       [ int "v" v ; opt int "m" m ;
         opt qual_param "qual_kind" qual_kind ]
     )
+    index (merge fastq_files)
     (fun env (Dir index) fastq_files path ->
       let cmd = 
 	<:sprint<bowtie -v $d:v$ $? m <- m${-m $d:m$} $? q <- qual_kind${qual_option q} -p $d:env.np$ $s:index$/index $!File f <- fastq_files ${$s:f$}{,} $s:path$ >>
       in
       print_endline cmd ;
       env.bash [ cmd ])
-    index (merge fastq_files)
 
 
 
