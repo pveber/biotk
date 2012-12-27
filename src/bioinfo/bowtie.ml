@@ -5,7 +5,7 @@ type index
 
 let index ?(packed = false) fasta = 
   d1
-    "guizmin.bioinfo.bowtie.index[r1]"
+    "guizmin.bioinfo.bowtie.index[r2]"
     [ Param.bool "packed" packed ]
     fasta
     (fun env (File fa) path ->
@@ -13,7 +13,7 @@ let index ?(packed = false) fasta =
 	sp "mkdir %s" path ;
 	sp "bowtie-build %s -f %s %s/index" 
 	  (if packed then "-a -p" else "") fa path ;
-	sp "ln -s %s index.fa" fa
+	sp "cd %s && ln -s %s index.fa" path fa
       ])
 
 let qual_option = function

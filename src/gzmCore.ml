@@ -4,17 +4,19 @@ type path = string
 
 module Param = struct
   type t =
-    | Int : string * int -> t
-    | String : string * string -> t
-    | Float : string * float -> t
-    | Bool : string * bool -> t
-    | Option : (string -> 'a -> t) * string * 'a option -> t
+    | Int of string * int
+    | String of string * string
+    | Float of string * float
+    | Bool of string * bool
+    | Option of string * t option
 
   let string id v = String (id, v)
   let int id v = Int (id, v)
   let float id v = Float (id, v)
   let bool id b = Bool (id, b)
-  let opt f id v = Option (f, id, v)
+  let opt f id = function
+  | Some v -> Option (id, Some (f id v))
+  | None -> Option (id, None)
 end
 
 type id = string

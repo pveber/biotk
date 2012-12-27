@@ -80,6 +80,13 @@ Executable test_ucsc_lift_over
   BuildDepends: guizmin.bioinfo,tabular.syntax,threads
   Install:      false
 
+Executable test_mouse_ES
+  Path:         src/examples
+  BuildTools:   ocamlbuild
+  MainIs:       test_mouse_ES.ml
+  BuildDepends: guizmin.bioinfo,tabular.syntax,threads
+  Install:      false
+
 Executable guizmin_mb_pipeline
   Path:         src
   BuildTools:   ocamlbuild
