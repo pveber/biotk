@@ -31,6 +31,11 @@ module Named : sig
     ?header:bool ->
     ?sep:char ->
     #Obj.t Guizmin_table.file_path -> f:(Row.t Stream.t -> 'b) -> 'b
+
+  (** keeps the first three cols and adds a fourth with a generated
+      identifier. This is necessary for certain routines to work,
+      notably sequence retrieval *)
+  val make : ?prefix:string -> #Obj.t Guizmin_table.file -> file
 end
 
 module Stranded : sig
