@@ -35,7 +35,7 @@ module Named : sig
   (** keeps the first three cols and adds a fourth with a generated
       identifier. This is necessary for certain routines to work,
       notably sequence retrieval *)
-  val make : ?prefix:string -> #Obj.t Guizmin_table.file -> file
+  val make : ?prefix:string -> #Minimal.Obj.t Guizmin_table.file -> file
 end
 
 module Stranded : sig
