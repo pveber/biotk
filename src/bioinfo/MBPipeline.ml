@@ -64,12 +64,14 @@ struct
         Bowtie.align ~v:2 ~m:1 Genome.(bowtie_index & genome) (fastq_files & s)
     )
 
+    let bam_aligned_reads = assoc samples (
+      fun s -> Samtools.bam_of_sam (aligned_reads & s)
+    )
+
     let macs_peaks_wo_control = assoc samples (fun s ->
       let genome = (model s.sample_model).model_genome in
       Macs.Wo_control.(
-        run 
-          ~genome:genome ~pvalue:1e-3 
-          ((assert false) (aligned_reads & s))
+        run ~genome:genome ~pvalue:1e-3 (bam_aligned_reads & s)
         |! peaks
       )
     )
@@ -82,6 +84,12 @@ struct
     ]
 
   let repo = List.concat Guizmin_repo.([
+    List.map 
+      TF_ChIP_seq.macs_peaks_wo_control
+      ~f:(fun (sample, peaks) ->
+            item 
+              ["chIP-seq" ; "peaks" ; "macs" ; "wo_control" ; sample.sample_id ] 
+              peaks) ;
     
   ])
 end
