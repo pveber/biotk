@@ -281,8 +281,8 @@ let with_env ?(np = 1) ?(mem = 100) base x ~f =
     let f msg =
       let t = localtime (time ()) in
       fprintf 
-        log_chan "[%s][%4d/%2d/%2d %2d:%2d] %s" 
-        label t.tm_year t.tm_mon t.tm_mday t.tm_hour t.tm_min msg
+        log_chan "[%s][%04d-%02d-%02d %02d:%02d] %s" 
+        label (1900 + t.tm_year) (t.tm_mon + 1)t.tm_mday t.tm_hour t.tm_min msg
     in
     ksprintf f fmt in
   let debug fmt = log "DEBUG" fmt in
