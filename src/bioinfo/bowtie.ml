@@ -75,7 +75,6 @@ let align ?m ?qual_kind ~v index fastq_files =
       let cmd = 
 	<:sprint<bowtie -v $d:v$ $? m <- m${-m $d:m$} $? q <- qual_kind${qual_option q} -p $d:env.np$ $s:index$/index $!File f <- fastq_files ${$s:f$}{,} $s:path$ >>
       in
-      print_endline cmd ;
       env.bash [ cmd ])
 
 
