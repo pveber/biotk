@@ -1,5 +1,5 @@
 open Printf
-
+open GzmUtils
 type path = string
 
 module Param = struct
@@ -245,13 +245,6 @@ let with_null_env base ~f =
   let r = f env in
   List.iter close_out [ stderr ; stdout ] ;
   r
-
-type cmd = string * string list
-
-let string_of_cmd (prog, args) =
-  String.concat " " (prog :: args)
-
-type 'a logger = ('a,unit,string,unit) format4 -> 'a
 
 let sh ~(debug: 'a logger) ~(error: 'a logger) ~stdout ~stderr prog args = 
   let cmd_str = string_of_cmd (prog, args) in

@@ -1,4 +1,7 @@
+type cmd = string * string list
+type 'a logger = ('a,unit,string,unit) format4 -> 'a
 
+val string_of_cmd : cmd -> string
 
 val sp : ('a, unit, string) format -> 'a
 

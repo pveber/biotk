@@ -1,5 +1,13 @@
 let sp = Printf.sprintf
 
+type cmd = string * string list
+
+let string_of_cmd (prog, args) =
+  String.concat " " (prog :: args)
+
+type 'a logger = ('a,unit,string,unit) format4 -> 'a
+
+
 let sh fmt = 
   let shell s =
     if Sys.command s != 0 
