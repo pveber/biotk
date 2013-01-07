@@ -25,7 +25,7 @@ let qual_param id v = Param.string id (qual_option v)
 
 let align_with_maq_policy ?l ?e ?m ?qual_kind ~n index fastq_files =
   f2
-    "guizmin.bioinfo.bowtie.align_with_maq_policy[r1]"
+    "guizmin.bioinfo.bowtie.align_with_maq_policy[r2]"
     Param.(
       [ int "n" n ; opt int "l" l ; opt int "e" e ; opt int "m" m ;
         opt qual_param "qual_kind" qual_kind]
@@ -33,7 +33,7 @@ let align_with_maq_policy ?l ?e ?m ?qual_kind ~n index fastq_files =
     index (merge fastq_files)
     (fun env (Dir index) fastq_files path ->
       env.bash [
-	<:sprint<bowtie -n $d:n$ \
+	<:sprint<bowtie -S -n $d:n$ \
                         $? l <- l${-l $d:l$} \
                         $? e <- e${-e $d:e$} \
                         $? m <- m${-m $d:m$} \
@@ -65,7 +65,7 @@ let align_with_maq_policy ?l ?e ?m ?qual_kind ~n index fastq_files =
 
 let align ?m ?qual_kind ~v index fastq_files =
   f2
-    "guizmin.bioinfo.bowtie.align[r1]"
+    "guizmin.bioinfo.bowtie.align[r2]"
     Param.(
       [ int "v" v ; opt int "m" m ;
         opt qual_param "qual_kind" qual_kind ]
@@ -73,7 +73,7 @@ let align ?m ?qual_kind ~v index fastq_files =
     index (merge fastq_files)
     (fun env (Dir index) fastq_files path ->
       let cmd = 
-	<:sprint<bowtie -v $d:v$ $? m <- m${-m $d:m$} $? q <- qual_kind${qual_option q} -p $d:env.np$ $s:index$/index $!File f <- fastq_files ${$s:f$}{,} $s:path$ >>
+	<:sprint<bowtie -S -v $d:v$ $? m <- m${-m $d:m$} $? q <- qual_kind${qual_option q} -p $d:env.np$ $s:index$/index $!File f <- fastq_files ${$s:f$}{,} $s:path$ >>
       in
       env.bash [ cmd ])
 
