@@ -215,6 +215,9 @@ let dir_exists path = Sys.file_exists path
 let cache_dir base = base ^ "/cache"
 let build_dir base = base ^ "/_build"
 let tmp_dir base = base ^ "/tmp"
+let stderr_dir base = base ^ "/stderr"
+let stdout_dir base = base ^ "/stdout"
+let log_dir base = base ^ "/logs"
 
 let path ~base x = 
   cache_dir base ^ "/" ^ (x.hash)
@@ -243,9 +246,9 @@ let with_null_env base ~f =
   r
 
 let with_env ?(np = 1) ?(mem = 100) base x ~f =
-  let stderr = open_out (sprintf "%s/stderr/%s" base x.hash) in
-  let stdout = open_out (sprintf "%s/stdout/%s" base x.hash) in
-  let log_chan = open_out (sprintf "%s/logs/%s"   base x.hash) in
+  let stderr = open_out (sprintf "%s/%s" (stderr_dir base) x.hash) in
+  let stdout = open_out (sprintf "%s/%s" (stdout_dir base) x.hash) in
+  let log_chan = open_out (sprintf "%s/%s" (log_dir base) x.hash) in
   let log (type s) label (fmt : (s, unit, string, unit) format4) =
     let open Unix in
     let f msg =
@@ -378,6 +381,9 @@ let create_base_directory base =
   mkdir base ;
   mkdir (cache_dir base) ;
   mkdir (build_dir base) ;
+  mkdir (stderr_dir base) ;
+  mkdir (stdout_dir base) ;
+  mkdir (log_dir base) ;
   mkdir (tmp_dir base)
 
 let base_directory base =
