@@ -4,7 +4,8 @@ open Guizmin
 open Guizmin_bioinfo
 open Guizmin_bioinfo.MBSchema
 
-let eval x = eval ~base:(Sys.getcwd ()) ~np:1 x
+let base = default_base_directory ()
+let eval x = eval ~base ~np:1 x
 
 let url = "ftp://ftp.ncbi.nlm.nih.gov/pub/geo/DATA/supplementary/samples/GSM288nnn/GSM288345/GSM288345_ES_Nanog.txt.gz"
 

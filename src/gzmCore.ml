@@ -212,12 +212,6 @@ let dir_exists path = Sys.file_exists path
 
 (* let home_dir    = Sys.getcwd () *)
 
-(* let _ =  *)
-(*   mkdir guizmin_dir ; *)
-(*   mkdir cache_dir ; *)
-(*   mkdir build_dir ; *)
-(*   mkdir tmp_dir *)
-
 let cache_dir base = base ^ "/cache"
 let build_dir base = base ^ "/_build"
 let tmp_dir base = base ^ "/tmp"
@@ -378,7 +372,22 @@ let exec : type a. a pipeline -> env -> unit = fun x env ->
 
   | Merge xs -> ()
 
-let build : type a. base:string -> np:int -> a pipeline -> unit = fun ~base ~np x ->
+type base_directory = string
+
+let create_base_directory base =
+  mkdir base ;
+  mkdir (cache_dir base) ;
+  mkdir (build_dir base) ;
+  mkdir (tmp_dir base)
+
+let base_directory base =
+  create_base_directory base ;
+  base
+
+let default_base_directory () =
+  base_directory (Sys.getcwd () ^ "/_guizmin")
+
+let build : type a. ?base:string -> ?np:int -> a pipeline -> unit = fun ?(base = Sys.getcwd ()) ?(np = 1) x ->
   with_null_env base ~f:(fun null ->
     let update = { f = (
       fun () x -> 
@@ -389,7 +398,7 @@ let build : type a. base:string -> np:int -> a pipeline -> unit = fun ~base ~np 
     fold update () x
   )
 
-let eval : type a. base:string -> np:int -> a pipeline -> a = fun ~base ~np x ->
+let eval : type a. ?base:string -> ?np:int -> a pipeline -> a = fun ?(base = Sys.getcwd ()) ?(np = 1) x ->
   build ~base ~np x ;
   with_null_env base ~f:(fun null -> unsafe_eval ~base:null.base x)
 

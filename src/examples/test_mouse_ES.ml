@@ -48,7 +48,8 @@ let published_sox2_peaks =
   wget_gzipped_bed "http://www.ncbi.nlm.nih.gov/geosuppl/?acc=GSM288347&file=GSM288347%5FES%5FSox2%2Etxt%2Egz"
 
 let () = Guizmin.(
-  let eval x = eval ~base:(Sys.getcwd ()) ~np:1 x in
+  let base = default_base_directory () in
+  let eval x = eval ~base ~np:1 x in
   let File p = eval (sox2_bam) in
   print_endline p
 )

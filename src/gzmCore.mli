@@ -50,13 +50,19 @@ val d3 : id -> params -> 'a pipeline -> 'b pipeline -> 'c pipeline -> (env -> 'a
 val select : 'a dir -> path -> 'b file
 val merge : 'a pipeline list -> 'a list pipeline
 
+type base_directory = private string
+val base_directory : string -> base_directory
+val default_base_directory : unit -> base_directory
+
 val build : 
-  base:string -> np:int ->
+  ?base:base_directory -> ?np:int ->
   'a pipeline -> unit
 val eval : 
-  base:string -> np:int ->
+  ?base:base_directory -> ?np:int ->
   'a pipeline -> 'a
-val path : base:string -> 'a pipeline -> string
+val path : base:base_directory -> 'a pipeline -> string
+
+
 
 
 
