@@ -13,7 +13,7 @@ let index ?(packed = false) fasta =
 	sp "mkdir %s" path ;
 	sp "bowtie-build %s -f %s %s/index" 
 	  (if packed then "-a -p" else "") fa path ;
-	sp "cd %s && ln -s %s index.fa" path fa
+	sp "cd %s && ln -s `readlink -f %s` index.fa" path fa
       ])
 
 let qual_option = function

@@ -14,7 +14,7 @@ let create ~base ~repo_base items =
     (function Item (pipeline,_,rel_path)  ->
       let abs_path = repo_base ^ "/" ^ (String.concat "/" rel_path) in
       sh "mkdir -p %s" (Filename.dirname abs_path) ;
-      sh "ln -s %s %s" (Guizmin.path ~base pipeline) abs_path)
+      sh "ln -s `readlink -f %s` %s" (Guizmin.path ~base pipeline) abs_path)
     items
 
 
