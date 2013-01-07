@@ -12,6 +12,7 @@ end
 
 module type Table = sig
   type t
+  val of_file : ?line_numbers:bool -> ?header: bool -> ?sep: char -> string -> t
 end
 
 module type F = 
@@ -25,3 +26,4 @@ sig
 
   val load : ?header:bool -> ?sep:char -> 'a file_path -> T.t
 end
+

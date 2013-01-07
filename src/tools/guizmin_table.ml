@@ -47,11 +47,22 @@ let load
     (type row) (type table)
     (module R : Row with type t = row)
     (module T : Table with type t = table)
-    ?(header = false) ?(sep = '\t') (File f) = assert false
-
+    ?line_numbers ?header ?sep (File f) =
+  T.of_file ?line_numbers ?header ?sep f
 
 module Make(R : Row)(T : Table) =
 struct
   let with_rows ?header ?sep file ~f = with_rows (module R) ?header ?sep file ~f
   let load ?header ?sep file = load (module R) (module T) ?header ?sep file
 end
+
+
+
+
+
+
+
+
+
+
+

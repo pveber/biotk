@@ -11,6 +11,13 @@ val with_rows :
 val load : 
   (module Row with type t = 'a) ->
   (module Table with type t = 'b) ->
-  ?header:bool -> ?sep:char -> 'a file_path -> 'b
+  ?line_numbers:bool -> ?header:bool -> ?sep:char -> 'a file_path -> 'b
 
 module Make : F
+
+
+
+
+
+
+
