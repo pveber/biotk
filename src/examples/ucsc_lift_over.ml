@@ -4,6 +4,8 @@ open Guizmin
 open Guizmin_bioinfo
 open Guizmin_bioinfo.MBSchema
 
+let eval x = eval ~base:(Sys.getcwd ()) ~np:1 x
+
 let url = "ftp://ftp.ncbi.nlm.nih.gov/pub/geo/DATA/supplementary/samples/GSM288nnn/GSM288345/GSM288345_ES_Nanog.txt.gz"
 
 let mm8_peaks : Gcf.file = Guizmin_unix.(gunzip (wget url))

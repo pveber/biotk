@@ -1,10 +1,21 @@
 open Guizmin
 
 type path = string list
-type item
+type item = private Item : 'a Guizmin.pipeline * string * path -> item
+
 val item : ?descr:string -> path -> 'a pipeline -> item
 
-val create : ?force:bool -> string -> item list -> unit
+val create : base:string -> repo_base:string -> item list -> unit
+
+
+
+
+
+
+
+
+
+
 
 
 

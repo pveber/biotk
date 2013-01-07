@@ -7,13 +7,22 @@ let item ?(descr = "") path pipeline = Item (pipeline, descr, path)
 
 type t = item list
 
-let create ?(force = false) base_path items =
-  sh "rm -rf %s" base_path ;
-  sh "mkdir -p %s" base_path ;
+let create ~base ~repo_base items =
+  sh "rm -rf %s" repo_base ;
+  sh "mkdir -p %s" repo_base ;
   List.iter
     (function Item (pipeline,_,rel_path)  ->
-      let abs_path = base_path ^ "/" ^ (String.concat "/" rel_path) in
-      if force then ignore (Guizmin.eval pipeline) ;
+      let abs_path = repo_base ^ "/" ^ (String.concat "/" rel_path) in
       sh "mkdir -p %s" (Filename.dirname abs_path) ;
-      sh "ln -s %s %s" (Guizmin.path pipeline) abs_path)
+      sh "ln -s %s %s" (Guizmin.path ~base pipeline) abs_path)
     items
+
+
+
+
+
+
+
+
+
+

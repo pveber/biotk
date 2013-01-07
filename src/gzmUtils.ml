@@ -9,7 +9,6 @@ let sh fmt =
 
 let bash ?(debug = false) ?(stdout = stdout) ?(stderr = stderr) cmds = 
   let open Shell in
-  if debug then List.iter prerr_endline cmds ;
   call [ cmd "bash" [ "-c" ; String.concat " && " cmds ] ]
 
 let load fn = 

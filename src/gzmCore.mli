@@ -12,18 +12,20 @@ end
 type id = string
 type params = Param.t list
 
-type env = private {
+type env = {
+  base : string ;
+  sh : 'a. ('a,unit,string,unit) format4 -> 'a ;
   bash : string list -> unit ;
   stdout : out_channel ;
   stderr : out_channel ;
-  np : int ; 
+  debug : 'a. ('a,unit,string,unit) format4 -> 'a ;
+  info  : 'a. ('a,unit,string,unit) format4 -> 'a ;
+  error : 'a. ('a,unit,string,unit) format4 -> 'a ;
+  np : int ;
+  mem : int ; (** in MB *)
 }
 
 type 'a pipeline
-val eval : 
-(*  ?stdout:out_channel -> ?stderr:out_channel -> ?np:int -> *)
-  'a pipeline -> 'a
-val path : 'a pipeline -> string
 
 val v0 : id -> params -> (env -> 'a) -> 'a pipeline
 val v1 : id -> params -> 'a pipeline -> (env -> 'a -> 'b) -> 'b pipeline
@@ -47,3 +49,26 @@ val d3 : id -> params -> 'a pipeline -> 'b pipeline -> 'c pipeline -> (env -> 'a
 
 val select : 'a dir -> path -> 'b file
 val merge : 'a pipeline list -> 'a list pipeline
+
+val build : 
+  base:string -> np:int ->
+  'a pipeline -> unit
+val eval : 
+  base:string -> np:int ->
+  'a pipeline -> 'a
+val path : base:string -> 'a pipeline -> string
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
