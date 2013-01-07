@@ -14,7 +14,7 @@ type params = Param.t list
 
 type env = {
   base : string ;
-  sh : 'a. ('a,unit,string,unit) format4 -> 'a ;
+  sh : string -> string list -> unit ;
   bash : string list -> unit ;
   stdout : out_channel ;
   stderr : out_channel ;

@@ -27,7 +27,7 @@ type 'a dir_path  = Dir of path
 
 type env = {
   base : string ;
-  sh : 'a. ('a,unit,string,unit) format4 -> 'a ;
+  sh : string -> string list -> unit ;
   bash : string list -> unit ;
   stdout : out_channel ;
   stderr : out_channel ;
@@ -228,6 +228,7 @@ let tmp_path ~base x =
 let touch fn =
   ignore (Sys.command ("touch " ^ fn))
 
+
 let with_null_env base ~f =
   let stderr = open_out "/dev/null" in
   let stdout = open_out "/dev/null" in
@@ -237,13 +238,46 @@ let with_null_env base ~f =
       debug = log ;
       info = log ;
       error = log ;
-      sh = log ;
+      sh = (fun _ _ -> ()) ;
       bash = ignore
   }
   in
   let r = f env in
   List.iter close_out [ stderr ; stdout ] ;
   r
+
+type cmd = string * string list
+
+let string_of_cmd (prog, args) =
+  String.concat " " (prog :: args)
+
+type 'a logger = ('a,unit,string,unit) format4 -> 'a
+
+let sh ~(debug: 'a logger) ~(error: 'a logger) ~stdout ~stderr prog args = 
+  let cmd_str = string_of_cmd (prog, args) in
+  debug "sh call:\n\n%s\n\n" cmd_str ;
+  try 
+    Shell.call
+      ~stdout:(Shell.to_fd (Unix.descr_of_out_channel stdout))
+      ~stderr:(Shell.to_fd (Unix.descr_of_out_channel stderr))
+      [ Shell.cmd prog args ]
+  with Shell.Subprocess_error _ -> (
+    error "sh call exited with non-zero code:\n\n%s\n\n" cmd_str ;
+    Core.Std.failwithf "shell call failed:\n%s\n" cmd_str ()
+  )
+
+let bash ~(debug: 'a logger) ~(error: 'a logger) ~stdout ~stderr cmds = 
+  let script = String.concat "\n" cmds in
+  debug "bash call:\n\n%s\n\n" script ;
+  try 
+    Shell.call
+      ~stdout:(Shell.to_fd (Unix.descr_of_out_channel stdout))
+      ~stderr:(Shell.to_fd (Unix.descr_of_out_channel stderr))
+      [ Shell.cmd "bash" [ "-c" ; String.concat " && " cmds ] ]
+  with Shell.Subprocess_error _ -> (
+    error "bash call exited with non-zero code:\n\n%s\n\n" script ;
+    Core.Std.failwithf "bash shell call failed:\n%s\n" script ()
+  )
 
 let with_env ?(np = 1) ?(mem = 100) base x ~f =
   let stderr = open_out (sprintf "%s/%s" (stderr_dir base) x.hash) in
@@ -258,19 +292,20 @@ let with_env ?(np = 1) ?(mem = 100) base x ~f =
         label t.tm_year t.tm_mon t.tm_mday t.tm_hour t.tm_min msg
     in
     ksprintf f fmt in
-    let env = { 
-      base ; stderr ; stdout ; np ; mem ; 
-      debug = (fun fmt -> log "DEBUG" fmt) ; 
-      info = (fun fmt -> log "INFO" fmt) ; 
-      error = (fun fmt -> log "ERROR" fmt) ;
-      sh = GzmUtils.sh ;
-      bash = GzmUtils.bash ~stdout ~stderr 
-    }
-    in
-    let r = f env in
-    List.iter close_out [ log_chan ; stderr ; stdout ] ;
-    r
-
+  let debug fmt = log "DEBUG" fmt in
+  let info fmt = log "INFO" fmt in
+  let error fmt = log "ERROR" fmt in
+  let env = { 
+    base ; stderr ; stdout ; np ; mem ; 
+    debug ; info ; error ; 
+    sh = sh ~debug ~error ~stdout ~stderr ; 
+    bash = bash ~debug ~error ~stdout ~stderr ;
+  }
+  in
+  let r = f env in
+  List.iter close_out [ log_chan ; stderr ; stdout ] ;
+  r
+    
 type 's update = { f : 'x. 's -> 'x pipeline -> 's }
 
 let rec fold : type a. 's update -> 's -> a pipeline -> 's = fun f init x -> 
