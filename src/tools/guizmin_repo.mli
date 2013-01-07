@@ -10,21 +10,3 @@ val item : ?descr:string -> path -> 'a pipeline -> item
 val create : ?np:int -> base:string -> repo_base:string -> item list -> unit
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

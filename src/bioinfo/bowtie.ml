@@ -5,7 +5,7 @@ type index
 
 let index ?(packed = false) fasta = 
   d1
-    "guizmin.bioinfo.bowtie.index[r2]"
+    "guizmin.bioinfo.bowtie.index[r3]"
     [ Param.bool "packed" packed ]
     fasta
     (fun env (File fa) path ->
