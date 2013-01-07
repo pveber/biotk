@@ -111,10 +111,10 @@ module Lift_over = struct
   let liftOver_cmd ~output ~chain_file ~old_locs ~new_locs ~unmapped_locs = 
     let string_of_output = function
     | `bed -> ""
-    | `position -> "-position"
+    | `position -> "-positions"
     in
     sh
-      "liftOver %s %s %s %s %s 2> /dev/null"
+      "liftOver %s %s %s %s %s"
       (string_of_output output) 
       old_locs chain_file new_locs unmapped_locs
     
