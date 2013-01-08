@@ -15,7 +15,7 @@ let cmd_tokens_of_string s =
       match s.[i] with
       | ' ' | '\t' | '\n' | '\r' ->
         aux (i - 1) "" (accept current accu)
-      | '\'' | '"' as c ->
+      | '\'' | '"' | '`' as c ->
         quote c (i - 1) "" (accept current accu)
       | c -> 
         aux (i - 1) (sp "%c%s" c current) accu

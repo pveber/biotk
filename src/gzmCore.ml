@@ -91,6 +91,8 @@ let make_hash id params kind deps_hash =
   let content = id, params, kind, deps_hash in
   digest content
 
+let hash x = x.hash
+
 let v0 id params f = {
   id ; params ;
   hash = make_hash id params `value [] ;
@@ -219,8 +221,13 @@ let stderr_dir base = base ^ "/stderr"
 let stdout_dir base = base ^ "/stdout"
 let log_dir base = base ^ "/logs"
 
-let path ~base x = 
-  cache_dir base ^ "/" ^ (x.hash)
+let path : type s. base:string -> s pipeline -> string = fun ~base x ->
+  match x.kind with
+  | Merge _ -> invalid_arg "Guizmin.path: a merge pipeline is not physically saved"
+  | Select (subpath, dir) -> 
+      cache_dir base ^ "/" ^ dir.hash ^ "/" ^ subpath
+  | _ -> 
+      cache_dir base ^ "/" ^ x.hash
 
 let tmp_path ~base x = 
   tmp_dir base ^ "/" ^ (x.hash)
@@ -308,8 +315,11 @@ let rec fold : type a. 's update -> 's -> a pipeline -> 's = fun f init x ->
   | Select (_,dir) -> f.f (fold f init dir) x
 
 
-let built : type a. base:string -> a pipeline -> bool = fun ~base x ->
-  Sys.file_exists (path ~base x)
+let rec built : type a. base:string -> a pipeline -> bool = fun ~base x ->
+  match x.kind with
+  | Merge xs -> List.for_all (built ~base) xs
+  | Select (_,dir) -> built ~base dir
+  | _ -> Sys.file_exists (path ~base x)
 
 let rec unsafe_eval : type a. base:string -> a pipeline -> a = fun ~base x ->
   match x.kind with

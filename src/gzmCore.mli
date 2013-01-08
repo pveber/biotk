@@ -27,6 +27,8 @@ type env = {
 
 type 'a pipeline
 
+val hash : 'a pipeline -> string
+
 val v0 : id -> params -> (env -> 'a) -> 'a pipeline
 val v1 : id -> params -> 'a pipeline -> (env -> 'a -> 'b) -> 'b pipeline
 val v2 : id -> params -> 'a pipeline -> 'b pipeline -> (env -> 'a -> 'b -> 'c) -> 'c pipeline
