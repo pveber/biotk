@@ -27,7 +27,7 @@ type 'a dir_path  = Dir of path
 
 type env = {
   base : string ;
-  sh : string -> string list -> unit ;
+  sh : 'a. ('a,unit,string,unit) format4 -> 'a ;
   bash : string list -> unit ;
   stdout : out_channel ;
   stderr : out_channel ;
@@ -238,26 +238,13 @@ let with_null_env base ~f =
       debug = log ;
       info = log ;
       error = log ;
-      sh = (fun _ _ -> ()) ;
+      sh = log ;
       bash = ignore
   }
   in
   let r = f env in
   List.iter close_out [ stderr ; stdout ] ;
   r
-
-let sh ~(debug: 'a logger) ~(error: 'a logger) ~stdout ~stderr prog args = 
-  let cmd_str = string_of_cmd (prog, args) in
-  debug "sh call:\n\n%s\n\n" cmd_str ;
-  try 
-    Shell.call
-      ~stdout:(Shell.to_fd (Unix.descr_of_out_channel stdout))
-      ~stderr:(Shell.to_fd (Unix.descr_of_out_channel stderr))
-      [ Shell.cmd prog args ]
-  with Shell.Subprocess_error _ -> (
-    error "sh call exited with non-zero code:\n\n%s\n\n" cmd_str ;
-    Core.Std.failwithf "shell call failed:\n%s\n" cmd_str ()
-  )
 
 let bash ~(debug: 'a logger) ~(error: 'a logger) ~stdout ~stderr cmds = 
   let script = String.concat "\n" cmds in
@@ -291,7 +278,7 @@ let with_env ?(np = 1) ?(mem = 100) base x ~f =
   let env = { 
     base ; stderr ; stdout ; np ; mem ; 
     debug ; info ; error ; 
-    sh = sh ~debug ~error ~stdout ~stderr ; 
+    sh = (fun fmt -> sh ~debug ~error ~stdout ~stderr fmt) ; 
     bash = bash ~debug ~error ~stdout ~stderr ;
   }
   in

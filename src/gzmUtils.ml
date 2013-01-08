@@ -5,14 +5,55 @@ type cmd = string * string list
 let string_of_cmd (prog, args) =
   String.concat " " (prog :: args)
 
+let cmd_tokens_of_string s =
+  let accept h t =
+    if h <> "" then h :: t else t
+  in
+  let rec aux i current accu =
+    if i < 0 then accept current accu
+    else 
+      match s.[i] with
+      | ' ' | '\t' | '\n' | '\r' ->
+        aux (i - 1) "" (accept current accu)
+      | '\'' | '"' as c ->
+        quote c (i - 1) "" (accept current accu)
+      | c -> 
+        aux (i - 1) (sp "%c%s" c current) accu
+  and quote c i current accu =
+    if i < 0 then failwith "GzmUtils.cmd_of_string: unfinished quotation"
+    else if s.[i] = c then aux (i - 1) "" (current :: accu) (* accepts even empty strings in that case *)
+    else quote c (i - 1) (sp "%c%s" s.[i] current) accu
+  in
+  aux (String.length s - 1) "" []
+
+let cmd_of_string s = match cmd_tokens_of_string s with
+  | h :: t -> h, t
+  | [] -> failwith "GzmUtils.cmd_of_string: empty command!"
+
 type 'a logger = ('a,unit,string,unit) format4 -> 'a
+let null_logger fmt =
+  Printf.ksprintf ignore fmt
 
-
-let sh fmt = 
+let sh 
+    ?(debug : 'a logger = null_logger) 
+    ?(error : 'a logger = null_logger) 
+    ?(stdout = stdout) 
+    ?(stderr = stderr)
+    fmt = 
   let shell s =
-    if Sys.command s != 0 
-    then failwith (sp "shell call failed:\n%s\n" s)
-  in Printf.ksprintf shell fmt
+    debug "sh call:\n\n%s\n\n" s ;
+    let prog, args = cmd_of_string s in
+    try 
+      Shell.call
+        ~stdout:(Shell.to_fd (Unix.descr_of_out_channel stdout))
+        ~stderr:(Shell.to_fd (Unix.descr_of_out_channel stderr))
+        [ Shell.cmd prog args ]
+    with Shell.Subprocess_error _ -> (
+      error "sh call exited with non-zero code:\n\n%s\n\n" s ;
+      Core.Std.failwithf "shell call failed:\n%s\n" s ()
+    )
+  in
+  Printf.ksprintf shell fmt
 
 
 let bash ?(debug = false) ?(stdout = stdout) ?(stderr = stderr) cmds = 

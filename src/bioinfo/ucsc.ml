@@ -113,7 +113,10 @@ module Lift_over = struct
     | `bed -> ""
     | `position -> "-positions"
     in
-    "liftOver", [ string_of_output output ; old_locs ; chain_file ; new_locs ; unmapped_locs ]
+    sprintf
+      "liftOver %s %s %s %s %s"
+      (string_of_output output) 
+      old_locs chain_file new_locs unmapped_locs
     
   let conversion (File chain_file) xs =
     let old_locs_fn = create_input_file xs in
@@ -121,7 +124,7 @@ module Lift_over = struct
     and unmapped_locs_fn = (* unmapped locations *)
       Filename.temp_file "gzm" ".locations" in
     let cmd = liftOver_cmd ~output:`position ~chain_file ~old_locs:old_locs_fn ~new_locs:new_locs_fn ~unmapped_locs:unmapped_locs_fn in
-    sh "%s 2> /dev/null" (string_of_cmd cmd) ;
+    sh "%s 2> /dev/null" cmd ;
     let new_locs = 
       List.map (lines_of_file new_locs_fn) ~f:Location.of_string
     and unmp_locs =
@@ -136,16 +139,16 @@ module Lift_over = struct
       "guizmin.bioinfo.ucsc.bed_conversion[r2]" []
       chain_file bed
       (fun env (File chain_file) (File bed) path ->
-        env.sh "mkdir" [ "-p" ; path ] ;
-        let prog, args = 
+        env.sh "mkdir -p %s" path ;
+        env.sh "%s" (
           liftOver_cmd
             ~output:`bed
             ~chain_file 
             ~old_locs:bed
             ~new_locs:(path ^ "/mapped.bed") 
             ~unmapped_locs:(path ^ "/unmapped.bed")
-        in env.sh prog args)
-
+        ))
+          
   let mapped x = select x "mapped.bed"
   let unmapped x = select x "unmapped.bed"
 end

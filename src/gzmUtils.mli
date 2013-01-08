@@ -5,7 +5,11 @@ val string_of_cmd : cmd -> string
 
 val sp : ('a, unit, string) format -> 'a
 
-val sh : ('a,unit,string,unit) format4 -> 'a
+val sh :
+  ?debug:(string -> unit) logger ->
+  ?error:(string -> unit) logger ->
+  ?stdout:out_channel ->
+  ?stderr:out_channel -> ('a, unit, string, unit) format4 -> 'a
 (** Shell invocation. Raises [Failure] in case of a non zero return
     code. *)
 
