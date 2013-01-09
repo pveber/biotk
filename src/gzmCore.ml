@@ -372,8 +372,9 @@ let exec : type a. a pipeline -> env -> unit = fun x env ->
       
   | File_input path ->
       if not (file_exists path) then (
-        fprintf env.stderr "File %s is declared as an input of a pipeline but does not exist." path ;
-        assert false
+        let msg = sp "File %s is declared as an input of a pipeline but does not exist." path in
+        env.error "%s" msg ;
+        failwith msg
       )
       
   | File0 f -> path_wrap x f
@@ -383,8 +384,9 @@ let exec : type a. a pipeline -> env -> unit = fun x env ->
 
   | Dir_input path ->
       if not (dir_exists path) then (
-        fprintf env.stderr "Directory %s is declared as an input of a pipeline but does not exist." path ;
-        assert false
+        let msg = sp "Directory %s is declared as an input of a pipeline but does not exist." path in
+        env.error "%s" msg ;
+        failwith msg
       )
 
   | Dir0 f -> path_wrap x f
@@ -420,12 +422,21 @@ let base_directory base =
 let default_base_directory () =
   base_directory (Sys.getcwd () ^ "/_guizmin")
 
+exception Error of string * exn
+
 let build : type a. ?base:string -> ?np:int -> a pipeline -> unit = fun ?(base = Sys.getcwd ()) ?(np = 1) x ->
   with_null_env base ~f:(fun null ->
     let update = { f = (
       fun () x -> 
-        if not (built ~base:null.base x)
-        then with_env ~np base x ~f:(exec x)
+        try
+          if not (built ~base:null.base x)
+          then with_env ~np base x ~f:(exec x)
+        with e -> raise (
+          Error (
+            sp "failed to eval pipeline with hash %s" x.hash,
+            e
+          )
+        )
     ) } 
     in 
     fold update () x

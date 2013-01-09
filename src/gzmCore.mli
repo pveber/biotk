@@ -56,6 +56,8 @@ type base_directory = private string
 val base_directory : string -> base_directory
 val default_base_directory : unit -> base_directory
 
+exception Error of string * exn
+
 val build : 
   ?base:base_directory -> ?np:int ->
   'a pipeline -> unit
