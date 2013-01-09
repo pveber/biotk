@@ -28,6 +28,7 @@ sig
     val chIP_samples_by_factor_and_condition : (string * condition, sample list) assoc
     val input_controls_by_condition : (condition, sample list) assoc
 
+    val fastq_files : (sample, [`fastq] Guizmin.file list) assoc
     val aligned_reads : (sample, Sam.file) assoc
     val macs_peaks_wo_control : pvalue:float -> (sample, Macs.Wo_control.Peak.file) assoc
   end
