@@ -226,6 +226,8 @@ let path : type s. base:string -> s pipeline -> string = fun ~base x ->
   | Merge _ -> invalid_arg "Guizmin.path: a merge pipeline is not physically saved"
   | Select (subpath, dir) -> 
       cache_dir base ^ "/" ^ dir.hash ^ "/" ^ subpath
+  | File_input path -> path
+  | Dir_input path -> path
   | _ -> 
       cache_dir base ^ "/" ^ x.hash
 
