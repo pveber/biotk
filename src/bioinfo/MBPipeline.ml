@@ -126,10 +126,6 @@ struct
     List.map 
       (TF_ChIP_seq.macs_peaks_wo_control ~pvalue:1e-3)
       ~f:(fun (sample, peaks) ->
-        let Guizmin.File f = Guizmin.eval ~base:(Guizmin.default_base_directory ()) peaks in
-        print_endline f ;
-        print_endline sample.sample_id ;
-        print_endline (Guizmin.hash peaks) ;
             item 
               ["chIP-seq" ; "peaks" ; "macs" ; "wo_control" ; sample.sample_id ^ ".tsv" ] 
               peaks) ;
