@@ -22,11 +22,11 @@ let indexed_bam_of_sam sam =
     []
     sam
     (fun env (File sam) path ->
-       sh "mkdir %s" path ;
-       sh "samtools view -S -b -o %s/temp.bam %s" path sam ;
-       sh "samtools sort %s/temp.bam %s/reads" path path ;
-       sh "samtools index %s/reads.bam" path ;
-       sh "rm %s/temp.bam" path 
+       env.sh "mkdir %s" path ;
+       env.sh "samtools view -S -b -o %s/temp.bam %s" path sam ;
+       env.sh "samtools sort %s/temp.bam %s/reads" path path ;
+       env.sh "samtools index %s/reads.bam" path ;
+       env.sh "rm %s/temp.bam" path 
     )
 
 let indexed_bam_of_bam bam =
@@ -35,9 +35,9 @@ let indexed_bam_of_bam bam =
     []
     bam
     (fun env (File bam) path ->
-      sh "mkdir %s" path ;
-      sh "samtools sort %s %s/reads" bam path ;
-      sh "samtools index %s/reads.bam" path)
+      env.sh "mkdir %s" path ;
+      env.sh "samtools sort %s %s/reads" bam path ;
+      env.sh "samtools index %s/reads.bam" path)
 
 let bam_of_indexed_bam ibam = select ibam "reads.bam"
 
@@ -56,7 +56,7 @@ let rmdup ?(single_end_mode = false) bam =
     [ Param.bool "single_end_mode" single_end_mode ]
     bam
     (fun env (File bam) path ->
-       sh "mkdir -p %s_tmp" path ;
-       sh "samtools sort %s %s_tmp/reads" bam path ;
-       sh "%s" <:sprint<samtools rmdup $? single_end_mode ${-s}{} $s:path$_tmp/reads.bam $s:path$>> ;
-       sh "rm -rf %s_tmp" path)
+       env.sh "mkdir -p %s_tmp" path ;
+       env.sh "samtools sort %s %s_tmp/reads" bam path ;
+       env.sh "%s" <:sprint<samtools rmdup $? single_end_mode ${-s}{} $s:path$_tmp/reads.bam $s:path$>> ;
+       env.sh "rm -rf %s_tmp" path)
