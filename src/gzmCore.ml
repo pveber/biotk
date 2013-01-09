@@ -191,7 +191,7 @@ let merge files =
   let id = "guizmin.merge" in
   {
     id ; params = [] ;
-    hash = make_hash id [] `merge [] ;
+    hash = make_hash id [] `merge (List.map hash files) ;
     kind = Merge files
   }
 
