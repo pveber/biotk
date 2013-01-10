@@ -95,11 +95,11 @@ let motif_scan pwm theta seq =
 
 let prediction ?(level = 0.1) pwm fa =
   v3
-    "guizmin.bioinfo.labs.pwm.prediction[r1]"
+    "guizmin.bioinfo.labs.pwm.prediction[r2]"
     [ Param.float "level" level ]
     pwm fa (best_score_distribution_of_fasta pwm (markov0_control_set fa))
     (fun env pwm fa score_dist ->
-       let theta = quantile score_dist level in
+       let theta = quantile score_dist (1. -. level) in
        Fasta.with_contents fa ~f:(fun seqs ->
          seqs /@ (fun (_,seq) -> motif_scan pwm theta seq)
          |! Biocaml_stream.to_list
