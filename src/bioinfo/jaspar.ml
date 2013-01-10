@@ -21,12 +21,9 @@ let core = v1
   (fun env (Dir mirror) ->
     Biocaml.Jaspar.load (sp "%s/jaspar_CORE/non_redundant/all_species/FlatFileDir" mirror))
 
-
-
-
-
-
-
-
-
+let core_vertebrates = v1
+  "guizmin.bioinfo.jaspar.core_vertebrates" []
+  mirror
+  (fun env (Dir mirror) ->
+    Biocaml.Jaspar.load (sp "%s/jaspar_CORE/non_redundant/by_tax_group/vertebrates/FlatFileDir/" mirror))
 
