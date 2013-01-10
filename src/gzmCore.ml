@@ -66,14 +66,7 @@ and _ kind =
 
   | Merge : 'a pipeline list -> 'a list kind
 
-(* type _ pipeline = *)
-(*     Input  : path -> (unit, 'a) pipeline *)
-(*   | File   : string * param list * (unit -> unit) * 'a pipeline -> ('a, path) pipeline *)
-(*   | File2  : string * param list * (unit -> unit) * 'a pipeline * 'b pipeline -> ('a * 'b, path) pipeline *)
-(*   | Value  : string * param list * ('a -> 'b) * 'a pipeline -> ('a,'b) pipeline *)
-(*   | Value2 : string * param list * (('a * 'b) -> 'c) * 'a pipeline * 'b pipeline -> ('a * 'b,'c) pipeline *)
-(*   | Select : path * 'a pipeline -> 'b pipeline *)
-(*   | Merge  : 'a pipeline list -> 'a list pipeline *)
+  | Adapter : 'a pipeline * ('a -> 'b) -> 'b kind
 
 type 'a file = 'a file_path pipeline
 type 'a dir = 'a dir_path pipeline
@@ -201,6 +194,14 @@ let merge files =
     kind = Merge files
   }
 
+let adapter x f =
+  let id = "guizmin.adapter" in
+  {
+    id ; params = [] ;
+    hash = make_hash id [] `merge [ x.hash ] ;
+    kind = Adapter (x,f)
+  }
+
 let load_value path = 
   let ic = open_in path in 
   let r = input_value ic in
@@ -321,7 +322,7 @@ let rec fold : type a. 's update -> 's -> a pipeline -> 's = fun f init x ->
   | Dir3 (y,z,w,_) -> f.f (fold f (fold f (fold f init y) z) w) x
   | Merge xs -> f.f (List.fold_left f.f init xs) x
   | Select (_,dir) -> f.f (fold f init dir) x
-
+  | Adapter (y,g) -> f.f (fold f init y) x
 
 let rec built : type a. base:string -> a pipeline -> bool = fun ~base x ->
   match x.kind with
@@ -347,6 +348,7 @@ let rec unsafe_eval : type a. base:string -> a pipeline -> a = fun ~base x ->
       let Dir dir_path = unsafe_eval ~base dir in 
       let p = Filename.concat dir_path subpath in
       File p
+  | Adapter (x,f) -> f (unsafe_eval ~base x)
         
         
 let exec : type a. a pipeline -> env -> unit = fun x env ->
@@ -409,6 +411,7 @@ let exec : type a. a pipeline -> env -> unit = fun x env ->
       )
 
   | Merge xs -> ()
+  | Adapter _ -> ()
 
 type base_directory = string
 

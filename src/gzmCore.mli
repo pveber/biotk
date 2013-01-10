@@ -52,6 +52,7 @@ val d3 : id -> params -> 'a pipeline -> 'b pipeline -> 'c pipeline -> (env -> 'a
 
 val select : 'a dir -> path -> 'b file
 val merge : 'a pipeline list -> 'a list pipeline
+val adapter : 'a pipeline -> ('a -> 'b) -> 'b pipeline
 
 type base_directory = private string
 val base_directory : string -> base_directory
