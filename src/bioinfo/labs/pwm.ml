@@ -46,6 +46,12 @@ let best_score_distribution_of_fasta pwm fa =
         score_distribution
       ))
 
+let const ~id pwm = 
+  v0 
+    "guizmin.bioinfo.labs.const[r1]" 
+    [ Param.string "id" id ] 
+    (fun _ -> pwm)
+
 let markov0_control_set fa : Guizmin_bioinfo.Fasta.file = f1
   "guizmin.bioinfo.labs.markov0_control_set[r1]" []
   fa
@@ -59,3 +65,10 @@ let markov0_control_set fa : Guizmin_bioinfo.Fasta.file = f1
         )
       )
   )
+
+
+
+
+
+
+
