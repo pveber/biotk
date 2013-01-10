@@ -1,4 +1,5 @@
 open Core.Std
+open GzmUtils
 
 type ('a, 'b) assoc = ('a * 'b) list
 let assoc l ~f = List.map ~f:(fun x -> x, f x) l
@@ -115,6 +116,24 @@ struct
         |! peaks
       )
     )
+
+    let macs_peaks_with_control ~pvalue =
+      List.cartesian_product chIP_samples input_controls
+      |! List.filter ~f:(fun (chIP,input) -> 
+           chIP.sample_condition = input.sample_condition
+           && chIP.sample_model = input.sample_model
+         )
+      |! List.map ~f:(fun (chIP, input) ->
+           (chIP, input), 
+           Macs.With_control.(
+             run 
+               ~genome:(model chIP.sample_model).model_genome
+               ~control:(bam_aligned_reads & input)
+               ~pvalue
+               (bam_aligned_reads & chIP)
+             |! peaks
+           )
+         )
   end
 
   let samples =
@@ -122,16 +141,34 @@ struct
       TF_ChIP_seq.samples
     ]
 
-  let repo = List.concat Guizmin_repo.([
+  let macs_peaks_without_control_items pvalue =
     List.map 
-      (TF_ChIP_seq.macs_peaks_wo_control ~pvalue:1e-3)
+      (TF_ChIP_seq.macs_peaks_wo_control ~pvalue)
       ~f:(fun (sample, peaks) ->
-            item 
-              ["chIP-seq" ; "peaks" ; "macs" ; "wo_control" ; sample.sample_id ^ ".tsv" ] 
-              peaks) ;
-    
+            Guizmin_repo.item 
+              ["chIP-seq" ; "peaks" ; "macs" ; "wo_control" ; sp "pvalue=%.0e" pvalue ; sample.sample_id ^ ".tsv" ] 
+              peaks)
+
+  let macs_peaks_with_control_items pvalue =
+    List.map 
+      (TF_ChIP_seq.macs_peaks_with_control ~pvalue)
+      ~f:(fun ((chIP,input), peaks) ->
+            Guizmin_repo.item 
+              ["chIP-seq" ; "peaks" ; "macs" ; "with_control" ; sp "pvalue=%.0e" pvalue ; sp "%s.%s.tsv" chIP.sample_id input.sample_id ] 
+              peaks)
+
+
+  let repo = List.concat Guizmin_repo.([
+    macs_peaks_without_control_items 1e-3 ;
+    macs_peaks_without_control_items 1e-6 ;
+    macs_peaks_with_control_items 1e-3 ;
+    macs_peaks_with_control_items 1e-6 ;
   ])
 end
+
+
+
+
 
 
 

@@ -64,6 +64,19 @@ Library guizmin_bioinfo
   XMETARequires:	guizmin, guizmin.tools, guizmin.syntax,biocaml
   XMETADescription:	Bioinformatics components for guizmin
 
+Library guizmin_bioinfo_labs
+  Path:			src/bioinfo/labs
+  Pack:			true
+  Modules:		Pwm
+  FindlibParent:	guizmin_bioinfo
+  FindlibName:		labs
+  BuildDepends:		batteries, biocaml, camlp4, core, format.syntax,
+                        fungen, gsl,
+                        guizmin, guizmin.syntax, guizmin.tools, guizmin.bioinfo,
+                        sexplib.syntax, tabular.syntax, threads
+  XMETARequires:	guizmin, guizmin.tools, guizmin.syntax,biocaml, guizmin.bioinfo
+  XMETADescription:	Experimental bioinformatics components for guizmin
+
 
 Executable test_yeast
   Path:         src/examples
