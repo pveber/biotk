@@ -53,7 +53,7 @@ let const ~id pwm =
     (fun _ -> pwm)
 
 let markov0_control_set fa : Guizmin_bioinfo.Fasta.file = f1
-  "guizmin.bioinfo.labs.markov0_control_set[r1]" []
+  "guizmin.bioinfo.labs.pwm.markov0_control_set[r1]" []
   fa
   (
     fun _ fa path ->
@@ -65,6 +65,56 @@ let markov0_control_set fa : Guizmin_bioinfo.Fasta.file = f1
         )
       )
   )
+
+let suppress_superposed_hits l =
+  let l = List.sort compare l in
+  let rec aux = function
+  | [] -> []
+  | h :: [] as l -> l
+  | ((st1,ed1,_,s1) as h1) :: ((st2,ed2,_,s2) as h2) :: t ->
+      if st1 = st2 && ed1 = ed2 then
+        let h = if s1 > s2 then h1 else h2 in
+        aux (h :: t)
+      else
+        h1 :: (aux (h2 :: t))
+  in
+  aux l
+
+let motif_scan pwm theta seq =
+  let reshape sense pwm hits =
+    let n = Array.length (pwm : Biocaml_pwm.t :> 'a array) in
+    List.map (fun (pos, score) -> pos, pos + n, sense, score) hits
+  in
+  Biocaml_pwm.(
+    List.append
+      (reshape `sense     pwm (fast_scan pwm                      seq theta))
+      (reshape `antisense pwm (fast_scan (reverse_complement pwm) seq theta))
+  )
+  |! suppress_superposed_hits
+
+
+let prediction ?(level = 0.1) pwm fa =
+  v3
+    "guizmin.bioinfo.labs.pwm.prediction[r1]"
+    [ Param.float "level" level ]
+    pwm fa (best_score_distribution_of_fasta pwm (markov0_control_set fa))
+    (fun env pwm fa score_dist ->
+       let theta = quantile score_dist level in
+       Fasta.with_contents fa ~f:(fun seqs ->
+         seqs /@ (fun (_,seq) -> motif_scan pwm theta seq)
+         |! Biocaml_stream.to_list
+       ))
+
+
+
+
+
+
+
+
+
+
+
 
 
 

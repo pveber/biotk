@@ -111,6 +111,12 @@ let v2 id params x y f = {
   kind = Val2 (x, y, f)
 }
 
+let v3 id params x y z f = {
+  id ; params ;
+  hash = make_hash id params `value [ x.hash ; y.hash ; z.hash ] ;
+  kind = Val3 (x, y, z, f)
+}
+
 let file path = 
   let id = "guizmin.file.input" in
   let params = [ Param.string "path" path ] in 
