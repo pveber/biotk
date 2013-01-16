@@ -437,15 +437,15 @@ let build : type a. ?base:string -> ?np:int -> a pipeline -> unit = fun ?(base =
   with_null_env base ~f:(fun null ->
     let update = { f = (
       fun () x -> 
-        try
+        (* try *)
           if not (built ~base:null.base x)
           then with_env ~np base x ~f:(exec x)
-        with e -> raise (
-          Error (
-            sp "failed to eval pipeline with hash %s" x.hash,
-            e
-          )
-        )
+        (* with e -> raise ( *)
+        (*   (\* Error ( *\) *)
+        (*   (\*   sp "failed to eval pipeline with hash %s" x.hash, *\) *)
+        (*   (\*   e *\) *)
+        (*   (\* ) *\) *)
+        (* ) *)
     ) } 
     in 
     fold update () x

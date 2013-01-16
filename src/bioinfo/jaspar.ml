@@ -2,6 +2,8 @@ open Biocaml
 open Guizmin
 open GzmUtils
 
+module J = Biocaml_jaspar
+
 type db
 
 let mirror = d0
@@ -26,4 +28,30 @@ let core_vertebrates = v1
   mirror
   (fun env (Dir mirror) ->
     Biocaml.Jaspar.load (sp "%s/jaspar_CORE/non_redundant/by_tax_group/vertebrates/FlatFileDir/" mirror))
+
+let cne = v1
+  "guizmin.bioinfo.jaspar.cne" []
+  mirror
+  (fun env (Dir mirror) ->
+    List.filter
+      (fun m -> m.J.collection = J.CNE)
+      (J.load (sp "%s/all_data/FlatFileDir" mirror)))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

@@ -74,7 +74,7 @@ Library guizmin_bioinfo_labs
                         fungen, gsl,
                         guizmin, guizmin.syntax, guizmin.tools, guizmin.bioinfo,
                         sexplib.syntax, tabular.syntax, threads
-  XMETARequires:	guizmin, guizmin.tools, guizmin.syntax,biocaml, guizmin.bioinfo
+  XMETARequires:	guizmin, guizmin.tools, guizmin.syntax,biocaml, guizmin.bioinfo, fungen
   XMETADescription:	Experimental bioinformatics components for guizmin
 
 

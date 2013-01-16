@@ -5,6 +5,7 @@ type wig
 
 type genome = [ `mm8 | `mm9 | `hg18 | `hg19 | `sacCer2 ]
 
+val string_of_genome : genome -> string
 val chromosome_sequences : genome -> [`ucsc_chromosome_sequences] dir
 val genome_sequence : [< genome] -> Fasta.file
 val genome_2bit_sequence : genome -> [`ucsc_2bit] file
