@@ -231,6 +231,7 @@ let log_dir base = base ^ "/logs"
 let path : type s. base:string -> s pipeline -> string = fun ~base x ->
   match x.kind with
   | Merge _ -> invalid_arg "Guizmin.path: a merge pipeline is not physically saved"
+  | Adapter _ -> invalid_arg "Guizmin.path: an adapter pipeline is not physically saved"
   | Select (subpath, dir) -> 
       cache_dir base ^ "/" ^ dir.hash ^ "/" ^ subpath
   | File_input path -> path
@@ -320,14 +321,35 @@ let rec fold : type a. 's update -> 's -> a pipeline -> 's = fun f init x ->
   | Dir1 (y,_) -> f.f (fold f init y) x
   | Dir2 (y,z,_) -> f.f (fold f (fold f init y) z) x
   | Dir3 (y,z,w,_) -> f.f (fold f (fold f (fold f init y) z) w) x
-  | Merge xs -> f.f (List.fold_left f.f init xs) x
+  | Merge xs -> f.f (List.fold_left (fold f) init xs) x
   | Select (_,dir) -> f.f (fold f init dir) x
   | Adapter (y,g) -> f.f (fold f init y) x
+
+let fold_deps : type a. 's update -> 's -> a pipeline -> 's = fun f init x -> 
+  match x.kind with 
+  | Val0 _ -> init
+  | Val1 (y,_) -> f.f init y
+  | Val2 (y,z,_) -> f.f (f.f init y) z
+  | Val3 (y,z,w,_) -> f.f (f.f (f.f init y) z) w
+  | File_input _ -> init
+  | File0 _ -> init
+  | File1 (y,_) ->  f.f init y
+  | File2 (y,z,_) -> f.f (f.f init y) z
+  | File3 (y,z,w,_) -> f.f (f.f (f.f init y) z) w
+  | Dir_input _ -> init
+  | Dir0 _ -> init
+  | Dir1 (y,_) -> f.f init y
+  | Dir2 (y,z,_) -> f.f (f.f init y) z
+  | Dir3 (y,z,w,_) -> f.f (f.f (f.f init y) z) w
+  | Merge xs -> List.fold_left f.f init xs
+  | Select (_,dir) -> f.f init dir
+  | Adapter (y,g) -> f.f init y
 
 let rec built : type a. base:string -> a pipeline -> bool = fun ~base x ->
   match x.kind with
   | Merge xs -> List.for_all (built ~base) xs
   | Select (_,dir) -> built ~base dir
+  | Adapter (y,_) -> built ~base y
   | _ -> Sys.file_exists (path ~base x)
 
 let rec unsafe_eval : type a. base:string -> a pipeline -> a = fun ~base x ->
@@ -410,8 +432,8 @@ let exec : type a. a pipeline -> env -> unit = fun x env ->
         failwith msg
       )
 
-  | Merge xs -> ()
-  | Adapter _ -> ()
+  | Merge xs -> raise (Invalid_argument "GzmCore.exec: merge")
+  | Adapter _ -> raise (Invalid_argument "GzmCore.exec: adapter")
 
 type base_directory = string
 
@@ -437,15 +459,18 @@ let build : type a. ?base:string -> ?np:int -> a pipeline -> unit = fun ?(base =
   with_null_env base ~f:(fun null ->
     let update = { f = (
       fun () x -> 
-        (* try *)
-          if not (built ~base:null.base x)
-          then with_env ~np base x ~f:(exec x)
-        (* with e -> raise ( *)
-        (*   (\* Error ( *\) *)
-        (*   (\*   sp "failed to eval pipeline with hash %s" x.hash, *\) *)
-        (*   (\*   e *\) *)
-        (*   (\* ) *\) *)
-        (* ) *)
+        if not (built ~base:null.base x)
+        then (
+          with_env ~np base x ~f:(fun env ->
+            try exec x env
+            with e -> (
+              env.error "failed to eval pipeline with hash %s and id %s" x.hash x.id ;
+              raise e
+            )
+          )
+        )
+        else (
+        )
     ) } 
     in 
     fold update () x
