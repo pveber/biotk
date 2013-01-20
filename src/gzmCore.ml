@@ -68,6 +68,8 @@ and _ kind =
 
   | Adapter : 'a pipeline * ('a -> 'b) -> 'b kind
 
+  | Map : 'a list pipeline * ('a pipeline -> 'b pipeline) -> 'b list kind
+
 type 'a file = 'a file_path pipeline
 type 'a dir = 'a dir_path pipeline
 
@@ -202,6 +204,16 @@ let adapter x f =
     kind = Adapter (x,f)
   }
 
+let map x f =
+  let id = "guizmin.map" in
+  let fake = v0 "guizmin.internal_fake" [] (fun _ -> assert false) in
+  let fake_image = f fake in
+  {
+    id ; params = [] ;
+    hash = make_hash id [] `map [ x.hash ; fake_image.hash ] ;
+    kind = Map (x, f)
+  }
+
 let load_value path = 
   let ic = open_in path in 
   let r = input_value ic in
@@ -229,6 +241,7 @@ let stdout_dir base = base ^ "/stdout"
 let log_dir base = base ^ "/logs"
 
 let path : type s. base:string -> s pipeline -> string = fun ~base x ->
+  let cache_path = cache_dir base ^ "/" ^ x.hash in
   match x.kind with
   | Merge _ -> invalid_arg "Guizmin.path: a merge pipeline is not physically saved"
   | Adapter _ -> invalid_arg "Guizmin.path: an adapter pipeline is not physically saved"
@@ -236,8 +249,16 @@ let path : type s. base:string -> s pipeline -> string = fun ~base x ->
       cache_dir base ^ "/" ^ dir.hash ^ "/" ^ subpath
   | File_input path -> path
   | Dir_input path -> path
-  | _ -> 
-      cache_dir base ^ "/" ^ x.hash
+  | Val0 _ | Val1 _ | Val2 _ | Val3 _ -> cache_path
+  | File0 _ -> cache_path
+  | File1 _ -> cache_path
+  | File2 _ -> cache_path
+  | File3 _ -> cache_path
+  | Dir0 _ -> cache_path
+  | Dir1 _ -> cache_path
+  | Dir2 _ -> cache_path
+  | Dir3 _ -> cache_path
+  | Map (x,_) -> cache_path
 
 let tmp_path ~base x = 
   tmp_dir base ^ "/" ^ (x.hash)
@@ -323,7 +344,8 @@ let rec fold : type a. 's update -> 's -> a pipeline -> 's = fun f init x ->
   | Dir3 (y,z,w,_) -> f.f (fold f (fold f (fold f init y) z) w) x
   | Merge xs -> f.f (List.fold_left (fold f) init xs) x
   | Select (_,dir) -> f.f (fold f init dir) x
-  | Adapter (y,g) -> f.f (fold f init y) x
+  | Adapter (y,_) -> f.f (fold f init y) x
+  | Map (y,_) -> f.f (fold f init y) x
 
 let fold_deps : type a. 's update -> 's -> a pipeline -> 's = fun f init x -> 
   match x.kind with 
@@ -343,18 +365,32 @@ let fold_deps : type a. 's update -> 's -> a pipeline -> 's = fun f init x ->
   | Dir3 (y,z,w,_) -> f.f (f.f (f.f init y) z) w
   | Merge xs -> List.fold_left f.f init xs
   | Select (_,dir) -> f.f init dir
-  | Adapter (y,g) -> f.f init y
+  | Adapter (y,_) -> f.f init y
+  | Map (y,_) -> f.f init y
 
 let rec built : type a. base:string -> a pipeline -> bool = fun ~base x ->
   match x.kind with
   | Merge xs -> List.for_all (built ~base) xs
   | Select (_,dir) -> built ~base dir
   | Adapter (y,_) -> built ~base y
-  | _ -> Sys.file_exists (path ~base x)
+  | Map _ -> Sys.file_exists (path ~base x)
+  | Val0 _ | Val1 _ | Val2 _ | Val3 _ -> 
+      Sys.file_exists (path ~base x)
+  | File_input _ -> Sys.file_exists (path ~base x)
+  | File0 _ -> Sys.file_exists (path ~base x)
+  | File1 _ -> Sys.file_exists (path ~base x)
+  | File2 _ -> Sys.file_exists (path ~base x)
+  | File3 _ -> Sys.file_exists (path ~base x)
+  | Dir_input _ -> Sys.file_exists (path ~base x)
+  | Dir0 _ -> Sys.file_exists (path ~base x)
+  | Dir1 _ -> Sys.file_exists (path ~base x)
+  | Dir2 _ -> Sys.file_exists (path ~base x)
+  | Dir3 _ -> Sys.file_exists (path ~base x)
 
 let rec unsafe_eval : type a. base:string -> a pipeline -> a = fun ~base x ->
   match x.kind with
   | Val0 _ | Val1 _ | Val2 _ | Val3 _ -> load_value (path base x)
+  | Map _ -> load_value (path base x)
   | File_input path -> File path
   | File0 _ -> File (path base x) 
   | File1 _ -> File (path base x) 
@@ -434,6 +470,8 @@ let exec : type a. a pipeline -> env -> unit = fun x env ->
 
   | Merge xs -> raise (Invalid_argument "GzmCore.exec: merge")
   | Adapter _ -> raise (Invalid_argument "GzmCore.exec: adapter")
+  | Map _ -> raise (Invalid_argument "GzmCore.exec: map")
+      
 
 type base_directory = string
 
@@ -453,38 +491,48 @@ let base_directory base =
 let default_base_directory () =
   base_directory (Sys.getcwd () ^ "/_guizmin")
 
+let list_nth l n =
+  v1 
+    "guizmin.list_nth"
+    [ Param.int "n" n ]
+    l
+    (fun _ l -> List.nth l n)
+
 exception Error of string * exn
+
+let rec build_aux : type a. string -> int -> env -> a pipeline -> unit = fun base np null x ->
+  let update = { f = (
+    fun (type s) () (x : s pipeline) -> 
+      if not (built ~base:null.base x)
+      then (
+        match x.kind with
+        | Map (y, f) ->
+            let n = List.length (unsafe_eval ~base:null.base y) in
+            let args = Core.Std.List.init n ~f:(list_nth y) in
+            let r = merge (List.map f args) in
+            build_aux base np null r ;
+            save_value (unsafe_eval ~base:null.base r) (path ~base x)
+        | _ ->
+            with_env ~np base x ~f:(fun env ->
+              try exec x env
+              with e -> (
+                env.error "failed to eval pipeline with hash %s and id %s" x.hash x.id ;
+                raise e
+              )
+            )
+      )
+  ) }
+  in 
+  fold update () x
 
 let build : type a. ?base:string -> ?np:int -> a pipeline -> unit = fun ?(base = Sys.getcwd ()) ?(np = 1) x ->
   with_null_env base ~f:(fun null ->
-    let update = { f = (
-      fun () x -> 
-        if not (built ~base:null.base x)
-        then (
-          with_env ~np base x ~f:(fun env ->
-            try exec x env
-            with e -> (
-              env.error "failed to eval pipeline with hash %s and id %s" x.hash x.id ;
-              raise e
-            )
-          )
-        )
-        else (
-        )
-    ) } 
-    in 
-    fold update () x
+    build_aux base np null x
   )
 
 let eval : type a. ?base:string -> ?np:int -> a pipeline -> a = fun ?(base = Sys.getcwd ()) ?(np = 1) x ->
   build ~base ~np x ;
   with_null_env base ~f:(fun null -> unsafe_eval ~base:null.base x)
-
-
-
-
-
-
 
 
 
