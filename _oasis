@@ -67,12 +67,13 @@ Library guizmin_bioinfo
 Library guizmin_bioinfo_labs
   Path:			src/bioinfo/labs
   Pack:			true
-  Modules:		Pwm
+  Modules:		Binding_region_finder, Mlea, Pwm
   FindlibParent:	guizmin_bioinfo
   FindlibName:		labs
   BuildDepends:		batteries, biocaml, camlp4, core, format.syntax,
                         fungen, gsl,
                         guizmin, guizmin.syntax, guizmin.tools, guizmin.bioinfo,
+                        R.graphics, R.grDevices, R.stats, R.syntax,
                         sexplib.syntax, tabular.syntax, threads
   XMETARequires:	guizmin, guizmin.tools, guizmin.syntax,biocaml, guizmin.bioinfo, fungen
   XMETADescription:	Experimental bioinformatics components for guizmin

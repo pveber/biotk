@@ -20,6 +20,17 @@ val fasta_of_bed : genome -> 'a Bed.named_file -> Fasta.file
 
 val wig_of_bigWig : bigWig file -> wig file
 
+module Chrom_info : sig
+  type tabular data = {
+    chrom : string ;
+    chrom_length : int
+  }
+  type format
+  type file = format Guizmin_table.file
+end
+val chrom_info : genome -> Chrom_info.file
+val bedClip : Chrom_info.file -> 'a Bed.file -> 'a Bed.file
+
 module Lift_over : sig
   open MBSchema
 

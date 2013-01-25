@@ -22,6 +22,16 @@ let gunzip x =
 	sh "gunzip -c %s > %s" f path
     )
 
+let unzip x =
+  d1
+    "guizmin.unix.unzip[r1]"
+    []
+    x
+    Shell.(
+      fun env (File f) path ->
+	env.sh "unzip -d %s %s" path f
+    )
+
 let crlf2lf x =
   f1
     "guizmin.unix.crlf2lf[r2]"

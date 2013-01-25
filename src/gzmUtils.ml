@@ -42,12 +42,11 @@ let sh
     fmt = 
   let shell s =
     debug "sh call:\n\n%s\n\n" s ;
-    let prog, args = cmd_of_string s in
     try 
       Shell.call
         ~stdout:(Shell.to_fd (Unix.descr_of_out_channel stdout))
         ~stderr:(Shell.to_fd (Unix.descr_of_out_channel stderr))
-        [ Shell.cmd prog args ]
+        [ Shell.cmd "sh" [ "-c" ; s ] ]
     with Shell.Subprocess_error _ -> (
       error "sh call exited with non-zero code:\n\n%s\n\n" s ;
       Core.Std.failwithf "shell call failed:\n%s\n" s ()
@@ -57,8 +56,13 @@ let sh
 
 
 let bash ?(debug = false) ?(stdout = stdout) ?(stderr = stderr) cmds = 
-  let open Shell in
-  call [ cmd "bash" [ "-c" ; String.concat " && " cmds ] ]
+  Shell.call
+    ~stdout:(Shell.to_fd (Unix.descr_of_out_channel stdout))
+    ~stderr:(Shell.to_fd (Unix.descr_of_out_channel stderr))
+    [ Shell.cmd "bash" [ "-c" ; String.concat " && " cmds ] ]
+
+let pipefail cmd1 cmd2 = 
+  Printf.sprintf "exec 3>&1; s=$(exec 4>&1 >&3; { %s; echo $? >&4; } | %s) && exit $s" cmd1 cmd2;;
 
 let load fn = 
   let ic = open_in fn in

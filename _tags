@@ -1,7 +1,8 @@
 # OASIS_START
 # OASIS_STOP
 <src/syntax/*>: syntax_camlp4o, pkg_camlp4
-<src/bioinfo/*>: syntax_camlp4o, pa_guizmin, pkg_format.syntax
+<src/bioinfo/*>: syntax_camlp4o, pa_guizmin
+<src/bioinfo/labs/*>: syntax_camlp4o, pa_guizmin
 <src/tools/*>: syntax_camlp4o, pa_guizmin
 <src/examples/test_yeast.*>: syntax_camlp4o, pa_guizmin
 <src/examples/ucsc_lift_over.ml>: syntax_camlp4o

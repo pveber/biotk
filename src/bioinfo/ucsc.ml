@@ -74,6 +74,40 @@ let fasta_of_bed org bed =
     (fun env (File seq2b) (File bed) path ->
       sh "twoBitToFa -bed=%s %s %s" bed seq2b path)
 
+module Chrom_info = struct
+  type tabular data = {
+    chrom : string ;
+    chrom_length : int
+  }
+  type format
+  type file = format Guizmin_table.file
+end
+
+let chrom_info_cmd1 org = Printf.sprintf "\
+mysql --user=genome --host=genome-mysql.cse.ucsc.edu -A -N \
+-e 'select chrom,size from chromInfo;' %s" (string_of_genome org)
+let chrom_info_cmd2 path = Printf.sprintf "\
+gawk -F'\t' '{printf \"%%s\\t%%s\\n\", $1,$2}' >> %s" path
+
+let chrom_info org =
+  f0
+    "guizmin.bioinfo.ucsc.chrom_info[r1]"
+    [ Param.string "org" (string_of_genome org) ]
+    (fun env path ->
+       let cmd =
+         pipefail
+           (chrom_info_cmd1 org)
+           (chrom_info_cmd2 path)
+       in
+       ignore (Sys.command cmd))
+
+let bedClip chrom_info bed =
+  f2
+    "guizmin.bioinfo.ucsc.bedClip[r1]" []
+    chrom_info bed
+    (fun env (File chrom_info) (File bed) path ->
+       env.sh "bedClip -verbose=2 %s %s %s" bed chrom_info path)
+
 let wig_of_bigWig bigWig = 
   f1
     "guizmin.bioinfo.ucsc.wig_of_bigWig[r1]" []

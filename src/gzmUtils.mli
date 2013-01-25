@@ -15,11 +15,21 @@ val sh :
 
 val bash : ?debug:bool -> ?stdout:out_channel -> ?stderr:out_channel -> string list -> unit
 
+(** [pipefail cmd1 cmd2] does a special pipe of commands [cmd1] and [cmd2]
+    whose exit code is non null as soon as that of any of the two commands 
+    is. 
+*)
+val pipefail : string -> string -> string
+
 val save : string -> 'a -> unit
 val load : string -> 'a
 
 val lines_of_file : string -> string list
 val lines_to_file : string -> string Stream.t -> unit
+
+
+
+
 
 
 
