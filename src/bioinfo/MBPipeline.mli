@@ -44,6 +44,15 @@ sig
   end
 
   val repo : Guizmin_repo.item list
+
+  module Config_file_check : sig
+    type error = [
+    | `duplicate_condition_id of string
+    | `duplicate_sample_id of string
+    ]
+    val errors : error list
+    val error_msg : string list
+  end
 end
 
 
