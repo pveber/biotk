@@ -5,11 +5,9 @@ let wget url =
   f0
     "guizmin.unix.wget[r1]"
     [Param.string "url" url]
-    Shell.(
+    (
       fun env path ->
-        call [
-          cmd "wget" [ "-O" ; path ; url ]
-        ]
+        env.sh "wget -O %s %s" path url
     )
 
 let gunzip x =
@@ -17,9 +15,9 @@ let gunzip x =
     "guizmin.unix.gunzip[r1]"
     []
     x
-    Shell.(
+    (
       fun env (File f) path ->
-	sh "gunzip -c %s > %s" f path
+	env.sh "gunzip -c %s > %s" f path
     )
 
 let unzip x =

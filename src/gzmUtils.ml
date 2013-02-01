@@ -54,6 +54,27 @@ let sh
   in
   Printf.ksprintf shell fmt
 
+let shout 
+    ?(debug : 'a logger = null_logger) 
+    ?(error : 'a logger = null_logger) 
+    ?(stderr = stderr)
+    fmt = 
+  let shell s =
+    debug "sh call:\n\n%s\n\n" s ;
+    let buf = Buffer.create 1024 in
+    try 
+      Shell.call
+        ~stdout:(Shell.to_buffer buf)
+        ~stderr:(Shell.to_fd (Unix.descr_of_out_channel stderr))
+        [ Shell.cmd "sh" [ "-c" ; s ] ] ;
+      Buffer.contents buf
+    with Shell.Subprocess_error _ -> (
+      error "sh call exited with non-zero code:\n\n%s\n\n" s ;
+      Core.Std.failwithf "shell call failed:\n%s\n" s ()
+    )
+  in
+  Printf.ksprintf shell fmt
+
 
 let bash ?(debug = false) ?(stdout = stdout) ?(stderr = stderr) cmds = 
   Shell.call

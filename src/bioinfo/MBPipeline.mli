@@ -34,6 +34,15 @@ sig
     val macs_peaks_with_control : pvalue:float -> (sample * sample, Macs.With_control.Peak.file) assoc
   end
 
+  module RNA_seq : sig
+    val conditions : condition list
+    val samples : sample list
+    val samples_by_condition : (condition, sample list) assoc
+
+    val fastq_files : (sample, [`fastq] Guizmin.file list) assoc
+    val aligned_reads : (sample, Bam.file) assoc
+  end
+
   val repo : Guizmin_repo.item list
 end
 

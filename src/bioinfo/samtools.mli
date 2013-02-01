@@ -16,7 +16,7 @@
 open Guizmin
 
 val indexed_bam_of_sam : Sam.file -> [ `indexed_bam ] dir
-val indexed_bam_of_bam : [`BAM] file -> [ `indexed_bam ] dir
+val indexed_bam_of_bam : Bam.file -> [ `indexed_bam ] dir
 val bam_of_indexed_bam : [ `indexed_bam ] dir -> Bam.file
 val bam_of_sam : Sam.file -> Bam.file
 val sam_of_bam : Bam.file -> Sam.file

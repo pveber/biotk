@@ -137,7 +137,7 @@ module ConfigFile = struct
   and sample_type =
     | ChIP_seq_input
     | TF_ChIP_seq of string
-    | RNA_seq of string
+    | RNA_seq
   and model = {
     model_id : string ;
     model_genome : genome ;

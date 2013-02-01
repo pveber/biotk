@@ -56,8 +56,13 @@ struct
 
     let conditions = extract' (
       function
-      | Sample ({ sample_condition = c }) -> Some c
-      | _ -> None
+      | Sample ({ sample_condition = c ; 
+                  sample_type = TF_ChIP_seq _ }) 
+      | Sample ({ sample_condition = c ; 
+                  sample_type = ChIP_seq_input }) ->
+          Some c
+      | _ -> 
+          None
     )
 
     let chIP_samples = extract (
@@ -136,9 +141,55 @@ struct
          )
   end
 
+  module RNA_seq = struct
+
+    let conditions = extract' (
+      function
+      | Sample ({ sample_condition = c ; 
+                  sample_type = ChIP_seq_input }) ->
+          Some c
+      | _ -> 
+          None
+    )
+
+    let samples = extract (
+      function
+      | Sample ({ sample_type = RNA_seq } as sample) -> 
+          Some sample
+      | _ -> None
+    )
+
+    let samples_by_condition =
+      extract (
+        function
+        | Sample ({ sample_type = RNA_seq ; sample_condition } as sample) -> 
+            Some (sample_condition, sample)
+        | _ -> None
+      )
+      |! rel_of_pairs
+
+    let fastq_files : (sample, [`fastq] Guizmin.file list) assoc = 
+      assoc samples (
+        fun s -> List.map s.sample_files ~f:Guizmin.file
+      )
+
+    let tophat_outputs =
+      assoc samples (
+        fun s -> 
+          let genome = (model s.sample_model).model_genome in
+          Tophat.run Genome.(bowtie_index & genome) (fastq_files & s)         
+      )
+
+    let aligned_reads =
+      assoc samples (
+        fun s -> Tophat.aligned_reads (tophat_outputs & s)
+      )
+  end
+
   let samples =
     List.concat [
-      TF_ChIP_seq.samples
+      TF_ChIP_seq.samples ;
+      RNA_seq.samples ;
     ]
 
   let macs_peaks_without_control_items pvalue =
@@ -157,12 +208,20 @@ struct
               ["chIP-seq" ; "peaks" ; "macs" ; "with_control" ; sp "pvalue=%.0e" pvalue ; sp "%s.%s.tsv" chIP.sample_id input.sample_id ] 
               peaks)
 
+  let rnaseq_bam_bai_items =
+    List.map RNA_seq.aligned_reads ~f:(
+      fun (sample, reads) ->
+        Guizmin_repo.item 
+          [ "RNA-seq" ; "signal" ; sample.sample_id ]
+          (Samtools.indexed_bam_of_bam reads)
+    )
 
   let repo = List.concat Guizmin_repo.([
     macs_peaks_without_control_items 1e-3 ;
     macs_peaks_without_control_items 1e-6 ;
     macs_peaks_with_control_items 1e-3 ;
     macs_peaks_with_control_items 1e-6 ;
+    rnaseq_bam_bai_items ;
   ])
 end
 
