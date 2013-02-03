@@ -8,6 +8,12 @@ let ( & ) l x = List.Assoc.find_exn l x
 
 type genome = MBSchema.ConfigFile.genome
 
+let fastq_of_path s : [`fastq] Guizmin.file =
+  if Filename.check_suffix s ".fastq.gz" then
+    Guizmin_unix.gunzip (Guizmin.file s)
+  else
+    Guizmin.file s
+
 module Make(P : sig 
                   val config_file : MBSchema.ConfigFile.t 
                 end) =
@@ -101,7 +107,7 @@ struct
 
     let fastq_files : (sample, [`fastq] Guizmin.file list) assoc = 
       assoc samples (
-        fun s -> List.map s.sample_files ~f:Guizmin.file
+        fun s -> List.map s.sample_files ~f:fastq_of_path
       )
 
     let aligned_reads = assoc samples (
@@ -170,7 +176,7 @@ struct
 
     let fastq_files : (sample, [`fastq] Guizmin.file list) assoc = 
       assoc samples (
-        fun s -> List.map s.sample_files ~f:Guizmin.file
+        fun s -> List.map s.sample_files ~f:fastq_of_path
       )
 
     let tophat_outputs =
