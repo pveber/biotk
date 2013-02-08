@@ -21,6 +21,7 @@ type env = {
   debug : 'a. ('a,unit,string,unit) format4 -> 'a ;
   info  : 'a. ('a,unit,string,unit) format4 -> 'a ;
   error : 'a. ('a,unit,string,unit) format4 -> 'a ;
+  with_temp_file : 'a. (string -> 'a) -> 'a ;
   np : int ;
   mem : int ; (** in MB *)
 }

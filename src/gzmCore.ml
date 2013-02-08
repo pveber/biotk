@@ -34,6 +34,7 @@ type env = {
   debug : 'a. ('a,unit,string,unit) format4 -> 'a ;
   info  : 'a. ('a,unit,string,unit) format4 -> 'a ;
   error : 'a. ('a,unit,string,unit) format4 -> 'a ;
+  with_temp_file : 'a. (string -> 'a) -> 'a ;
   np : int ;
   mem : int ; (** in MB *)
 }
@@ -277,7 +278,8 @@ let with_null_env base ~f =
       info = log ;
       error = log ;
       sh = log ;
-      bash = ignore
+      bash = ignore ;
+      with_temp_file = fun f -> GzmUtils.with_temp_file ~in_dir:(tmp_dir base) ~f
   }
   in
   let r = f env in
@@ -318,6 +320,7 @@ let with_env ?(np = 1) ?(mem = 100) base x ~f =
     debug ; info ; error ; 
     sh = (fun fmt -> sh ~debug ~error ~stdout ~stderr fmt) ; 
     bash = bash ~debug ~error ~stdout ~stderr ;
+    with_temp_file = fun f -> GzmUtils.with_temp_file ~in_dir:(tmp_dir base) ~f
   }
   in
   let r = f env in

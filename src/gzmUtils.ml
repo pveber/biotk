@@ -109,9 +109,8 @@ let lines_of_file path =
   (*     fun ic -> to_list (lines_of_channel ic) *)
   (*   ) *)
 
-
-
-
+let with_temp_file ~in_dir ~f =
+  Batteries.with_dispose ~dispose:Sys.remove f (Core.Std.Filename.temp_file ~in_dir "gzm" "")
 
 
 
