@@ -54,7 +54,18 @@ struct
   end
 
   module Transcriptome = struct
-    let gtf = assert false
+    let release_of_genome = function
+    | `mm9 -> 63
+
+    let species_of_genome = function
+    | `mm9 -> `mus_musculus
+
+    let gtf = assoc genomes ~f:(
+      fun g -> 
+        Ensembl.gtf 
+          ~release:(release_of_genome g)
+          ~species:(species_of_genome g)
+    )
   end
 
   module TF_ChIP_seq = struct
@@ -194,6 +205,13 @@ struct
       assoc samples (
         fun s -> Tophat.aligned_reads (tophat_outputs & s)
       )
+
+    let counts =
+      assoc samples (
+        fun s -> 
+          let g = (model s.sample_model).model_genome in
+          Htseq.count (Samtools.sam_of_bam (aligned_reads & s)) (Transcriptome.gtf & g)
+      )
   end
 
   let samples =
@@ -224,6 +242,14 @@ struct
         Guizmin_repo.item 
           [ "RNA-seq" ; "signal" ; sample.sample_id ]
           (Samtools.indexed_bam_of_bam reads)
+    )
+
+  let rnaseq_count_items =
+    List.map RNA_seq.counts ~f:(
+      fun (sample, counts) ->
+        Guizmin_repo.item 
+          [ "RNA-seq" ; "counts" ; sample.sample_id ]
+          counts
     )
 
   let repo = List.concat Guizmin_repo.([

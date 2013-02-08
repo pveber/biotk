@@ -9,4 +9,4 @@ module Output : sig
   type file = format Guizmin_table.file
 end
 
-val count : ?feature:string -> Sam.file -> [`gtf] file -> Output.file
+val count : ?feature:string -> Sam.file -> Gtf.file -> Output.file

@@ -45,6 +45,7 @@ sig
 
     val fastq_files : (sample, [`fastq] Guizmin.file list) assoc
     val aligned_reads : (sample, Bam.file) assoc
+    val counts : (sample, Htseq.Output.file) assoc
   end
 
   val repo : Guizmin_repo.item list
