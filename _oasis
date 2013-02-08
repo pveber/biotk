@@ -52,7 +52,8 @@ Library guizmin_tools
 Library guizmin_bioinfo
   Path:			src/bioinfo
   Pack:			true
-  Modules:		Bam, Bed, Bowtie, Fasta, Gcf, Gtf,
+  Modules:		Bam, Bed, Bowtie, Ensembl, Fasta, 
+                        Gcf, Gtf,
                         Htseq, Jaspar, Macs, MBPipeline, 
                         MBSchema, Sam, Samtools, Sra, Tophat, 
                         Ucsc
