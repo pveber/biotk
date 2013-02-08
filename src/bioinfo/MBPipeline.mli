@@ -16,6 +16,10 @@ sig
     val bowtie_index : (genome, Bowtie.index dir) assoc
   end
 
+  module Transcriptome : sig
+    val gtf : (genome, Gtf.file) assoc
+  end
+
   module TF_ChIP_seq : sig
     val factors : string list
 

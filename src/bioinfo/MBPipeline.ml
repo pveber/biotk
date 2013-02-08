@@ -53,6 +53,10 @@ struct
     )
   end
 
+  module Transcriptome = struct
+    let gtf = assert false
+  end
+
   module TF_ChIP_seq = struct
     let factors = extract' (
       function
