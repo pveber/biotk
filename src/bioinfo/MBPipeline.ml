@@ -63,6 +63,7 @@ struct
     let gtf = assoc genomes ~f:(
       fun g -> 
         Ensembl.gtf 
+          ~chr_name:`ucsc
           ~release:(release_of_genome g)
           ~species:(species_of_genome g)
     )
@@ -258,6 +259,7 @@ struct
     macs_peaks_with_control_items 1e-3 ;
     macs_peaks_with_control_items 1e-6 ;
     rnaseq_bam_bai_items ;
+    rnaseq_count_items ;
   ])
 
   module Config_file_check = struct
@@ -296,21 +298,3 @@ struct
 
 
 end
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

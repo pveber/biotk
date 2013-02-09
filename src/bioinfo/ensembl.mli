@@ -4,7 +4,9 @@ type species = [
 type genome = [`mm9]
 
 val reference_genome : release:int -> species:species -> genome
-val gtf : release:int -> species:species -> Gtf.file
+val gtf : ?chr_name : [`ensembl | `ucsc] -> release:int -> species:species -> Gtf.file
+
+
 
 
 

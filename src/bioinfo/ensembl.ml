@@ -1,4 +1,5 @@
 open Printf
+open Guizmin
 
 type species = [
 | `mus_musculus
@@ -21,14 +22,29 @@ let lab_label_of_genome = function
 let string_of_species = function
 | `mus_musculus -> "mus_musculus"
 
-let gtf ~release ~species =
+let ucsc_chr_names_gtf gtf =
+  f1
+    "guizmin.bioinfo.ensembl.ucsc_chr_names_gtf[r1]"
+    []
+    gtf
+    (
+      fun env (File gtf) path ->
+        env.sh "gawk '{print \"chr\" $0}' %s | sed 's/chrMT/chrM/g' > %s" gtf path
+    )
+
+let gtf ?(chr_name = `ensembl) ~release ~species =
   let url = 
     sprintf "ftp://ftp.ensembl.org/pub/release-%d/gtf/%s/%s.%s.%d.gtf.gz"
       release (string_of_species species) 
       (String.capitalize (string_of_species species))
       (lab_label_of_genome (reference_genome ~release ~species)) release
   in
-  Guizmin_unix.(gunzip (wget url))
+  let gtf = Guizmin_unix.(gunzip (wget url)) in
+  match chr_name with
+  | `ensembl -> gtf
+  | `ucsc -> ucsc_chr_names_gtf gtf
+
+
 
 
 
