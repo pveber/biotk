@@ -6,6 +6,13 @@ let load_value
   : 'a value file_path -> 'a 
   = function (File fn) -> GzmUtils.load fn
 
+module Console = GzmConsole
+
+
+
+
+
+
 
 
 
