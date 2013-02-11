@@ -390,6 +390,25 @@ let rec built : type a. base:string -> a pipeline -> bool = fun ~base x ->
   | Dir2 _ -> Sys.file_exists (path ~base x)
   | Dir3 _ -> Sys.file_exists (path ~base x)
 
+let rec use : type a. base:string -> a pipeline -> unit = fun ~base x ->
+  match x.kind with
+  | Merge xs -> List.iter (use ~base) xs
+  | Select (_,dir) -> use ~base dir
+  | Adapter (y,_) -> use ~base y
+  | Map _ -> touch (path ~base x)
+  | Val0 _ | Val1 _ | Val2 _ | Val3 _ -> 
+      touch (path ~base x)
+  | File_input _ -> touch (path ~base x)
+  | File0 _ -> touch (path ~base x)
+  | File1 _ -> touch (path ~base x)
+  | File2 _ -> touch (path ~base x)
+  | File3 _ -> touch (path ~base x)
+  | Dir_input _ -> touch (path ~base x)
+  | Dir0 _ -> touch (path ~base x)
+  | Dir1 _ -> touch (path ~base x)
+  | Dir2 _ -> touch (path ~base x)
+  | Dir3 _ -> touch (path ~base x)
+
 let rec unsafe_eval : type a. base:string -> a pipeline -> a = fun ~base x ->
   match x.kind with
   | Val0 _ | Val1 _ | Val2 _ | Val3 _ -> load_value (path base x)
@@ -524,6 +543,7 @@ let rec build_aux : type a. string -> int -> env -> a pipeline -> unit = fun bas
               )
             )
       )
+      else use ~base:null.base x
   ) }
   in 
   fold update () x
