@@ -9,7 +9,7 @@ let ( & ) l x = List.Assoc.find_exn l x
 type genome = MBSchema.ConfigFile.genome
 
 let fastq_of_path s : [`fastq] Guizmin.file =
-  if Filename.check_suffix s ".fastq.gz" then
+  if Filename.check_suffix s ".gz" then
     Guizmin_unix.gunzip (Guizmin.file s)
   else
     Guizmin.file s
@@ -258,8 +258,8 @@ struct
     macs_peaks_without_control_items 1e-6 ;
     macs_peaks_with_control_items 1e-3 ;
     macs_peaks_with_control_items 1e-6 ;
-    rnaseq_bam_bai_items ;
     rnaseq_count_items ;
+    rnaseq_bam_bai_items ;
   ])
 
   module Config_file_check = struct
