@@ -17,6 +17,7 @@ module Param = struct
   let opt f id = function
   | Some v -> Option (id, Some (f id v))
   | None -> Option (id, None)
+
 end
 
 type id = string
@@ -74,8 +75,8 @@ and _ kind =
 type 'a file = 'a file_path pipeline
 type 'a dir = 'a dir_path pipeline
 
-let mkdir s = 
-  if not (Sys.file_exists s) then 
+let mkdir s =
+  if not (Sys.file_exists s) then
     Unix.mkdir s 0o755
   else
     assert (Sys.is_directory s)
@@ -113,9 +114,9 @@ let v3 id params x y z f = {
   kind = Val3 (x, y, z, f)
 }
 
-let file path = 
+let file path =
   let id = "guizmin.file.input" in
-  let params = [ Param.string "path" path ] in 
+  let params = [ Param.string "path" path ] in
   {
     id ; params ;
     hash = make_hash id params `file_input [] ;
@@ -147,9 +148,9 @@ let f3 id params x y z f = {
 }
 
 
-let dir path = 
+let dir path =
   let id = "guizmin.dir.input" in
-  let params = [ Param.string "path" path ] in 
+  let params = [ Param.string "path" path ] in
   {
     id ; params ;
     hash = make_hash id params `file_input [] ;
@@ -180,7 +181,7 @@ let d3 id params x y z f = {
   kind = Dir3 (x, y, z, f)
 }
 
-let select dir subpath = 
+let select dir subpath =
   let id = "guizmin.select" in
   let params = [Param.string "subpath" subpath] in
   {
@@ -215,15 +216,15 @@ let map x f =
     kind = Map (x, f)
   }
 
-let load_value path = 
-  let ic = open_in path in 
+let load_value path =
+  let ic = open_in path in
   let r = input_value ic in
   close_in ic ; r
 
-let save_value v path = 
-  let oc = open_out path in 
+let save_value v path =
+  let oc = open_out path in
   output_value oc v ;
-  close_out oc 
+  close_out oc
 
 (* FIXME: we should also check that [path] is indeed a regular file *)
 let file_exists path = Sys.file_exists path
@@ -241,12 +242,107 @@ let stderr_dir base = base ^ "/stderr"
 let stdout_dir base = base ^ "/stdout"
 let log_dir base = base ^ "/logs"
 
+let rec string_descr : type s. ?tab:int -> s pipeline -> string = fun ?(tab = 0) x ->
+  let rec string_of_param = Param.(
+    function
+    | Int (k,v) -> sprintf "%s=%d" k v
+    | String (k,v) -> sprintf "%s=%s" k v
+    | Float (k,v) -> sprintf "%s=%f" k v
+    | Option (id,None) -> id
+    | Option (_,Some t) -> string_of_param t
+    | Bool (k,v) -> sprintf "%s=%b" k v
+  )
+  in
+  let space = String.make tab ' ' in
+  sprintf "%s%s(%s)%s"
+    space
+    x.id
+    (String.concat "," (List.map string_of_param x.params))
+    (
+      match x.kind with
+      | Val0 _ -> "[]"
+      | Val1 (x1,_) ->
+          sprintf "[\n%s\n%s]"
+            (string_descr ~tab:(tab + 2) x1)
+            space
+      | Val2 (x1,x2,_) ->
+          sprintf "[\n%s\n%s\n%s]"
+            (string_descr ~tab:(tab + 2) x1)
+            (string_descr ~tab:(tab + 2) x2)
+            space
+      | Val3 (x1,x2,x3,_) -> 
+          sprintf "[\n%s\n%s\n%s\n%s]"
+            (string_descr ~tab:(tab + 2) x1)
+            (string_descr ~tab:(tab + 2) x2)
+            (string_descr ~tab:(tab + 2) x3)
+            space
+
+      | File_input _ -> "[]"
+      | File0 _ -> "[]"
+      | File1 (x1,_) ->
+          sprintf "[\n%s\n%s]"
+            (string_descr ~tab:(tab + 2) x1)
+            space
+      | File2 (x1,x2,_) ->
+          sprintf "[\n%s\n%s\n%s]"
+            (string_descr ~tab:(tab + 2) x1)
+            (string_descr ~tab:(tab + 2) x2)
+            space
+      | File3 (x1,x2,x3,_) -> 
+          sprintf "[\n%s\n%s\n%s\n%s]"
+            (string_descr ~tab:(tab + 2) x1)
+            (string_descr ~tab:(tab + 2) x2)
+            (string_descr ~tab:(tab + 2) x3)
+            space
+
+      | Dir_input _ -> "[]"
+      | Dir0 _ -> "[]"
+      | Dir1 (x1,_) ->
+          sprintf "[\n%s\n%s]"
+            (string_descr ~tab:(tab + 2) x1)
+            space
+      | Dir2 (x1,x2,_) ->
+          sprintf "[\n%s\n%s\n%s]"
+            (string_descr ~tab:(tab + 2) x1)
+            (string_descr ~tab:(tab + 2) x2)
+            space
+      | Dir3 (x1,x2,x3,_) -> 
+          sprintf "[\n%s\n%s\n%s\n%s]"
+            (string_descr ~tab:(tab + 2) x1)
+            (string_descr ~tab:(tab + 2) x2)
+            (string_descr ~tab:(tab + 2) x3)
+            space
+
+      | Select (_,dir) ->
+          sprintf "[\n%s\n%s]"
+            (string_descr ~tab:(tab + 2) dir)
+            space
+            
+      | Merge xs ->
+          sprintf "[\n%s\n%s]"
+            (String.concat ",\n" (List.map (string_descr ~tab:(tab + 2)) xs))
+            space
+
+      | Adapter (x1,_) ->
+          sprintf "[\n%s\n%s]"
+            (string_descr ~tab:(tab + 2) x1)
+            space
+          
+      | Map (x1, f) ->
+          let fake = v0 "guizmin.internal_fake" [] (fun _ -> assert false) in
+          let fake_image = f fake in
+          sprintf "[\n%s\n%s\n%s]"
+            (string_descr ~tab:(tab + 2) x1)
+            (string_descr ~tab:(tab + 2) fake_image)
+            space
+    )
+
 let path : type s. base:string -> s pipeline -> string = fun ~base x ->
   let cache_path = cache_dir base ^ "/" ^ x.hash in
   match x.kind with
   | Merge _ -> invalid_arg "Guizmin.path: a merge pipeline is not physically saved"
   | Adapter _ -> invalid_arg "Guizmin.path: an adapter pipeline is not physically saved"
-  | Select (subpath, dir) -> 
+  | Select (subpath, dir) ->
       cache_dir base ^ "/" ^ dir.hash ^ "/" ^ subpath
   | File_input path -> path
   | Dir_input path -> path
@@ -261,7 +357,7 @@ let path : type s. base:string -> s pipeline -> string = fun ~base x ->
   | Dir3 _ -> cache_path
   | Map (x,_) -> cache_path
 
-let tmp_path ~base x = 
+let tmp_path ~base x =
   tmp_dir base ^ "/" ^ (x.hash)
 
 let touch fn =
@@ -272,8 +368,8 @@ let with_null_env base ~f =
   let stderr = open_out "/dev/null" in
   let stdout = open_out "/dev/null" in
   let log (type s) (fmt : (s, unit, string, unit) format4) = ksprintf ignore fmt in
-  let env = { 
-      base ; stderr ; stdout ; np = 1 ; mem = 100 ; 
+  let env = {
+      base ; stderr ; stdout ; np = 1 ; mem = 100 ;
       debug = log ;
       info = log ;
       error = log ;
@@ -286,10 +382,10 @@ let with_null_env base ~f =
   List.iter close_out [ stderr ; stdout ] ;
   r
 
-let bash ~(debug: 'a logger) ~(error: 'a logger) ~stdout ~stderr cmds = 
+let bash ~(debug: 'a logger) ~(error: 'a logger) ~stdout ~stderr cmds =
   let script = String.concat "\n" cmds in
   debug "bash call:\n\n%s\n\n" script ;
-  try 
+  try
     Shell.call
       ~stdout:(Shell.to_fd (Unix.descr_of_out_channel stdout))
       ~stderr:(Shell.to_fd (Unix.descr_of_out_channel stderr))
@@ -307,18 +403,18 @@ let with_env ?(np = 1) ?(mem = 100) base x ~f =
     let open Unix in
     let f msg =
       let t = localtime (time ()) in
-      fprintf 
-        log_chan "[%s][%04d-%02d-%02d %02d:%02d] %s" 
+      fprintf
+        log_chan "[%s][%04d-%02d-%02d %02d:%02d] %s"
         label (1900 + t.tm_year) (t.tm_mon + 1)t.tm_mday t.tm_hour t.tm_min msg
     in
     ksprintf f fmt in
   let debug fmt = log "DEBUG" fmt in
   let info fmt = log "INFO" fmt in
   let error fmt = log "ERROR" fmt in
-  let env = { 
-    base ; stderr ; stdout ; np ; mem ; 
-    debug ; info ; error ; 
-    sh = (fun fmt -> sh ~debug ~error ~stdout ~stderr fmt) ; 
+  let env = {
+    base ; stderr ; stdout ; np ; mem ;
+    debug ; info ; error ;
+    sh = (fun fmt -> sh ~debug ~error ~stdout ~stderr fmt) ;
     bash = bash ~debug ~error ~stdout ~stderr ;
     with_temp_file = fun f -> GzmUtils.with_temp_file ~in_dir:(tmp_dir base) ~f
   }
@@ -326,12 +422,12 @@ let with_env ?(np = 1) ?(mem = 100) base x ~f =
   let r = f env in
   List.iter close_out [ log_chan ; stderr ; stdout ] ;
   r
-    
+
 type 's update = { f : 'x. 's -> 'x pipeline -> 's }
 
-let rec fold : type a. 's update -> 's -> a pipeline -> 's = fun f init x -> 
-  match x.kind with 
-  | Val0 _ -> f.f init x 
+let rec fold : type a. 's update -> 's -> a pipeline -> 's = fun f init x ->
+  match x.kind with
+  | Val0 _ -> f.f init x
   | Val1 (y,_) -> f.f (fold f init y) x
   | Val2 (y,z,_) -> f.f (fold f (fold f init y) z) x
   | Val3 (y,z,w,_) -> f.f (fold f (fold f (fold f init y) z) w) x
@@ -350,8 +446,8 @@ let rec fold : type a. 's update -> 's -> a pipeline -> 's = fun f init x ->
   | Adapter (y,_) -> f.f (fold f init y) x
   | Map (y,_) -> f.f (fold f init y) x
 
-let fold_deps : type a. 's update -> 's -> a pipeline -> 's = fun f init x -> 
-  match x.kind with 
+let fold_deps : type a. 's update -> 's -> a pipeline -> 's = fun f init x ->
+  match x.kind with
   | Val0 _ -> init
   | Val1 (y,_) -> f.f init y
   | Val2 (y,z,_) -> f.f (f.f init y) z
@@ -377,7 +473,7 @@ let rec built : type a. base:string -> a pipeline -> bool = fun ~base x ->
   | Select (_,dir) -> built ~base dir
   | Adapter (y,_) -> built ~base y
   | Map _ -> Sys.file_exists (path ~base x)
-  | Val0 _ | Val1 _ | Val2 _ | Val3 _ -> 
+  | Val0 _ | Val1 _ | Val2 _ | Val3 _ ->
       Sys.file_exists (path ~base x)
   | File_input _ -> Sys.file_exists (path ~base x)
   | File0 _ -> Sys.file_exists (path ~base x)
@@ -396,7 +492,7 @@ let rec use : type a. base:string -> a pipeline -> unit = fun ~base x ->
   | Select (_,dir) -> use ~base dir
   | Adapter (y,_) -> use ~base y
   | Map _ -> touch (path ~base x)
-  | Val0 _ | Val1 _ | Val2 _ | Val3 _ -> 
+  | Val0 _ | Val1 _ | Val2 _ | Val3 _ ->
       touch (path ~base x)
   | File_input _ -> touch (path ~base x)
   | File0 _ -> touch (path ~base x)
@@ -414,23 +510,23 @@ let rec unsafe_eval : type a. base:string -> a pipeline -> a = fun ~base x ->
   | Val0 _ | Val1 _ | Val2 _ | Val3 _ -> load_value (path base x)
   | Map _ -> load_value (path base x)
   | File_input path -> File path
-  | File0 _ -> File (path base x) 
-  | File1 _ -> File (path base x) 
-  | File2 _ -> File (path base x) 
-  | File3 _ -> File (path base x) 
+  | File0 _ -> File (path base x)
+  | File1 _ -> File (path base x)
+  | File2 _ -> File (path base x)
+  | File3 _ -> File (path base x)
   | Dir_input path -> Dir path
-  | Dir0 _ -> Dir (path base x) 
-  | Dir1 _ -> Dir (path base x) 
-  | Dir2 _ -> Dir (path base x) 
-  | Dir3 _ -> Dir (path base x) 
+  | Dir0 _ -> Dir (path base x)
+  | Dir1 _ -> Dir (path base x)
+  | Dir2 _ -> Dir (path base x)
+  | Dir3 _ -> Dir (path base x)
   | Merge xs -> List.map (unsafe_eval ~base) xs
   | Select (subpath, dir) ->
-      let Dir dir_path = unsafe_eval ~base dir in 
+      let Dir dir_path = unsafe_eval ~base dir in
       let p = Filename.concat dir_path subpath in
       File p
   | Adapter (x,f) -> f (unsafe_eval ~base x)
-        
-        
+
+
 let exec : type a. a pipeline -> env -> unit = fun x env ->
   let val_wrap x f =
     let dest = path ~base:env.base x in
@@ -444,7 +540,7 @@ let exec : type a. a pipeline -> env -> unit = fun x env ->
   in
   let path_wrap x f =
     let dest = path ~base:env.base x in
-    let tmp = tmp_path ~base:env.base x in 
+    let tmp = tmp_path ~base:env.base x in
     if not (Sys.file_exists dest) then (
       f env tmp ;
       Sys.rename tmp dest ;
@@ -457,14 +553,14 @@ let exec : type a. a pipeline -> env -> unit = fun x env ->
   | Val1 (x1, f) -> val_wrap x (fun env -> f env (eval x1))
   | Val2 (x1, x2, f) -> val_wrap x (fun env -> f env (eval x1) (eval x2))
   | Val3 (x1, x2, x3, f) -> val_wrap x (fun env -> f env (eval x1) (eval x2) (eval x3))
-      
+
   | File_input path ->
       if not (file_exists path) then (
         let msg = sp "File %s is declared as an input of a pipeline but does not exist." path in
         env.error "%s" msg ;
         failwith msg
       )
-      
+
   | File0 f -> path_wrap x f
   | File1 (x1, f) -> path_wrap x (fun env -> f env (eval x1))
   | File2 (x1, x2, f) -> path_wrap x (fun env -> f env (eval x1) (eval x2))
@@ -483,7 +579,7 @@ let exec : type a. a pipeline -> env -> unit = fun x env ->
   | Dir3 (x1, x2, x3, f) -> path_wrap x (fun env -> f env (eval x1) (eval x2) (eval x3))
 
   | Select (subpath, dir) ->
-      let Dir dir_path = eval dir in 
+      let Dir dir_path = eval dir in
       let p = Filename.concat dir_path subpath in
       if not (Sys.file_exists p) then (
         let msg = sprintf "Tried to access %s in %s but there is no such file or directory." subpath dir_path in
@@ -493,7 +589,7 @@ let exec : type a. a pipeline -> env -> unit = fun x env ->
   | Merge xs -> raise (Invalid_argument "GzmCore.exec: merge")
   | Adapter _ -> raise (Invalid_argument "GzmCore.exec: adapter")
   | Map _ -> raise (Invalid_argument "GzmCore.exec: map")
-      
+
 
 type base_directory = string
 
@@ -514,7 +610,7 @@ let default_base_directory () =
   base_directory (Sys.getcwd () ^ "/_guizmin")
 
 let list_nth l n =
-  v1 
+  v1
     "guizmin.list_nth"
     [ Param.int "n" n ]
     l
@@ -524,7 +620,7 @@ exception Error of string * exn
 
 let rec build_aux : type a. string -> int -> env -> a pipeline -> unit = fun base np null x ->
   let update = { f = (
-    fun (type s) () (x : s pipeline) -> 
+    fun (type s) () (x : s pipeline) ->
       if not (built ~base:null.base x)
       then (
         match x.kind with
@@ -536,7 +632,9 @@ let rec build_aux : type a. string -> int -> env -> a pipeline -> unit = fun bas
             save_value (unsafe_eval ~base:null.base r) (path ~base x)
         | _ ->
             with_env ~np base x ~f:(fun env ->
-              try exec x env
+              try
+                env.info "\n%s%!\n" (string_descr x) ;
+                exec x env
               with e -> (
                 env.error "failed to eval pipeline with hash %s and id %s" x.hash x.id ;
                 raise e
@@ -545,7 +643,7 @@ let rec build_aux : type a. string -> int -> env -> a pipeline -> unit = fun bas
       )
       else use ~base:null.base x
   ) }
-  in 
+  in
   fold update () x
 
 let build : type a. ?base:string -> ?np:int -> a pipeline -> unit = fun ?(base = Sys.getcwd ()) ?(np = 1) x ->
