@@ -211,7 +211,7 @@ struct
       assoc samples (
         fun s -> 
           let g = (model s.sample_model).model_genome in
-          Htseq.count (Samtools.sam_of_bam (aligned_reads & s)) (Transcriptome.gtf & g)
+          Htseq.count (Samtools.sam_of_bam (aligned_reads & s)) ((Transcriptome.gtf & g) :> Gtf.file)
       )
   end
 

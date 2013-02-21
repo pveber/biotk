@@ -1,5 +1,5 @@
 open Guizmin
-
+open MBSchema
 
 module Minimal : sig
   type tabular data = {
@@ -16,7 +16,7 @@ module Minimal : sig
     ?header:bool ->
     ?sep:char ->
     #Obj.t Guizmin_table.file_path -> Table.t
-
+  val location_of_row : Row.t -> Location.t
 end
 
 module Named : sig
@@ -36,6 +36,8 @@ module Named : sig
       identifier. This is necessary for certain routines to work,
       notably sequence retrieval *)
   val make : ?prefix:string -> #Minimal.Obj.t Guizmin_table.file -> file
+
+  val location_of_row : Row.t -> Location.t
 end
 
 module Stranded : sig
@@ -52,6 +54,8 @@ module Stranded : sig
     ?header:bool ->
     ?sep:char ->
     #Obj.t Guizmin_table.file_path -> f:(Row.t Stream.t -> 'b) -> 'b
+
+  val location_of_row : Row.t -> Location.t
 end
 
 type 'a file = (#Minimal.Obj.t as 'a) Guizmin_table.file

@@ -42,6 +42,8 @@ val f0 : id -> params -> (env -> path -> unit) -> 'a file
 val f1 : id -> params -> 'a pipeline -> (env -> 'a -> path -> unit) -> 'b file
 val f2 : id -> params -> 'a pipeline -> 'b pipeline -> (env -> 'a -> 'b -> path -> unit) -> 'c file
 val f3 : id -> params -> 'a pipeline -> 'b pipeline -> 'c pipeline -> (env -> 'a -> 'b -> 'c -> path -> unit) -> 'd file
+val f5 : id -> params -> 'a pipeline -> 'b pipeline -> 'c pipeline -> 'd pipeline -> 'e pipeline -> (env -> 'a -> 'b -> 'c -> 'd -> 'e -> path -> unit) -> 'f file
+
 
 type 'a dir_path  = private Dir of path
 type 'a dir = 'a dir_path pipeline

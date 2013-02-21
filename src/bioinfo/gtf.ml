@@ -22,11 +22,24 @@ let stream_of_channel ?(buffer_size = 4096) ~t ic =
   in
   Biocaml_stream.from (fun _ -> loop ())
 
-let with_file (File gff) ~f =
+open Sexplib.Std
+
+type parse_error = [ `cannot_parse_float of Biocaml_pos.t * string
+                   | `cannot_parse_int of Biocaml_pos.t * string
+                   | `cannot_parse_strand of Biocaml_pos.t * string
+                   | `cannot_parse_string of Biocaml_pos.t * string
+                   | `empty_line of Biocaml_pos.t
+                   | `incomplete_input of Biocaml_pos.t * string list * string option
+                   | `wrong_attributes of Biocaml_pos.t * string
+                   | `wrong_row of Biocaml_pos.t * string
+                   | `wrong_url_escaping of Biocaml_pos.t * string ]
+with sexp
+
+let with_file ?tags (File gff) ~f =
   In_channel.with_file gff ~f:(fun ic ->
-    Biocaml_gff.Transform.string_to_item ~tags:[] ()
-    |! (fun t -> stream_of_channel t ic)
-    |! Biocaml_stream.result_to_exn ~error_to_exn:(fun _ -> assert false)
+    Biocaml_stream.strings_of_channel ic
+    |! Biocaml_transform.to_stream_fun (Biocaml_gff.Transform.string_to_item ?tags ())
+    |! Biocaml_stream.result_to_exn ~error_to_exn:(fun e -> Failure (Sexp.to_string_hum (sexp_of_parse_error e)))
     |! f
   )
 

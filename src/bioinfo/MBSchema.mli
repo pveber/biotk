@@ -1,7 +1,7 @@
 open Biocaml
 
 module Location : sig
-  type t = string * Range.t
+  type t = string * Range.t with sexp
 
   val make : string -> int -> int -> t
 
@@ -13,7 +13,7 @@ module Location : sig
   val overlaps : t -> t -> bool
   val dist : t -> t -> int
   val position : from:t -> t -> int
-  val stranded_position : from:t -> strand:[`Sense | `Antisense] -> t -> int
+  val stranded_position : from:t -> strand:[`sense | `antisense] -> t -> int
 
   val relmove : int -> int -> t -> t
 
@@ -22,7 +22,7 @@ module Location : sig
       exactly at the same distance from both ends of [l]. It is of
       length 1 if [l] has an odd length and 2 otherwise. *)
     
-  val upstream : up:int -> down:int -> [`Sense | `Antisense] -> t -> t
+  val upstream : up:int -> down:int -> [`sense | `antisense] -> t -> t
 
   val to_string : t -> string
   (** String representation of a location, as <chr>:<start>-<end> *)
@@ -36,9 +36,9 @@ module Transcript : sig
   type t = {
     id : string ;
     gene_id : string ;
-    strand : [`Sense | `Antisense] ;
+    strand : [`sense | `antisense] ;
     exons : Location.t list (** Exons are sorted according to their number, not their location *)
-  }
+  } with sexp
 
   val tss : t -> Location.t
   val position2tss : t -> Location.t -> int
@@ -50,7 +50,7 @@ module Gene : sig
     id : string ;
     aliases : (string * string) list ;
     transcripts : Transcript.t list
-  }
+  } with sexp
 
   val symbol : t -> string option
 end

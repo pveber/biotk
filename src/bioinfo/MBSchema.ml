@@ -1,9 +1,11 @@
 open Batteries
 open Printf
 open Biocaml
+open Sexplib.Std
+
 
 module Location = struct
-  type t = string * Range.t
+  type t = string * Range.t with sexp
 
   let make chr st ed =
     if st > ed then (
@@ -49,7 +51,7 @@ module Location = struct
 
   let range_stranded_pos ~from ~strand r = 
     let p = range_pos ~from r in
-    if strand = `Sense then p else (- p)
+    if strand = `sense then p else (- p)
   let stranded_position ~from ~strand (chr,r) =
     if fst from <> chr then raise (Invalid_argument "MBSchema.Location.stranded_position") ;
     range_stranded_pos ~from:(snd from) ~strand r
@@ -65,9 +67,9 @@ module Location = struct
 
   let upstream ~up ~down strand (chr, { Range.lo ; hi }) =
   match strand with
-    | `Sense ->
+    | `sense ->
 	make chr (max 0 (lo - up)) (max 0 (lo + down))
-    | `Antisense ->
+    | `antisense ->
 	make chr (max 0 (hi - down)) (max 0 (hi + up))
 
 let size (_,r) = Range.size r
@@ -86,16 +88,16 @@ module Transcript = struct
   type t = {
     id : string ;
     gene_id : string ;
-    strand : [`Sense | `Antisense] ;
+    strand : [`sense | `antisense] ;
     exons : Location.t list
-  }
+  } with sexp
 
   let tss transcript =
     let open Location in 
     let exon1 = List.hd transcript.exons in
     let pos = match transcript.strand with
-    | `Sense -> st exon1
-    | `Antisense -> ed exon1 in 
+    | `sense -> st exon1
+    | `antisense -> ed exon1 in 
     make (chr exon1) pos pos
 
   let position2tss transcript loc = 
@@ -110,7 +112,7 @@ module Gene = struct
     id : string ;
     aliases : (string * string) list ;
     transcripts : Transcript.t list
-  }
+  } with sexp
 
   let symbol g =
     try Some (List.assoc "symbol" g.aliases)
@@ -119,8 +121,6 @@ end
 
 
 module ConfigFile = struct
-  open Sexplib.Std
-
   type t = statement list
   and statement = 
     | Condition of condition

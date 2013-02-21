@@ -57,6 +57,7 @@ and _ kind =
   | File1 : 'b pipeline * (env -> 'b -> path -> unit) -> 'a file_path kind
   | File2 : 'b pipeline * 'c pipeline * (env -> 'b -> 'c -> path -> unit) -> 'a file_path kind
   | File3 : 'b pipeline * 'c pipeline * 'd pipeline * (env -> 'b -> 'c -> 'd -> path -> unit) -> 'a file_path kind
+  | File5 : 'b pipeline * 'c pipeline * 'd pipeline * 'e pipeline * 'f pipeline * (env -> 'b -> 'c -> 'd -> 'e -> 'f -> path -> unit) -> 'a file_path kind
 
   | Dir_input : path -> 'a dir_path kind
   | Dir0 : (env -> path -> unit) -> 'a dir_path kind
@@ -145,6 +146,12 @@ let f3 id params x y z f = {
   id ; params ;
   hash = make_hash id params `file [ x.hash ; y.hash ; z.hash ] ;
   kind = File3 (x, y, z, f)
+}
+
+let f5 id params x y z w r f = {
+  id ; params ;
+  hash = make_hash id params `file [ x.hash ; y.hash ; z.hash ; w.hash ; r.hash ] ;
+  kind = File5 (x, y, z, w, r, f)
 }
 
 
@@ -294,6 +301,14 @@ let rec string_descr : type s. ?tab:int -> s pipeline -> string = fun ?(tab = 0)
             (string_descr ~tab:(tab + 2) x2)
             (string_descr ~tab:(tab + 2) x3)
             space
+      | File5 (x1,x2,x3,x4,x5,_) -> 
+          sprintf "[\n%s\n%s\n%s\n%s\n%s\n%s]"
+            (string_descr ~tab:(tab + 2) x1)
+            (string_descr ~tab:(tab + 2) x2)
+            (string_descr ~tab:(tab + 2) x3)
+            (string_descr ~tab:(tab + 2) x4)
+            (string_descr ~tab:(tab + 2) x5)
+            space
 
       | Dir_input _ -> "[]"
       | Dir0 _ -> "[]"
@@ -351,6 +366,7 @@ let path : type s. base:string -> s pipeline -> string = fun ~base x ->
   | File1 _ -> cache_path
   | File2 _ -> cache_path
   | File3 _ -> cache_path
+  | File5 _ -> cache_path
   | Dir0 _ -> cache_path
   | Dir1 _ -> cache_path
   | Dir2 _ -> cache_path
@@ -404,7 +420,7 @@ let with_env ?(np = 1) ?(mem = 100) base x ~f =
     let f msg =
       let t = localtime (time ()) in
       fprintf
-        log_chan "[%s][%04d-%02d-%02d %02d:%02d] %s"
+        log_chan "[%s][%04d-%02d-%02d %02d:%02d] %s%!"
         label (1900 + t.tm_year) (t.tm_mon + 1)t.tm_mday t.tm_hour t.tm_min msg
     in
     ksprintf f fmt in
@@ -436,6 +452,7 @@ let rec fold : type a. 's update -> 's -> a pipeline -> 's = fun f init x ->
   | File1 (y,_) ->  f.f (fold f init y) x
   | File2 (y,z,_) -> f.f (fold f (fold f init y) z) x
   | File3 (y,z,w,_) -> f.f (fold f (fold f (fold f init y) z) w) x
+  | File5 (y,z,w,r,s,_) -> f.f (fold f (fold f (fold f (fold f (fold f init y) z) w) r) s) x
   | Dir_input _ -> f.f init x
   | Dir0 _ -> f.f init x
   | Dir1 (y,_) -> f.f (fold f init y) x
@@ -457,6 +474,7 @@ let fold_deps : type a. 's update -> 's -> a pipeline -> 's = fun f init x ->
   | File1 (y,_) ->  f.f init y
   | File2 (y,z,_) -> f.f (f.f init y) z
   | File3 (y,z,w,_) -> f.f (f.f (f.f init y) z) w
+  | File5 (y,z,w,r,s,_) -> f.f (f.f (f.f (f.f (f.f init y) z) w) r) s
   | Dir_input _ -> init
   | Dir0 _ -> init
   | Dir1 (y,_) -> f.f init y
@@ -480,6 +498,7 @@ let rec built : type a. base:string -> a pipeline -> bool = fun ~base x ->
   | File1 _ -> Sys.file_exists (path ~base x)
   | File2 _ -> Sys.file_exists (path ~base x)
   | File3 _ -> Sys.file_exists (path ~base x)
+  | File5 _ -> Sys.file_exists (path ~base x)
   | Dir_input _ -> Sys.file_exists (path ~base x)
   | Dir0 _ -> Sys.file_exists (path ~base x)
   | Dir1 _ -> Sys.file_exists (path ~base x)
@@ -499,6 +518,7 @@ let rec use : type a. base:string -> a pipeline -> unit = fun ~base x ->
   | File1 _ -> touch (path ~base x)
   | File2 _ -> touch (path ~base x)
   | File3 _ -> touch (path ~base x)
+  | File5 _ -> touch (path ~base x)
   | Dir_input _ -> touch (path ~base x)
   | Dir0 _ -> touch (path ~base x)
   | Dir1 _ -> touch (path ~base x)
@@ -514,6 +534,7 @@ let rec unsafe_eval : type a. base:string -> a pipeline -> a = fun ~base x ->
   | File1 _ -> File (path base x)
   | File2 _ -> File (path base x)
   | File3 _ -> File (path base x)
+  | File5 _ -> File (path base x)
   | Dir_input path -> Dir path
   | Dir0 _ -> Dir (path base x)
   | Dir1 _ -> Dir (path base x)
@@ -565,6 +586,7 @@ let exec : type a. a pipeline -> env -> unit = fun x env ->
   | File1 (x1, f) -> path_wrap x (fun env -> f env (eval x1))
   | File2 (x1, x2, f) -> path_wrap x (fun env -> f env (eval x1) (eval x2))
   | File3 (x1, x2, x3, f) -> path_wrap x (fun env -> f env (eval x1) (eval x2) (eval x3))
+  | File5 (x1, x2, x3, x4, x5, f) -> path_wrap x (fun env -> f env (eval x1) (eval x2) (eval x3) (eval x4) (eval x5))
 
   | Dir_input path ->
       if not (dir_exists path) then (
@@ -633,7 +655,7 @@ let rec build_aux : type a. string -> int -> env -> a pipeline -> unit = fun bas
         | _ ->
             with_env ~np base x ~f:(fun env ->
               try
-                env.info "\n%s%!\n" (string_descr x) ;
+                env.info "\n%s\n" (string_descr x) ;
                 exec x env
               with e -> (
                 env.error "failed to eval pipeline with hash %s and id %s" x.hash x.id ;

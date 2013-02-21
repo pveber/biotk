@@ -10,6 +10,8 @@ module Minimal = struct
   }
   type file = Obj.t Guizmin_table.file
   include Guizmin_table.Make(Row)(Table)
+
+  let location_of_row { chrom ; chromStart ; chromEnd } = Location.make chrom chromStart chromEnd
 end
 
 module Named = struct
@@ -44,6 +46,8 @@ module Named = struct
           Biocaml_stream.mapi xs ~f:rename |! save
         )
       )
+
+  let location_of_row { chrom ; chromStart ; chromEnd } = Location.make chrom chromStart chromEnd
 end
 
 module Stranded = struct
@@ -57,6 +61,7 @@ module Stranded = struct
   }
   type file = Obj.t Guizmin_table.file
   include Guizmin_table.Make(Row)(Table)
+  let location_of_row { chrom ; chromStart ; chromEnd } = Location.make chrom chromStart chromEnd
 end
 
 type 'a file = (#Minimal.Obj.t as 'a) Guizmin_table.file
