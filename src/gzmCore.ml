@@ -51,6 +51,7 @@ and _ kind =
   | Val1 : 'b pipeline * (env -> 'b -> 'a) -> 'a kind
   | Val2 : 'b pipeline * 'c pipeline * (env -> 'b -> 'c -> 'a) -> 'a kind
   | Val3 : 'b pipeline * 'c pipeline * 'd pipeline * (env -> 'b -> 'c -> 'd -> 'a) -> 'a kind
+  | Val4 : 'b pipeline * 'c pipeline * 'd pipeline * 'e pipeline * (env -> 'b -> 'c -> 'd -> 'e -> 'a) -> 'a kind
 
   | File_input : path -> 'a file_path kind
   | File0 : (env -> path -> unit) -> 'a file_path kind
@@ -113,6 +114,12 @@ let v3 id params x y z f = {
   id ; params ;
   hash = make_hash id params `value [ x.hash ; y.hash ; z.hash ] ;
   kind = Val3 (x, y, z, f)
+}
+
+let v4 id params x y z w f = {
+  id ; params ;
+  hash = make_hash id params `value [ x.hash ; y.hash ; z.hash ; w.hash ] ;
+  kind = Val4 (x, y, z, w, f)
 }
 
 let file path =
@@ -283,6 +290,13 @@ let rec string_descr : type s. ?tab:int -> s pipeline -> string = fun ?(tab = 0)
             (string_descr ~tab:(tab + 2) x2)
             (string_descr ~tab:(tab + 2) x3)
             space
+      | Val4 (x1,x2,x3,x4,_) -> 
+          sprintf "[\n%s\n%s\n%s\n%s\n%s]"
+            (string_descr ~tab:(tab + 2) x1)
+            (string_descr ~tab:(tab + 2) x2)
+            (string_descr ~tab:(tab + 2) x3)
+            (string_descr ~tab:(tab + 2) x4)
+            space
 
       | File_input _ -> "[]"
       | File0 _ -> "[]"
@@ -361,7 +375,7 @@ let path : type s. base:string -> s pipeline -> string = fun ~base x ->
       cache_dir base ^ "/" ^ dir.hash ^ "/" ^ subpath
   | File_input path -> path
   | Dir_input path -> path
-  | Val0 _ | Val1 _ | Val2 _ | Val3 _ -> cache_path
+  | Val0 _ | Val1 _ | Val2 _ | Val3 _ | Val4 _ -> cache_path
   | File0 _ -> cache_path
   | File1 _ -> cache_path
   | File2 _ -> cache_path
@@ -447,6 +461,7 @@ let rec fold : type a. 's update -> 's -> a pipeline -> 's = fun f init x ->
   | Val1 (y,_) -> f.f (fold f init y) x
   | Val2 (y,z,_) -> f.f (fold f (fold f init y) z) x
   | Val3 (y,z,w,_) -> f.f (fold f (fold f (fold f init y) z) w) x
+  | Val4 (x1,x2,x3,x4,_) -> f.f (fold f (fold f (fold f (fold f init x1) x2) x3) x4) x
   | File_input _ -> f.f init x
   | File0 _ -> f.f init x
   | File1 (y,_) ->  f.f (fold f init y) x
@@ -469,6 +484,7 @@ let fold_deps : type a. 's update -> 's -> a pipeline -> 's = fun f init x ->
   | Val1 (y,_) -> f.f init y
   | Val2 (y,z,_) -> f.f (f.f init y) z
   | Val3 (y,z,w,_) -> f.f (f.f (f.f init y) z) w
+  | Val4 (x1,x2,x3,x4,_) -> f.f (f.f (f.f (f.f init x1) x2) x3) x4
   | File_input _ -> init
   | File0 _ -> init
   | File1 (y,_) ->  f.f init y
@@ -491,7 +507,7 @@ let rec built : type a. base:string -> a pipeline -> bool = fun ~base x ->
   | Select (_,dir) -> built ~base dir
   | Adapter (y,_) -> built ~base y
   | Map _ -> Sys.file_exists (path ~base x)
-  | Val0 _ | Val1 _ | Val2 _ | Val3 _ ->
+  | Val0 _ | Val1 _ | Val2 _ | Val3 _ | Val4 _ ->
       Sys.file_exists (path ~base x)
   | File_input _ -> Sys.file_exists (path ~base x)
   | File0 _ -> Sys.file_exists (path ~base x)
@@ -511,7 +527,7 @@ let rec use : type a. base:string -> a pipeline -> unit = fun ~base x ->
   | Select (_,dir) -> use ~base dir
   | Adapter (y,_) -> use ~base y
   | Map _ -> touch (path ~base x)
-  | Val0 _ | Val1 _ | Val2 _ | Val3 _ ->
+  | Val0 _ | Val1 _ | Val2 _ | Val3 _ | Val4 _ ->
       touch (path ~base x)
   | File_input _ -> touch (path ~base x)
   | File0 _ -> touch (path ~base x)
@@ -527,7 +543,7 @@ let rec use : type a. base:string -> a pipeline -> unit = fun ~base x ->
 
 let rec unsafe_eval : type a. base:string -> a pipeline -> a = fun ~base x ->
   match x.kind with
-  | Val0 _ | Val1 _ | Val2 _ | Val3 _ -> load_value (path base x)
+  | Val0 _ | Val1 _ | Val2 _ | Val3 _ | Val4 _ -> load_value (path base x)
   | Map _ -> load_value (path base x)
   | File_input path -> File path
   | File0 _ -> File (path base x)
@@ -574,6 +590,7 @@ let exec : type a. a pipeline -> env -> unit = fun x env ->
   | Val1 (x1, f) -> val_wrap x (fun env -> f env (eval x1))
   | Val2 (x1, x2, f) -> val_wrap x (fun env -> f env (eval x1) (eval x2))
   | Val3 (x1, x2, x3, f) -> val_wrap x (fun env -> f env (eval x1) (eval x2) (eval x3))
+  | Val4 (x1, x2, x3, x4, f) -> val_wrap x (fun env -> f env (eval x1) (eval x2) (eval x3) (eval x4))
 
   | File_input path ->
       if not (file_exists path) then (
