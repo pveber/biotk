@@ -39,3 +39,25 @@ module Tsv_output : sig
 
   val of_test : result list pipeline -> line Guizmin_table.file
 end
+
+val latex_output : result list pipeline -> [`latex] file
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

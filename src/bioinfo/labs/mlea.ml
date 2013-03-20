@@ -158,7 +158,7 @@ let test org bed motifs =
 module Tsv_output = struct
   module Id = struct
     include String
-    let to_string x = sprintf "%32s" x
+    let to_string x = sprintf "%20s" x
   end
 
   module Float = struct
@@ -192,10 +192,24 @@ module Tsv_output = struct
   include Data
 end
 
-
-
-
-
+let latex_output r =
+  Guizmin.f1
+    "guizmin.bioinfo.labs.mlea.latex_output[r1]"
+      []
+      r
+      (
+        fun env results path ->
+          let module Table = Tsv_output.Data.Table in
+          let results = 
+            List.sort (fun r1 r2 -> - compare r1.fold r2.fold) results 
+            |> List.filter ~f:(fun r -> r.fdr < 1.e-3)
+            |> List.map ~f:(fun { motif_id ; fold ; pval ; pval_adj ; fdr } -> 
+              { Tsv_output.Data.motif_id ; fold ; pval ; pval_adj ; fdr })
+            |> Stream.of_list
+            |> Table.of_stream
+          in
+          Out_channel.with_file path ~f:(fun oc -> Table.latex_to_channel oc results)
+      )
 
 
 
