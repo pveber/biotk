@@ -94,7 +94,6 @@ let single_test preds (motif_id, pwm) =
         data.frame(positions = x, p.value = t#p.value, fold = t#estimate / t#null.value)
       >> 
     in
-    let r = Rbase.dataframe r in
     (motif_id, pwm, 
      R.floats_of_t (r ## positions),
      R.float_of_t (r ## fold),
