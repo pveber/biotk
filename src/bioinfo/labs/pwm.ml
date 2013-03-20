@@ -83,7 +83,7 @@ let suppress_superposed_hits l =
 let motif_scan pwm theta seq =
   let reshape sense pwm hits =
     let n = Array.length (pwm : Biocaml_pwm.t :> 'a array) in
-    List.map (fun (pos, score) -> pos, pos + n, sense, score) hits
+    List.map (fun (pos, score) -> pos, pos + n - 1, sense, score) hits
   in
   Biocaml_pwm.(
     List.append
@@ -95,7 +95,7 @@ let motif_scan pwm theta seq =
 
 let prediction ?(level = 0.1) pwm fa =
   v3
-    "guizmin.bioinfo.labs.pwm.prediction[r2]"
+    "guizmin.bioinfo.labs.pwm.prediction[r3]"
     [ Param.float "level" level ]
     pwm fa (best_score_distribution_of_fasta pwm (markov0_control_set fa))
     (fun env pwm fa score_dist ->
