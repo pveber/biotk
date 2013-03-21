@@ -393,7 +393,7 @@ let tmp_path ~base x =
 let touch fn =
   ignore (Sys.command ("touch " ^ fn))
 
-
+(* Provides an env to eval [f]. This env ignores its input or prints to /dev/null *)
 let with_null_env base ~f =
   let stderr = open_out "/dev/null" in
   let stdout = open_out "/dev/null" in
@@ -657,18 +657,18 @@ let list_nth l n =
 
 exception Error of string * exn
 
-let rec build_aux : type a. string -> int -> env -> a pipeline -> unit = fun base np null x ->
+let rec build : type a. ?base:string -> ?np:int -> a pipeline -> unit = fun ?(base = Sys.getcwd ()) ?(np = 1) x ->
   let update = { f = (
     fun (type s) () (x : s pipeline) ->
-      if not (built ~base:null.base x)
+      if not (built ~base x)
       then (
         match x.kind with
         | Map (y, f) ->
-            let n = List.length (unsafe_eval ~base:null.base y) in
+            let n = List.length (unsafe_eval ~base y) in
             let args = Core.Std.List.init n ~f:(list_nth y) in
             let r = merge (List.map f args) in
-            build_aux base np null r ;
-            save_value (unsafe_eval ~base:null.base r) (path ~base x)
+            build ~base ~np r ;
+            save_value (unsafe_eval ~base r) (path ~base x)
         | _ ->
             with_env ~np base x ~f:(fun env ->
               try
@@ -680,19 +680,14 @@ let rec build_aux : type a. string -> int -> env -> a pipeline -> unit = fun bas
               )
             )
       )
-      else use ~base:null.base x
+      else use ~base x
   ) }
   in
   fold update () x
 
-let build : type a. ?base:string -> ?np:int -> a pipeline -> unit = fun ?(base = Sys.getcwd ()) ?(np = 1) x ->
-  with_null_env base ~f:(fun null ->
-    build_aux base np null x
-  )
-
 let eval : type a. ?base:string -> ?np:int -> a pipeline -> a = fun ?(base = Sys.getcwd ()) ?(np = 1) x ->
   build ~base ~np x ;
-  with_null_env base ~f:(fun null -> unsafe_eval ~base:null.base x)
+  unsafe_eval ~base x
 
 
 
