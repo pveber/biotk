@@ -1,12 +1,25 @@
-open GuizminAltCore
+open Printf
+open Guizmin
 
-let p i s = v0 ("guizmin.test.1", [ `int i ; `string s ]) (fun () -> i = int_of_string s)
+let eval x = Guizmin.(eval ~base:(default_base_directory ()) x)
 
-let p = 
-  value pipeline "mon.pipeline.2.0"
-    ~(x:int) ?(y:string = "1") z:string 
-    uses foo bar* -> (
-      1 + 1
-    )
+let p i s = 
+  v0 
+    "guizmin.test.1" 
+    Param.([ int "i" i ; string "s" s ])
+    (fun env -> i = int_of_string s)
 
-let f value pipeline = 0
+let () =
+  printf "%b %b\n"
+    (eval (p 0 "1"))
+    (eval (p 1 "1"))
+
+
+
+
+
+
+
+
+
+

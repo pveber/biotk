@@ -88,6 +88,14 @@ Executable test_yeast
                 biocaml
   Install:      false
 
+Executable test
+  Path:         src/examples
+  BuildTools:   ocamlbuild
+  MainIs:       test.ml
+  BuildDepends: threads, tabular, guizmin, camlp4.quotations.o, 
+                biocaml
+  Install:      false
+
 Executable test_ucsc_lift_over
   Path:         src/examples
   BuildTools:   ocamlbuild

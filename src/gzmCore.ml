@@ -393,25 +393,6 @@ let tmp_path ~base x =
 let touch fn =
   ignore (Sys.command ("touch " ^ fn))
 
-(* Provides an env to eval [f]. This env ignores its input or prints to /dev/null *)
-let with_null_env base ~f =
-  let stderr = open_out "/dev/null" in
-  let stdout = open_out "/dev/null" in
-  let log (type s) (fmt : (s, unit, string, unit) format4) = ksprintf ignore fmt in
-  let env = {
-      base ; stderr ; stdout ; np = 1 ; mem = 100 ;
-      debug = log ;
-      info = log ;
-      error = log ;
-      sh = log ;
-      bash = ignore ;
-      with_temp_file = fun f -> GzmUtils.with_temp_file ~in_dir:(tmp_dir base) ~f
-  }
-  in
-  let r = f env in
-  List.iter close_out [ stderr ; stdout ] ;
-  r
-
 let bash ~(debug: 'a logger) ~(error: 'a logger) ~stdout ~stderr cmds =
   let script = String.concat "\n" cmds in
   debug "bash call:\n\n%s\n\n" script ;
@@ -688,18 +669,3 @@ let rec build : type a. ?base:string -> ?np:int -> a pipeline -> unit = fun ?(ba
 let eval : type a. ?base:string -> ?np:int -> a pipeline -> a = fun ?(base = Sys.getcwd ()) ?(np = 1) x ->
   build ~base ~np x ;
   unsafe_eval ~base x
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
