@@ -434,53 +434,62 @@ let with_env ?(np = 1) ?(mem = 100) base x ~f =
   List.iter close_out [ log_chan ; stderr ; stdout ] ;
   r
 
-type 's update = { f : 'x. 's -> 'x pipeline -> 's }
+type 's update = { 
+  guard : 'x. 'x pipeline -> bool ;
+  f : 'x. 's -> 'x pipeline -> 's ;
+}
 
-let rec fold : type a. 's update -> 's -> a pipeline -> 's = fun f init x ->
-  match x.kind with
-  | Val0 _ -> f.f init x
-  | Val1 (y,_) -> f.f (fold f init y) x
-  | Val2 (y,z,_) -> f.f (fold f (fold f init y) z) x
-  | Val3 (y,z,w,_) -> f.f (fold f (fold f (fold f init y) z) w) x
-  | Val4 (x1,x2,x3,x4,_) -> f.f (fold f (fold f (fold f (fold f init x1) x2) x3) x4) x
-  | File_input _ -> f.f init x
-  | File0 _ -> f.f init x
-  | File1 (y,_) ->  f.f (fold f init y) x
-  | File2 (y,z,_) -> f.f (fold f (fold f init y) z) x
-  | File3 (y,z,w,_) -> f.f (fold f (fold f (fold f init y) z) w) x
-  | File5 (y,z,w,r,s,_) -> f.f (fold f (fold f (fold f (fold f (fold f init y) z) w) r) s) x
-  | Dir_input _ -> f.f init x
-  | Dir0 _ -> f.f init x
-  | Dir1 (y,_) -> f.f (fold f init y) x
-  | Dir2 (y,z,_) -> f.f (fold f (fold f init y) z) x
-  | Dir3 (y,z,w,_) -> f.f (fold f (fold f (fold f init y) z) w) x
-  | Merge xs -> f.f (List.fold_left (fold f) init xs) x
-  | Select (_,dir) -> f.f (fold f init dir) x
-  | Adapter (y,_) -> f.f (fold f init y) x
-  | Map (y,_) -> f.f (fold f init y) x
+let rec fold : type a. 's update -> 's -> a pipeline -> 's = fun up init x ->
+  if up.guard x then
+    match x.kind with
+    | Val0 _ -> up.f init x
+    | Val1 (y,_) -> up.f (fold up init y) x
+    | Val2 (y,z,_) -> up.f (fold up (fold up init y) z) x
+    | Val3 (y,z,w,_) -> up.f (fold up (fold up (fold up init y) z) w) x
+    | Val4 (x1,x2,x3,x4,_) -> up.f (fold up (fold up (fold up (fold up init x1) x2) x3) x4) x
+    | File_input _ -> up.f init x
+    | File0 _ -> up.f init x
+    | File1 (y,_) ->  up.f (fold up init y) x
+    | File2 (y,z,_) -> up.f (fold up (fold up init y) z) x
+    | File3 (y,z,w,_) -> up.f (fold up (fold up (fold up init y) z) w) x
+    | File5 (y,z,w,r,s,_) -> up.f (fold up (fold up (fold up (fold up (fold up init y) z) w) r) s) x
+    | Dir_input _ -> up.f init x
+    | Dir0 _ -> up.f init x
+    | Dir1 (y,_) -> up.f (fold up init y) x
+    | Dir2 (y,z,_) -> up.f (fold up (fold up init y) z) x
+    | Dir3 (y,z,w,_) -> up.f (fold up (fold up (fold up init y) z) w) x
+    | Merge xs -> up.f (List.fold_left (fold up) init xs) x
+    | Select (_,dir) -> up.f (fold up init dir) x
+    | Adapter (y,_) -> up.f (fold up init y) x
+    | Map (y,_) -> up.f (fold up init y) x
+  else
+    init
 
-let fold_deps : type a. 's update -> 's -> a pipeline -> 's = fun f init x ->
-  match x.kind with
-  | Val0 _ -> init
-  | Val1 (y,_) -> f.f init y
-  | Val2 (y,z,_) -> f.f (f.f init y) z
-  | Val3 (y,z,w,_) -> f.f (f.f (f.f init y) z) w
-  | Val4 (x1,x2,x3,x4,_) -> f.f (f.f (f.f (f.f init x1) x2) x3) x4
-  | File_input _ -> init
-  | File0 _ -> init
-  | File1 (y,_) ->  f.f init y
-  | File2 (y,z,_) -> f.f (f.f init y) z
-  | File3 (y,z,w,_) -> f.f (f.f (f.f init y) z) w
-  | File5 (y,z,w,r,s,_) -> f.f (f.f (f.f (f.f (f.f init y) z) w) r) s
-  | Dir_input _ -> init
-  | Dir0 _ -> init
-  | Dir1 (y,_) -> f.f init y
-  | Dir2 (y,z,_) -> f.f (f.f init y) z
-  | Dir3 (y,z,w,_) -> f.f (f.f (f.f init y) z) w
-  | Merge xs -> List.fold_left f.f init xs
-  | Select (_,dir) -> f.f init dir
-  | Adapter (y,_) -> f.f init y
-  | Map (y,_) -> f.f init y
+let fold_deps : type a. 's update -> 's -> a pipeline -> 's = fun up init x ->
+  if up.guard x then 
+    match x.kind with
+    | Val0 _ -> init
+    | Val1 (y,_) -> up.f init y
+    | Val2 (y,z,_) -> up.f (up.f init y) z
+    | Val3 (y,z,w,_) -> up.f (up.f (up.f init y) z) w
+    | Val4 (x1,x2,x3,x4,_) -> up.f (up.f (up.f (up.f init x1) x2) x3) x4
+    | File_input _ -> init
+    | File0 _ -> init
+    | File1 (y,_) ->  up.f init y
+    | File2 (y,z,_) -> up.f (up.f init y) z
+    | File3 (y,z,w,_) -> up.f (up.f (up.f init y) z) w
+    | File5 (y,z,w,r,s,_) -> up.f (up.f (up.f (up.f (up.f init y) z) w) r) s
+    | Dir_input _ -> init
+    | Dir0 _ -> init
+    | Dir1 (y,_) -> up.f init y
+    | Dir2 (y,z,_) -> up.f (up.f init y) z
+    | Dir3 (y,z,w,_) -> up.f (up.f (up.f init y) z) w
+    | Merge xs -> List.fold_left up.f init xs
+    | Select (_,dir) -> up.f init dir
+    | Adapter (y,_) -> up.f init y
+    | Map (y,_) -> up.f init y
+  else
+    init
 
 let rec built : type a. base:string -> a pipeline -> bool = fun ~base x ->
   match x.kind with
@@ -502,11 +511,11 @@ let rec built : type a. base:string -> a pipeline -> bool = fun ~base x ->
   | Dir2 _ -> Sys.file_exists (path ~base x)
   | Dir3 _ -> Sys.file_exists (path ~base x)
 
-let rec use : type a. base:string -> a pipeline -> unit = fun ~base x ->
+let rec used : type a. base:string -> a pipeline -> unit = fun ~base x ->
   match x.kind with
-  | Merge xs -> List.iter (use ~base) xs
-  | Select (_,dir) -> use ~base dir
-  | Adapter (y,_) -> use ~base y
+  | Merge xs -> List.iter (used ~base) xs
+  | Select (_,dir) -> used ~base dir
+  | Adapter (y,_) -> used ~base y
   | Map _ -> touch (path ~base x)
   | Val0 _ | Val1 _ | Val2 _ | Val3 _ | Val4 _ ->
       touch (path ~base x)
@@ -639,10 +648,14 @@ let list_nth l n =
 exception Error of string * exn
 
 let rec build : type a. ?base:string -> ?np:int -> a pipeline -> unit = fun ?(base = Sys.getcwd ()) ?(np = 1) x ->
-  let update = { f = (
-    fun (type s) () (x : s pipeline) ->
-      if not (built ~base x)
-      then (
+  let update = { 
+    guard = (
+      fun (type s) (x : s pipeline) ->
+        (* if the pipeline is built, mark it as used *)
+        if not (built ~base x) then true else (used ~base x ; false)
+    ) ;
+    f = (
+      fun (type s) () (x : s pipeline) ->
         match x.kind with
         | Map (y, f) ->
             let n = List.length (unsafe_eval ~base y) in
@@ -660,9 +673,8 @@ let rec build : type a. ?base:string -> ?np:int -> a pipeline -> unit = fun ?(ba
                 raise e
               )
             )
-      )
-      else use ~base x
-  ) }
+    ) ;
+  }
   in
   fold update () x
 
