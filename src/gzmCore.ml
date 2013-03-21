@@ -256,8 +256,7 @@ let tmp_dir base = base ^ "/tmp"
 let stderr_dir base = base ^ "/stderr"
 let stdout_dir base = base ^ "/stdout"
 let log_dir base = base ^ "/logs"
-let used_dir base = base ^ "/used"
-let reqs_dir base = base ^ "/reqs"
+let history_dir base = base ^ "/history"
 
 let rec string_descr : type s. ?tab:int -> s pipeline -> string = fun ?(tab = 0) x ->
   let rec string_of_param = Param.(
@@ -514,28 +513,33 @@ let rec built : type a. base:string -> a pipeline -> bool = fun ~base x ->
   | Dir2 _ -> Sys.file_exists (path ~base x)
   | Dir3 _ -> Sys.file_exists (path ~base x)
 
-let rec mark : type a. pipeline_path -> a pipeline -> unit = fun pp x ->
-  match x.kind with
-  | Merge xs -> List.iter (mark pp) xs
-  | Select (_,dir) -> mark pp dir
-  | Adapter (y,_) -> mark pp y
-  | Map _ -> touch (pp.path x)
-  | Val0 _ | Val1 _ | Val2 _ | Val3 _ | Val4 _ ->
-      touch (pp.path x)
-  | File_input _ -> touch (pp.path x)
-  | File0 _ -> touch (pp.path x)
-  | File1 _ -> touch (pp.path x)
-  | File2 _ -> touch (pp.path x)
-  | File3 _ -> touch (pp.path x)
-  | File5 _ -> touch (pp.path x)
-  | Dir_input _ -> touch (pp.path x)
-  | Dir0 _ -> touch (pp.path x)
-  | Dir1 _ -> touch (pp.path x)
-  | Dir2 _ -> touch (pp.path x)
-  | Dir3 _ -> touch (pp.path x)
+let append_history ~base ~msg x =
+  sh "echo %s >> %s/%s" msg (history_dir base) x.hash
 
-let used ~base = mark { path = (fun x -> used_dir base ^ "/" ^ x.hash) }
-let requested ~base = mark { path = (fun x -> reqs_dir base ^ "/" ^ x.hash) }
+let rec history : type a. base:string -> msg:string -> a pipeline -> unit = fun ~base ~msg x ->
+  let log x = append_history ~base ~msg x in
+  match x.kind with
+  | Merge xs -> List.iter (history ~base ~msg) xs
+  | Select (_,dir) -> history ~base ~msg dir
+  | Adapter (y,_) -> history ~base ~msg y
+  | Map _ -> log x
+  | Val0 _ | Val1 _ | Val2 _ | Val3 _ | Val4 _ ->
+      log x
+  | File_input _ -> log x
+  | File0 _ -> log x
+  | File1 _ -> log x
+  | File2 _ -> log x
+  | File3 _ -> log x
+  | File5 _ -> log x
+  | Dir_input _ -> log x
+  | Dir0 _ -> log x
+  | Dir1 _ -> log x
+  | Dir2 _ -> log x
+  | Dir3 _ -> log x
+
+let log_used  ~base = history ~base ~msg:"USED"
+let log_built ~base = history ~base ~msg:"BUILT"
+let log_requested ~base = history ~base ~msg:"REQ"
 
 let rec unsafe_eval : type a. base:string -> a pipeline -> a = fun ~base x ->
   match x.kind with
@@ -636,8 +640,7 @@ let create_base_directory base =
   mkdir (stdout_dir base) ;
   mkdir (log_dir base) ;
   mkdir (tmp_dir base) ;
-  mkdir (reqs_dir base) ;
-  mkdir (used_dir base)
+  mkdir (history_dir base)
 
 
 let base_directory base =
@@ -661,7 +664,9 @@ let rec build : type a. ?base:string -> ?np:int -> a pipeline -> unit = fun ?(ba
     guard = (
       fun (type s) (x : s pipeline) ->
         (* if the pipeline is built, mark it as used *)
-        if not (built ~base x) then true else (used ~base x ; false)
+        if not (built ~base x) 
+        then (log_built ~base x ; true)
+        else (log_used  ~base x ; false)
     ) ;
     f = (
       fun (type s) () (x : s pipeline) ->
@@ -688,9 +693,18 @@ let rec build : type a. ?base:string -> ?np:int -> a pipeline -> unit = fun ?(ba
   fold update () x
 
 let eval : type a. ?base:string -> ?np:int -> a pipeline -> a = fun ?(base = Sys.getcwd ()) ?(np = 1) x ->
-  requested ~base x ;
+  log_requested ~base x ;
   build ~base ~np x ;
   unsafe_eval ~base x
+
+
+
+
+
+
+
+
+
 
 
 
