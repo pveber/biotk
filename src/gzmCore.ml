@@ -76,6 +76,7 @@ and _ kind =
 
 type 'a file = 'a file_path pipeline
 type 'a dir = 'a dir_path pipeline
+type pipeline_path = { path : 'a. 'a pipeline -> string }
 
 let mkdir s =
   if not (Sys.file_exists s) then
@@ -255,6 +256,8 @@ let tmp_dir base = base ^ "/tmp"
 let stderr_dir base = base ^ "/stderr"
 let stdout_dir base = base ^ "/stdout"
 let log_dir base = base ^ "/logs"
+let used_dir base = base ^ "/used"
+let reqs_dir base = base ^ "/reqs"
 
 let rec string_descr : type s. ?tab:int -> s pipeline -> string = fun ?(tab = 0) x ->
   let rec string_of_param = Param.(
@@ -511,25 +514,28 @@ let rec built : type a. base:string -> a pipeline -> bool = fun ~base x ->
   | Dir2 _ -> Sys.file_exists (path ~base x)
   | Dir3 _ -> Sys.file_exists (path ~base x)
 
-let rec used : type a. base:string -> a pipeline -> unit = fun ~base x ->
+let rec mark : type a. pipeline_path -> a pipeline -> unit = fun pp x ->
   match x.kind with
-  | Merge xs -> List.iter (used ~base) xs
-  | Select (_,dir) -> used ~base dir
-  | Adapter (y,_) -> used ~base y
-  | Map _ -> touch (path ~base x)
+  | Merge xs -> List.iter (mark pp) xs
+  | Select (_,dir) -> mark pp dir
+  | Adapter (y,_) -> mark pp y
+  | Map _ -> touch (pp.path x)
   | Val0 _ | Val1 _ | Val2 _ | Val3 _ | Val4 _ ->
-      touch (path ~base x)
-  | File_input _ -> touch (path ~base x)
-  | File0 _ -> touch (path ~base x)
-  | File1 _ -> touch (path ~base x)
-  | File2 _ -> touch (path ~base x)
-  | File3 _ -> touch (path ~base x)
-  | File5 _ -> touch (path ~base x)
-  | Dir_input _ -> touch (path ~base x)
-  | Dir0 _ -> touch (path ~base x)
-  | Dir1 _ -> touch (path ~base x)
-  | Dir2 _ -> touch (path ~base x)
-  | Dir3 _ -> touch (path ~base x)
+      touch (pp.path x)
+  | File_input _ -> touch (pp.path x)
+  | File0 _ -> touch (pp.path x)
+  | File1 _ -> touch (pp.path x)
+  | File2 _ -> touch (pp.path x)
+  | File3 _ -> touch (pp.path x)
+  | File5 _ -> touch (pp.path x)
+  | Dir_input _ -> touch (pp.path x)
+  | Dir0 _ -> touch (pp.path x)
+  | Dir1 _ -> touch (pp.path x)
+  | Dir2 _ -> touch (pp.path x)
+  | Dir3 _ -> touch (pp.path x)
+
+let used ~base = mark { path = (fun x -> used_dir base ^ "/" ^ x.hash) }
+let requested ~base = mark { path = (fun x -> reqs_dir base ^ "/" ^ x.hash) }
 
 let rec unsafe_eval : type a. base:string -> a pipeline -> a = fun ~base x ->
   match x.kind with
@@ -629,7 +635,10 @@ let create_base_directory base =
   mkdir (stderr_dir base) ;
   mkdir (stdout_dir base) ;
   mkdir (log_dir base) ;
-  mkdir (tmp_dir base)
+  mkdir (tmp_dir base) ;
+  mkdir (reqs_dir base) ;
+  mkdir (used_dir base)
+
 
 let base_directory base =
   create_base_directory base ;
@@ -679,5 +688,15 @@ let rec build : type a. ?base:string -> ?np:int -> a pipeline -> unit = fun ?(ba
   fold update () x
 
 let eval : type a. ?base:string -> ?np:int -> a pipeline -> a = fun ?(base = Sys.getcwd ()) ?(np = 1) x ->
+  requested ~base x ;
   build ~base ~np x ;
   unsafe_eval ~base x
+
+
+
+
+
+
+
+
+
