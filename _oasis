@@ -25,7 +25,7 @@ Description:
 Library guizmin
   Path:               src
   Modules:            GzmUtils, GzmConsole, GzmCore, Guizmin
-  BuildDepends:       batteries, core, shell, threads
+  BuildDepends:       batteries, calendar, core, shell, threads
   
 Library syntax
   Path:               src/syntax
