@@ -673,7 +673,7 @@ let rec build : type a. ?base:string -> ?np:int -> a pipeline -> unit = fun ?(ba
             build ~base ~np r ;
             save_value (unsafe_eval ~base r) (path ~base x)
         | Select (subpath, dir) ->
-            let Dir dir_path = eval dir in
+            let Dir dir_path = unsafe_eval ~base dir in
             let p = Filename.concat dir_path subpath in
             if not (Sys.file_exists p) then (
               let msg = sprintf "Tried to access %s in %s but there is no such file or directory." subpath dir_path in
