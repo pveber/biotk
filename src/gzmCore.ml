@@ -564,7 +564,8 @@ let rec unsafe_eval : type a. base:string -> a pipeline -> a = fun ~base x ->
       File p
   | Adapter (x,f) -> f (unsafe_eval ~base x)
 
-
+(* pipeline execution. only accepts pipelines for which there is  actual work to do. 
+   Special pipelines raise Invalid_argument *)
 let exec : type a. a pipeline -> env -> unit = fun x env ->
   let val_wrap x f =
     let dest = path ~base:env.base x in
@@ -618,14 +619,7 @@ let exec : type a. a pipeline -> env -> unit = fun x env ->
   | Dir2 (x1, x2, f) -> path_wrap x (fun env -> f env (eval x1) (eval x2))
   | Dir3 (x1, x2, x3, f) -> path_wrap x (fun env -> f env (eval x1) (eval x2) (eval x3))
 
-  | Select (subpath, dir) ->
-      let Dir dir_path = eval dir in
-      let p = Filename.concat dir_path subpath in
-      if not (Sys.file_exists p) then (
-        let msg = sprintf "Tried to access %s in %s but there is no such file or directory." subpath dir_path in
-        failwith msg
-      )
-
+  | Select (subpath, dir) -> raise (Invalid_argument "GzmCore.exec: select")
   | Merge xs -> raise (Invalid_argument "GzmCore.exec: merge")
   | Adapter _ -> raise (Invalid_argument "GzmCore.exec: adapter")
   | Map _ -> raise (Invalid_argument "GzmCore.exec: map")
@@ -678,6 +672,15 @@ let rec build : type a. ?base:string -> ?np:int -> a pipeline -> unit = fun ?(ba
             let r = merge (List.map f args) in
             build ~base ~np r ;
             save_value (unsafe_eval ~base r) (path ~base x)
+        | Select (subpath, dir) ->
+            let Dir dir_path = eval dir in
+            let p = Filename.concat dir_path subpath in
+            if not (Sys.file_exists p) then (
+              let msg = sprintf "Tried to access %s in %s but there is no such file or directory." subpath dir_path in
+              failwith msg
+            )
+        | Merge _ -> ()
+        | Adapter _ -> ()
         | _ ->
             with_env ~np base x ~f:(fun env ->
               try
