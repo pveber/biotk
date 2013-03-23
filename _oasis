@@ -45,8 +45,8 @@ Library guizmin_tools
                         Guizmin_unix
   FindlibParent:	guizmin
   FindlibName:		tools
-  BuildDepends:		batteries, camlp4, core, guizmin, guizmin.syntax, threads
-  XMETARequires:	guizmin, guizmin.syntax, tabular, tabular.syntax
+  BuildDepends:		batteries, camlp4, core, guizmin, threads
+  XMETARequires:	guizmin, tabular, tabular.syntax
   XMETADescription:	Pervasives components for guizmin
 
 Library guizmin_bioinfo
@@ -60,9 +60,9 @@ Library guizmin_bioinfo
   FindlibParent:	guizmin
   FindlibName:		bioinfo
   BuildDepends:		batteries, biocaml, camlp4, core, format.syntax,
-                        guizmin, guizmin.syntax, guizmin.tools,
+                        guizmin, guizmin.tools,
                         sexplib.syntax, tabular.syntax, threads
-  XMETARequires:	guizmin, guizmin.tools, guizmin.syntax,biocaml
+  XMETARequires:	guizmin, guizmin.tools,biocaml
   XMETADescription:	Bioinformatics components for guizmin
 
 Library guizmin_bioinfo_labs
@@ -73,10 +73,10 @@ Library guizmin_bioinfo_labs
   FindlibName:		labs
   BuildDepends:		batteries, biocaml, camlp4, core, format.syntax,
                         fungen, gsl,
-                        guizmin, guizmin.syntax, guizmin.tools, guizmin.bioinfo,
+                        guizmin, guizmin.tools, guizmin.bioinfo,
                         R.graphics, R.grDevices, R.stats, R.syntax,
                         sexplib.syntax, tabular.syntax, threads
-  XMETARequires:	guizmin, guizmin.tools, guizmin.syntax,biocaml, guizmin.bioinfo, fungen
+  XMETARequires:	guizmin, guizmin.tools, biocaml, guizmin.bioinfo, fungen
   XMETADescription:	Experimental bioinformatics components for guizmin
 
 
