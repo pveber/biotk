@@ -7,4 +7,4 @@
 <src/examples/test_yeast.*>: syntax_camlp4o, pa_guizmin
 <src/examples/ucsc_lift_over.ml>: syntax_camlp4o
 true: annot, debug
-
+<src/guizmin_mb_pipeline.*>: -syntax_camlp4o
