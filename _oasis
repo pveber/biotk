@@ -68,7 +68,7 @@ Library guizmin_bioinfo
 Library guizmin_bioinfo_labs
   Path:			src/bioinfo/labs
   Pack:			true
-  Modules:		Binding_region_finder, Mlea, Pwm
+  Modules:		Binding_region_finder, Bioinfo_labs, Mlea, Pwm
   FindlibParent:	guizmin_bioinfo
   FindlibName:		labs
   BuildDepends:		batteries, biocaml, camlp4, core, format.syntax,
