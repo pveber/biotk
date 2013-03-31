@@ -54,6 +54,63 @@ let clear_cache (base_directory : base_directory) space =
   )
   |! List.iter ~f:(fun f -> GzmUtils.sh "rm -rf %s" f)
 
+type history = ([`used | `requested | `built] * CalendarLib.Printer.Date.t) list
+
+let tag_of_string = function
+| "USED" -> `used
+| "REQ" -> `requested
+| "BUILT" -> `built
+| _ -> assert false
+
+let parse_history_line l =
+  let tag, stamp = String.lsplit2_exn l ~on:':' in
+  tag_of_string tag, CalendarLib.Printer.Date.from_string (String.lstrip stamp)
+
+let load_history path =
+  if Caml.Sys.file_exists path then
+    List.map (In_channel.read_lines path) ~f:parse_history_line
+  else
+    []
+
+type cached_file = {
+  name : string ;
+  history : history ;
+  size : Int64.t
+}
+type cache_selection = cached_file list
+
+let less_tagged tag ~during:period ~than:limit x =
+  let open CalendarLib in
+  let now = Date.today () in
+  List.count x.history ~f:(fun (t,stamp) -> t = tag && Date.(Period.nb_days (sub stamp now) < period)) <= limit
+
+let cache_selection
+    ?used_less_than ?req_less_than 
+    ?bigger_than
+    base =
+  let default _ = true in
+  let used_less_than = 
+    Option.value_map used_less_than ~default ~f:(fun (ntimes, period) -> 
+      less_tagged `used ~than:ntimes ~during:period
+    )
+  and req_less_than  = 
+    Option.value_map req_less_than ~default ~f:(fun (ntimes, period) -> 
+      less_tagged `requested ~than:ntimes ~during:period
+    ) 
+  in
+  let files = Sys.readdir (cache_dir base)  in
+  let cached_files = Array.map files ~f:(
+    fun f -> 
+      { 
+        name = f ;
+        history = load_history (Filename.concat (history_dir base) f) ;
+        size = du (Filename.concat (cache_dir base) f)
+      }
+  )
+  in
+  Array.filter cached_files ~f:(fun x -> used_less_than x && req_less_than x) 
+  |! Array.to_list
+
 
 
 
