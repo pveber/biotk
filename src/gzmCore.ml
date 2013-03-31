@@ -515,7 +515,8 @@ let rec built : type a. base:string -> a pipeline -> bool = fun ~base x ->
 
 let append_history ~base ~msg x =
   let date_stamp = CalendarLib.(Printer.Date.to_string (Date.today ())) in
-  sh "echo %s: %s >> %s/%s" date_stamp msg (history_dir base) x.hash
+  let time_stamp = CalendarLib.(Printer.Time.to_string (Time.now ())) in
+  sh "echo %s: %s @ %s s>> %s/%s" date_stamp msg time_stamp (history_dir base) x.hash
 
 let rec history : type a. base:string -> msg:string -> a pipeline -> unit = fun ~base ~msg x ->
   let log x = append_history ~base ~msg x in
@@ -660,7 +661,7 @@ let rec build : type a. ?base:string -> ?np:int -> a pipeline -> unit = fun ?(ba
       fun (type s) (x : s pipeline) ->
         (* if the pipeline is built, mark it as used *)
         if not (built ~base x) 
-        then (log_built ~base x ; true)
+        then true
         else (log_used  ~base x ; false)
     ) ;
     f = (
@@ -685,7 +686,8 @@ let rec build : type a. ?base:string -> ?np:int -> a pipeline -> unit = fun ?(ba
             with_env ~np base x ~f:(fun env ->
               try
                 env.info "\n%s\n" (string_descr x) ;
-                exec x env
+                exec x env ;
+                log_built ~base x
               with e -> (
                 env.error "failed to eval pipeline with hash %s and id %s" x.hash x.id ;
                 raise e

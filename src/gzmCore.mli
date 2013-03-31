@@ -62,6 +62,10 @@ val map : 'a list pipeline -> ('a pipeline -> 'b pipeline) -> 'b list pipeline
 type base_directory = private string
 val base_directory : string -> base_directory
 val default_base_directory : unit -> base_directory
+val cache_dir : base_directory -> string
+val log_dir : base_directory -> string
+val history_dir : base_directory -> string
+
 
 exception Error of string * exn
 
