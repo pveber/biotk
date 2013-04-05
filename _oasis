@@ -59,10 +59,10 @@ Library guizmin_bioinfo
                         Ucsc
   FindlibParent:	guizmin
   FindlibName:		bioinfo
-  BuildDepends:		batteries, biocaml, camlp4, core, format.syntax,
+  BuildDepends:		batteries, biocaml, camlp4, core, core_extended, format.syntax,
                         guizmin, guizmin.tools,
                         sexplib.syntax, tabular.syntax, threads
-  XMETARequires:	guizmin, guizmin.tools,biocaml
+  XMETARequires:	guizmin, guizmin.tools, biocaml, core_extended
   XMETADescription:	Bioinformatics components for guizmin
 
 Library guizmin_bioinfo_labs
@@ -84,7 +84,7 @@ Executable test_yeast
   Path:         src/examples
   BuildTools:   ocamlbuild
   MainIs:       test_yeast.ml
-  BuildDepends: threads, tabular, guizmin, camlp4.quotations.o, 
+  BuildDepends: threads, tabular, guizmin.bioinfo, camlp4.quotations.o, 
                 biocaml
   Install:      false
 
@@ -92,7 +92,7 @@ Executable test
   Path:         src/examples
   BuildTools:   ocamlbuild
   MainIs:       test.ml
-  BuildDepends: threads, tabular, guizmin, camlp4.quotations.o, 
+  BuildDepends: threads, tabular, guizmin.bioinfo, camlp4.quotations.o, 
                 biocaml
   Install:      false
 

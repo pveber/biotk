@@ -1,6 +1,9 @@
 open GzmUtils
 open GzmCore
 
+module Stream = Biocaml.Stream
+open Stream.Infix
+
 type bigWig
 type wig
 type genome = [ `mm8 | `mm9 | `hg18 | `hg19 | `sacCer2 ]
@@ -66,13 +69,40 @@ let wg_encode_crg_mappability_50 org = wg_encode_crg_mappability 50 org
 let wg_encode_crg_mappability_75 org = wg_encode_crg_mappability 75 org
 let wg_encode_crg_mappability_100 org = wg_encode_crg_mappability 100 org
 
+let twoBitToFa ~positions ~seq2b ~fa =
+  let arg, fn = match positions with
+  | `bed fn -> "bed", fn
+  | `seqList fn -> "seqList", fn
+  in
+  sh "twoBitToFa -%s=%s %s %s" arg fn seq2b fa
+
 let fasta_of_bed org bed = 
   let seq2b = genome_2bit_sequence org in
   f2
     "guizmin.bioinfo.ucsc.fasta_of_bed[1]" []
     seq2b bed
     (fun env (File seq2b) (File bed) path ->
-      sh "twoBitToFa -bed=%s %s %s" bed seq2b path)
+      twoBitToFa ~positions:(`bed bed) ~seq2b ~fa:path)
+
+let fetch_sequences (File seq2b) locations =
+  let open Core.Std in
+  Core_extended.Sys_utils.with_tmp ~pre:"gzm" ~suf:".seqList" (fun seqList ->
+    Core_extended.Sys_utils.with_tmp ~pre:"gzm" ~suf:".fa" (fun fa ->
+      (* Write locations to a file *)
+      List.map locations MBSchema.Location.to_string
+      |> Out_channel.write_lines seqList ;
+      
+      (* run twoBitToFa *)
+      twoBitToFa ~positions:(`seqList seqList) ~seq2b ~fa ;
+
+      (* Parse the Fasta file *)
+      In_channel.with_file fa ~f:(fun ic ->
+        Biocaml.Fasta.in_channel_to_char_seq_item_stream ~pedantic:false ic
+        /@ (fun x -> x.Biocaml.Fasta.sequence)
+        |> Stream.to_list
+      )
+    )
+  )
 
 module Chrom_info = struct
   type tabular data = {
