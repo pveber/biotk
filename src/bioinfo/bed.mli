@@ -17,6 +17,8 @@ module Minimal : sig
     ?sep:char ->
     #Obj.t Guizmin_table.file_path -> Table.t
   val location_of_row : Row.t -> Location.t
+  val row_of_location : Location.t -> Row.t
+  val of_locations : Location.t list pipeline -> file
 end
 
 module Named : sig

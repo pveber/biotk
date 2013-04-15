@@ -12,6 +12,22 @@ module Minimal = struct
   include Guizmin_table.Make(Row)(Table)
 
   let location_of_row { chrom ; chromStart ; chromEnd } = Location.make chrom chromStart chromEnd
+
+  let row_of_location (chrom, { Biocaml_range.lo = chromStart ; hi = chromEnd }) = 
+    { chrom ; chromStart ; chromEnd }
+
+  let of_locations locs =
+    f1
+      "guizmin.bioinfo.bed.minimal.of_locations[r1]" []
+      locs
+      (
+        fun env locs path ->
+          Out_channel.with_file path ~f:(fun oc ->
+            List.map locs row_of_location
+            |> Stream.of_list
+            |> Row.stream_to_channel oc
+          )
+      )
 end
 
 module Named = struct
