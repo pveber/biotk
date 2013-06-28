@@ -1,9 +1,10 @@
 open Guizmin
 
 type species = [
+| `homo_sapiens
 | `mus_musculus
 ]
-type genome = [`mm9]
+type genome = [`mm9 | `hg19]
 
 val reference_genome : release:int -> species:species -> genome
 type gtf = private Gtf.file

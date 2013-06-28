@@ -5,9 +5,11 @@ open Guizmin
 module Stream = Biocaml_stream
 
 type species = [
+| `homo_sapiens
 | `mus_musculus
 ]
 type genome = [
+| `hg19
 | `mm9
 ]
 
@@ -15,14 +17,17 @@ type genome = [
 let reference_genome ~release ~species =
   match species with
   | `mus_musculus when 63 <= release && release <= 65 -> `mm9
+  | `homo_sapiens when release = 71 -> `hg19
   | _ -> failwith "unknown release for this species" 
 
 (* acronym of the lab where the species was sequenced *)
 let lab_label_of_genome = function
+| `hg19 -> "GRCh37"
 | `mm9 -> "NCBIM37"
 | `mm10 -> "GRCm38"
 
 let string_of_species = function
+| `homo_sapiens -> "homo_sapiens"
 | `mus_musculus -> "mus_musculus"
 
 let ucsc_chr_names_gtf gtf =
