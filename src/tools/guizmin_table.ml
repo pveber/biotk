@@ -40,7 +40,10 @@ let with_rows
     ?(header = false) ?(sep = '\t') 
     (File file) ~f =
   In_channel.with_file file ~f:(fun ic ->
-    f (BatStream.map (fun x -> R.of_array (split ~on:sep x)) (line_stream_of_channel ic))
+    line_stream_of_channel ic
+    |> (if header then BatStream.drop 1 else ident)
+    |> BatStream.map (fun x -> R.of_array (split ~on:sep x))
+    |> f
   )
     
 let load
