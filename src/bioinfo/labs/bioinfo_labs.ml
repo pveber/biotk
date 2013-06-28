@@ -49,3 +49,38 @@ let bed_intersection_filter ?(be_in_all = []) ?(not_in_any = []) bed =
         |! fun xs -> Out_channel.with_file path ~f:(Biocaml_lines.to_channel xs)
       )
     )
+
+let bed_union beds =
+  f1
+    "guizmin.bioinfo.labs.bed_union[r1]" []
+    (merge beds)
+    (
+      fun env beds path ->
+        List.map beds ~f:selection_of_bed
+        |> List.reduce ~f:Biocaml.GenomeMap.Selection.union
+        |> Option.value_map ~default:(Stream.empty ()) ~f:Biocaml.GenomeMap.Selection.to_stream
+        |> Stream.map ~f:Bed.Minimal.row_of_location
+        |> fun xs -> Out_channel.with_file path ~f:(fun ic -> Bed.Minimal.Row.stream_to_channel ic xs)
+    )
+      
+      
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
