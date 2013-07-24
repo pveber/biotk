@@ -19,7 +19,7 @@ let summit p = Peak.(p.chromStart + p.summit)
 
 let find_clusters_on_chromosome (_,peaks) =
   let peaks = Array.of_list peaks in
-  Array.sort (fun p q -> compare (summit p) (summit q)) peaks ;
+  Array.sort ~cmp:(fun p q -> compare (summit p) (summit q)) peaks ;
   let current = ref [ peaks.(0) ] and r = ref [] in
   for i = 1 to Array.length peaks - 1 do 
     if summit peaks.(i) - summit (List.hd_exn !current) > 100 then (

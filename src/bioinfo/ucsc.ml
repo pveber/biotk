@@ -97,7 +97,7 @@ let fetch_sequences (File seq2b) locations =
 
       (* Parse the Fasta file *)
       In_channel.with_file fa ~f:(fun ic ->
-        Biocaml.Fasta.in_channel_to_char_seq_item_stream ~pedantic:false ic
+        Biocaml.Fasta.(in_channel_to_char_seq_item_stream_exn ic)
         /@ (fun x -> x.Biocaml.Fasta.sequence)
         |> Stream.to_list
       )

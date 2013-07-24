@@ -83,7 +83,8 @@ module Annotation = struct
       gtf
       (
         fun env gtf ->
-          Gtf.with_file ~tags:[`version `two] gtf ~f:(fun items ->
+          let tags = Biocaml_gff.Tags.({ default with version = `two ; allow_empty_lines = true}) in
+          Gtf.with_file ~tags gtf ~f:(fun items ->
             Stream.filter_map items ~f:exon_item
             |! Stream.group ~f:transcript_id
             |! Stream.map ~f:Biocaml_gff.(fun items ->
