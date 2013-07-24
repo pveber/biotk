@@ -532,7 +532,7 @@ let rec built : type a. base:string -> a pipeline -> bool = fun ~base x ->
 
 let append_history ~base ~msg x =
   let date_stamp = CalendarLib.(Printer.Date.to_string (Date.today ())) in
-  sh "echo %s: %s s>> %s/%s" date_stamp msg (history_dir base) x.hash
+  sh "echo %s: %s >> %s/%s" date_stamp msg (history_dir base) x.hash
 
 let rec history : type a. base:string -> msg:string -> a pipeline -> unit = fun ~base ~msg x ->
   let log x = append_history ~base ~msg x in
