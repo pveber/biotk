@@ -36,6 +36,7 @@ val v2 : id -> params -> 'a pipeline -> 'b pipeline -> (env -> 'a -> 'b -> 'c) -
 val v3 : id -> params -> 'a pipeline -> 'b pipeline -> 'c pipeline -> (env -> 'a -> 'b -> 'c -> 'd) -> 'd pipeline
 val v4 : id -> params -> 'a pipeline -> 'b pipeline -> 'c pipeline -> 'd pipeline -> (env -> 'a -> 'b -> 'c -> 'd -> 'e) -> 'e pipeline
 val v5 : id -> params -> 'a pipeline -> 'b pipeline -> 'c pipeline -> 'd pipeline -> 'e pipeline -> (env -> 'a -> 'b -> 'c -> 'd -> 'e -> 'f) -> 'f pipeline
+val v6 : id -> params -> 'a pipeline -> 'b pipeline -> 'c pipeline -> 'd pipeline -> 'e pipeline -> 'f pipeline -> (env -> 'a -> 'b -> 'c -> 'd -> 'e -> 'f -> 'g) -> 'g pipeline
 
 type 'a file_path = private File of path
 type 'a file = 'a file_path pipeline
