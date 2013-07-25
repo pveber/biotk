@@ -68,7 +68,8 @@ Library guizmin_bioinfo
 Library guizmin_bioinfo_labs
   Path:			src/bioinfo/labs
   Pack:			true
-  Modules:		Binding_region_finder, Bioinfo_labs, Mlea, Pwm
+  Modules:		Binding_region_finder, Bioinfo_labs, Meme_suite,
+                        Mlea, Pwm
   FindlibParent:	guizmin_bioinfo
   FindlibName:		labs
   BuildDepends:		batteries, biocaml, camlp4, core, format.syntax,
@@ -116,6 +117,14 @@ Executable guizmin_mb_pipeline
   MainIs:       guizmin_mb_pipeline.ml
   BuildDepends: cmdliner, guizmin, guizmin.bioinfo
   Install:      false
+
+Document API
+  Title:           API reference for Guizmin
+  Type:            OCamlbuild (0.3)
+  InstallDir:      $docdir/api
+  BuildTools:      ocamldoc, ocamlbuild
+  XOCamlbuildPath: .
+  XOCamlbuildLibraries: guizmin,guizmin.tools,guizmin.bioinfo,guizmin.bioinfo.labs
 
 
 SourceRepository head
