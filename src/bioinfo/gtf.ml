@@ -35,10 +35,10 @@ type parse_error = [ `cannot_parse_float of Biocaml_pos.t * string
                    | `wrong_url_escaping of Biocaml_pos.t * string ]
 with sexp
 
-let with_file ?tags (File gff) ~f =
+let with_file ?(tags = Biocaml_gff.Tags.({ default with allow_empty_lines = true })) (File gff) ~f =
   In_channel.with_file gff ~f:(fun ic ->
     Biocaml_stream.strings_of_channel ic
-    |! Biocaml_transform.to_stream_fun (Biocaml_gff.Transform.string_to_item ?tags ())
+    |! Biocaml_transform.to_stream_fun (Biocaml_gff.Transform.string_to_item tags ())
     |! Biocaml_stream.result_to_exn ~error_to_exn:(fun e -> Failure (Sexp.to_string_hum (sexp_of_parse_error e)))
     |! f
   )
