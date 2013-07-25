@@ -672,34 +672,35 @@ let list_nth l n =
 
 exception Error of string * exn
 
-let rec build : type a. ?base:string -> ?np:int -> a pipeline -> unit = fun ?(base = Sys.getcwd ()) ?(np = 1) x ->
-  let update = { 
-    guard = (
-      fun (type s) (x : s pipeline) ->
+let rec build_aux : type a. ?base:string -> ?np:int -> a pipeline -> unit = 
+  fun ?(base = Sys.getcwd ()) ?(np = 1) x ->
+    let update = { 
+      guard = (
+        fun (type s) (x : s pipeline) ->
         (* if the pipeline is built, mark it as used *)
-        if not (built ~base x) 
-        then true
-        else (log_used  ~base x ; false)
-    ) ;
-    f = (
-      fun (type s) () (x : s pipeline) ->
-        match x.kind with
-        | Map (y, f) ->
+          if not (built ~base x) 
+          then true
+          else (log_used  ~base x ; false)
+      ) ;
+      f = (
+        fun (type s) () (x : s pipeline) ->
+          match x.kind with
+          | Map (y, f) ->
             let n = List.length (unsafe_eval ~base y) in
             let args = Core.Std.List.init n ~f:(list_nth y) in
             let r = merge (List.map f args) in
-            build ~base ~np r ;
+            build_aux ~base ~np r ;
             save_value (unsafe_eval ~base r) (path ~base x)
-        | Select (subpath, dir) ->
+          | Select (subpath, dir) ->
             let Dir dir_path = unsafe_eval ~base dir in
             let p = Filename.concat dir_path subpath in
             if not (Sys.file_exists p) then (
               let msg = sprintf "Tried to access %s in %s but there is no such file or directory." subpath dir_path in
               failwith msg
             )
-        | Merge _ -> ()
-        | Adapter _ -> ()
-        | _ ->
+          | Merge _ -> ()
+          | Adapter _ -> ()
+          | _ ->
             with_env ~np base x ~f:(fun env ->
               try
                 env.info "\n%s\n" (string_descr x) ;
@@ -710,15 +711,20 @@ let rec build : type a. ?base:string -> ?np:int -> a pipeline -> unit = fun ?(ba
                 raise e
               )
             )
-    ) ;
-  }
-  in
-  fold update () x
+      ) ;
+    }
+    in
+    fold update () x
 
-let eval : type a. ?base:string -> ?np:int -> a pipeline -> a = fun ?(base = Sys.getcwd ()) ?(np = 1) x ->
-  log_requested ~base x ;
-  build ~base ~np x ;
-  unsafe_eval ~base x
+let build : type a. ?base:string -> ?np:int -> a pipeline -> unit =
+  fun ?(base = Sys.getcwd ()) ?(np = 1) x ->
+    log_requested ~base x ;
+    build_aux ~base ~np x
+
+let eval : type a. ?base:string -> ?np:int -> a pipeline -> a = 
+  fun ?(base = Sys.getcwd ()) ?(np = 1) x ->
+    build ~base ~np x ;
+    unsafe_eval ~base x
 
 
 
