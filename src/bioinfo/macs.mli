@@ -48,4 +48,4 @@ module With_control : sig
   val peaks : Peak.t output dir -> Peak.file
 end
 
-val bed : 'a output dir -> Bed.file'
+val bed : 'a output dir -> Bed.Basic.file

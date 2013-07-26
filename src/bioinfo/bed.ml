@@ -3,6 +3,10 @@ open Guizmin
 open MBSchema
 
 type 'a format constraint 'a = < chrom : string ; chromStart : int ; chromEnd : int ; .. >
+type 'a file = 'a format Guizmin_table.file
+type 'a basic_file = 'a file
+type 'a named_file = 'a file constraint 'a = < name : string ; .. >
+type 'a stranded_file = 'a named_file constraint 'a = < strand : [`sense | `antisense ] ; .. >
 
 module Basic = struct
   type tabular data = {
@@ -11,10 +15,7 @@ module Basic = struct
     chromEnd : int 
   }
 
-  type file' = Obj.t format Guizmin_table.file
-  type file_path' = Obj.t format Guizmin_table.file_path
-
-  type 'a file = (#Obj.t as 'a) format Guizmin_table.file
+  type file = Obj.t format Guizmin_table.file
   type 'a file_path = (#Obj.t as 'a) format Guizmin_table.file_path
 
   let with_rows ?header ?sep x ~f = Guizmin_table.with_rows (module Row) ?header ?sep x ~f
@@ -43,7 +44,7 @@ module Basic = struct
 end
 
 
-module With_name = struct
+module Named = struct
   type tabular data = {
     chrom : string ;
     chromStart : int ;
@@ -51,10 +52,7 @@ module With_name = struct
     name : string ;
   }
 
-  type file' = Obj.t format Guizmin_table.file
-  type file_path' = Obj.t format Guizmin_table.file_path
-
-  type 'a file = (#Obj.t as 'a) format Guizmin_table.file
+  type file = Obj.t format Guizmin_table.file
   type 'a file_path = (#Obj.t as 'a) format Guizmin_table.file_path
 
   let with_rows ?header ?sep x ~f = Guizmin_table.with_rows (module Row) ?header ?sep x ~f
@@ -85,7 +83,7 @@ module With_name = struct
   let location_of_row { chrom ; chromStart ; chromEnd } = Location.make chrom chromStart chromEnd
 end
 
-module With_strand = struct
+module Stranded = struct
   type tabular data = {
     chrom : string ;
     chromStart : int ;
@@ -95,10 +93,7 @@ module With_strand = struct
     strand : [`sense "+" | `antisense "-"] ;
   }
 
-  type file' = Obj.t format Guizmin_table.file
-  type file_path' = Obj.t format Guizmin_table.file_path
-
-  type 'a file = (#Obj.t as 'a) format Guizmin_table.file
+  type file = Obj.t format Guizmin_table.file
   type 'a file_path = (#Obj.t as 'a) format Guizmin_table.file_path
 
   let with_rows ?header ?sep x ~f = Guizmin_table.with_rows (module Row) ?header ?sep x ~f
@@ -107,7 +102,6 @@ module With_strand = struct
   let location_of_row { chrom ; chromStart ; chromEnd } = Location.make chrom chromStart chromEnd
 end
 
-include Basic
 
 type track
 

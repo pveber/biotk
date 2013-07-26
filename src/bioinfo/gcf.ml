@@ -11,7 +11,7 @@ include Guizmin_table.Make(Row)(Table)
 
 let bed_row_of_genomic_coordinate { loc = (chrom, { Biocaml.Range.lo ; hi } ) } =
   {
-    Bed.chrom ;
+    Bed.Basic.chrom ;
     chromStart = lo ;
     chromEnd = hi 
   }
@@ -25,7 +25,7 @@ let to_bed gcf =
         Row.stream_of_channel ic
         /@ bed_row_of_genomic_coordinate
         |> fun x -> Out_channel.with_file path ~f:(fun oc -> 
-          Bed.Row.stream_to_channel oc x
+          Bed.Basic.Row.stream_to_channel oc x
         )
       ))
 

@@ -40,7 +40,7 @@ let gfp_bam = Bowtie.align ~v:2 bowtie_index_mm9 gfp_fastq
 (*     sox2_bam *)
 (* ) *)
 
-let wget_gzipped_bed url : Bed.file' = Guizmin_unix.(
+let wget_gzipped_bed url : Bed.Basic.file = Guizmin_unix.(
   gunzip (wget url)
 )
 

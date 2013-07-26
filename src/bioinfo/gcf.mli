@@ -11,7 +11,7 @@ type tabular data = {
 
 include module type of Guizmin_table.Make(Row)(Table)
 
-val to_bed : file -> Bed.file'
+val to_bed : file -> Bed.Basic.file
 
 
 

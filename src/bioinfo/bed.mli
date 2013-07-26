@@ -1,19 +1,20 @@
 open Guizmin
 open MBSchema
 
-type tabular data = {
-  chrom : string ;
-  chromStart : int ;
-  chromEnd : int 
-}
-
-type 'a format constraint 'a = #Obj.t
+type 'a format constraint 'a = < chrom : string ; chromStart : int ; chromEnd : int ; .. >
+type 'a file = 'a format Guizmin_table.file
+type 'a basic_file = 'a file
+type 'a named_file = 'a file constraint 'a = < name : string ; .. >
+type 'a stranded_file = 'a named_file constraint 'a = < strand : [`sense | `antisense ] ; .. >
 
 module Basic : sig
-  type file' = Obj.t format Guizmin_table.file
-  type file_path' = Obj.t format Guizmin_table.file_path
-      
-  type 'a file = (#Obj.t as 'a) format Guizmin_table.file
+  type tabular data = {
+    chrom : string ;
+    chromStart : int ;
+    chromEnd : int 
+  }
+
+  type file = Obj.t format Guizmin_table.file
   type 'a file_path = (#Obj.t as 'a) format Guizmin_table.file_path
       
   val with_rows : 
@@ -33,10 +34,10 @@ module Basic : sig
     
   val location_of_row : Row.t -> Location.t
   val row_of_location : Location.t -> Row.t
-  val of_locations : Location.t list pipeline -> file'
+  val of_locations : Location.t list pipeline -> file
 end
 
-module With_name : sig
+module Named : sig
   type tabular data = {
     chrom : string ;
     chromStart : int ;
@@ -44,10 +45,7 @@ module With_name : sig
     name : string ;
   }
 
-  type file' = Obj.t format Guizmin_table.file
-  type file_path' = Obj.t format Guizmin_table.file_path
-
-  type 'a file = (#Obj.t as 'a) format Guizmin_table.file
+  type file = Obj.t format Guizmin_table.file
   type 'a file_path = (#Obj.t as 'a) format Guizmin_table.file_path
 
   val with_rows : 
@@ -60,7 +58,7 @@ module With_name : sig
     ?sep:char ->
     'a file_path -> Table.t
 
-  val make : ?prefix:string -> 'a Basic.file -> file'
+  val make : ?prefix:string -> 'a basic_file -> file
   (** keeps the first three cols and adds a fourth with a generated
       identifier. This is necessary for certain routines to work,
       notably sequence retrieval *)
@@ -68,7 +66,7 @@ module With_name : sig
   val location_of_row : Row.t -> Location.t
 end
 
-module With_strand : sig
+module Stranded : sig
 
   type tabular data = {
     chrom : string ;
@@ -79,10 +77,7 @@ module With_strand : sig
     strand : [`sense "+" | `antisense "-"] ;
   }
 
-  type file' = Obj.t format Guizmin_table.file
-  type file_path' = Obj.t format Guizmin_table.file_path
-
-  type 'a file = (#Obj.t as 'a) format Guizmin_table.file
+  type file = Obj.t format Guizmin_table.file
   type 'a file_path = (#Obj.t as 'a) format Guizmin_table.file_path
 
   val with_rows : 
@@ -97,8 +92,6 @@ module With_strand : sig
 
   val location_of_row : Row.t -> Location.t
 end
-
-include module type of Basic
 
 type track
 
