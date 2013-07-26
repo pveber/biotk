@@ -14,10 +14,7 @@ let mm8_peaks : Gcf.file = Guizmin_unix.(gunzip (wget url))
 let chain_file = 
   Ucsc.Lift_over.chain_file ~org_from:`mm8 ~org_to:`mm9
     
-let load_table x =
-  Guizmin_table.load
-    (module Gcf.Row) (module Gcf.Table)
-    (eval x)
+let load_table x = Gcf.load (eval x)
 
 let mm9_peaks, unmapped_peaks =
   Ucsc.Lift_over.conversion

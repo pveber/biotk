@@ -8,13 +8,13 @@ open Guizmin_bioinfo.MBSchema
 let radius = 1000
 
 (** consider broader regions around peaks *)
-let bed_recenter ~radius (bed : 'a Bed.named_file) : Bed.Named.file =
+let bed_recenter ~radius (bed : 'a Named_bed.file) : Named_bed.file' =
   Guizmin.(
     f1
       "guizmin.bioinfo.labs.mlea.bed_recenter[r1]"
       Param.([ int "radius" radius ])
       bed
-      Bed.Named.(fun env bed path -> 
+      Named_bed.(fun env bed path -> 
         with_rows bed ~f:(fun items ->
           items 
           /@ (fun loc -> 
@@ -22,7 +22,7 @@ let bed_recenter ~radius (bed : 'a Bed.named_file) : Bed.Named.file =
                 { loc with
                         chromStart = max 0 (center - 1000) ;
                         chromEnd   = center + 1000 })
-          |! fun xs -> Out_channel.with_file path ~f:(fun oc -> Bed.Named.Row.stream_to_channel oc xs)
+          |! fun xs -> Out_channel.with_file path ~f:(fun oc -> Named_bed.Row.stream_to_channel oc xs)
         )
       )
   )

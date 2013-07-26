@@ -7,8 +7,8 @@ open Guizmin_bioinfo
 
 let selection_of_bed (File bed) =
   In_channel.with_file bed ~f:(fun ic ->
-    Bed.Minimal.Row.stream_of_channel ic
-    /@ Bed.Minimal.location_of_row
+    Bed.Row.stream_of_channel ic
+    /@ Bed.location_of_row
     |! Biocaml.GenomeMap.Selection.of_stream
   )
 
@@ -32,9 +32,8 @@ let bed_intersection_filter ?(be_in_all = []) ?(not_in_any = []) bed =
       (*   be_in_all loc && not_in_any loc *)
       (* in *)
       let item_filter line =
-        let open Bed.Minimal in
         let fields = String.split (line : Biocaml_lines.item :> string) ~on:'\t' |! Array.of_list in
-        let { chrom ; chromStart ; chromEnd } = Row.of_array fields in
+        let { Bed.chrom ; chromStart ; chromEnd } = Bed.Row.of_array fields in
         let loc = chrom, Biocaml.Range.make chromStart chromEnd in
         be_in_all loc && not_in_any loc
       in
@@ -59,8 +58,8 @@ let bed_union beds =
         List.map beds ~f:selection_of_bed
         |> List.reduce ~f:Biocaml.GenomeMap.Selection.union
         |> Option.value_map ~default:(Stream.empty ()) ~f:Biocaml.GenomeMap.Selection.to_stream
-        |> Stream.map ~f:Bed.Minimal.row_of_location
-        |> fun xs -> Out_channel.with_file path ~f:(fun ic -> Bed.Minimal.Row.stream_to_channel ic xs)
+        |> Stream.map ~f:Bed.row_of_location
+        |> fun xs -> Out_channel.with_file path ~f:(fun ic -> Bed.Row.stream_to_channel ic xs)
     )
       
       

@@ -20,7 +20,7 @@ let meme_chip ?meme_nmotifs ?meme_minw ?meme_maxw fa : meme_chip_output dir =
 let meme_chip_meme_motifs (Dir output) =
   In_channel.with_file 
     (output ^ "/meme_out/meme.xml")
-    ~f:Meme.(fun ic ->
+    ~f:Fungen.Meme.(fun ic ->
       let xml = xml_of_channel ic in
       List.map
         (Option.value_exn xml).motifs

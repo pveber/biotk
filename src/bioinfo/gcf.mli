@@ -9,9 +9,9 @@ type tabular data = {
   loc : Location
 }
 
-type file = Row.t Guizmin_table.file
+include module type of Guizmin_table.Make(Row)(Table)
 
-val to_bed : file -> 'a Bed.file
+val to_bed : file -> Bed.file'
 
 
 

@@ -41,7 +41,7 @@ Library syntax
 
 Library guizmin_tools
   Path:			src/tools
-  Modules:		Guizmin_repo, Guizmin_table, Guizmin_table_sig,
+  Modules:		Guizmin_repo, Guizmin_table,
                         Guizmin_unix
   FindlibParent:	guizmin
   FindlibName:		tools
@@ -55,7 +55,8 @@ Library guizmin_bioinfo
   Modules:		Bam, Bed, Bowtie, Ensembl, Fasta, 
                         Gcf, Gtf,
                         Htseq, Jaspar, Macs, MBPipeline, 
-                        MBSchema, Sam, Samtools, Sra, Tophat, 
+                        MBSchema, Named_bed, Sam, Samtools,
+                        Sra, Stranded_bed, Tophat, 
                         Ucsc
   FindlibParent:	guizmin
   FindlibName:		bioinfo

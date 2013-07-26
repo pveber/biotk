@@ -71,11 +71,18 @@ let of_macs_peaks peak_files =
     (Guizmin.merge peak_files)
     (fun env peaks_files ->
       let peak_tracks = List.map peaks_files ~f:(fun file ->
-        Guizmin_table.with_rows
-          (module Peak.Row)
-          file
-          ~f:Stream.to_list
+        Peak.with_rows file ~f:Stream.to_list
       )
       in
       let clusters = find_clusters peak_tracks in
       List.map clusters ~f:binding_region_of_macs_peaks)
+
+
+
+
+
+
+
+
+
+

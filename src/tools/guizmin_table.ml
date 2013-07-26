@@ -2,7 +2,20 @@
 open Core.Std
 open Guizmin
 
-include Guizmin_table_sig
+module type Row = sig
+  type t
+  val labels : string list
+  val of_array : string array -> t
+end
+
+module type Table = sig
+  type t
+  val of_file : ?line_numbers:bool -> ?header: bool -> ?sep: char -> string -> t
+end
+
+type 'a format
+type 'a file = 'a format Guizmin.file
+type 'a file_path = 'a format Guizmin.file_path
 
 let count_occurences ch s =
   let accu = ref 0 in
@@ -53,11 +66,27 @@ let load
     ?line_numbers ?header ?sep (File f) =
   T.of_file ?line_numbers ?header ?sep f
 
-module Make(R : Row)(T : Table) =
+module MakeOpen(R : Row)(T : Table) =
 struct
   let with_rows ?header ?sep file ~f = with_rows (module R) ?header ?sep file ~f
   let load ?header ?sep file = load (module R) (module T) ?header ?sep file
 end
+
+module Make(R : Row)(T : Table) =
+struct
+  type file = R.t format Guizmin.file
+  type file_path = R.t format Guizmin.file_path
+
+  include MakeOpen(R)(T)
+end
+
+
+
+
+
+
+
+
 
 
 

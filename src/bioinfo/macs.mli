@@ -13,7 +13,7 @@ module Wo_control : sig
       pvalue : float ;
       fold : float ;
     }
-    type file = Row.t Guizmin_table.file
+    include module type of Guizmin_table.Make(Row)(Table)
   end
   val run :
     ?tagsize:int -> ?bandwidth:int -> 
@@ -35,7 +35,7 @@ module With_control : sig
       fold : float ;
       fdr : float ;
     }
-    type file = Row.t Guizmin_table.file
+    include module type of Guizmin_table.Make(Row)(Table)
   end
 
   val run : 
@@ -48,4 +48,14 @@ module With_control : sig
   val peaks : [`with_control] output dir -> Peak.file
 end
 
-val bed : 'a output dir -> Bed.Minimal.file
+val bed : 'a output dir -> Bed.file'
+
+
+
+
+
+
+
+
+
+

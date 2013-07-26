@@ -61,7 +61,7 @@ module Wo_control = struct
       pvalue : float ;
       fold : float ;
     }
-    type file = Row.t Guizmin_table.file
+    include Guizmin_table.Make(Row)(Table)
   end
   let run ?tagsize ?bandwidth ~genome ~pvalue chIP =
     run14 ~genome ?tagsize ?bandwidth ~pvalue chIP
@@ -85,7 +85,7 @@ module With_control = struct
       fold : float ;
       fdr : float ;
     }
-    type file = Row.t Guizmin_table.file
+    include Guizmin_table.Make(Row)(Table)
   end
   let run ?tagsize ?bandwidth ~genome ~pvalue ~control chIP =
     run14 ~genome ?tagsize ?bandwidth ~pvalue ~control chIP

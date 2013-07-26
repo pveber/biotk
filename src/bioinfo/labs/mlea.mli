@@ -18,13 +18,13 @@ val jaspar_library :
 
 val graph : 
   Ucsc.genome ->
-  'a Bed.named_file ->
+  'a Named_bed.file ->
   Biocaml_pwm.t pipeline ->
   [`pdf] file
 
 val test :
   Ucsc.genome ->
-  'a Bed.named_file ->
+  'a Named_bed.file ->
   (string * Biocaml_pwm.t) list pipeline ->
   result list pipeline
 
