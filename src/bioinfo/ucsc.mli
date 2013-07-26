@@ -16,7 +16,7 @@ val wg_encode_crg_mappability_50  : [`mm9 | `hg18 | `hg19] -> bigWig file
 val wg_encode_crg_mappability_75  : [`mm9 | `hg18 | `hg19] -> bigWig file
 val wg_encode_crg_mappability_100 : [`mm9 | `hg18 | `hg19] -> bigWig file
 
-val fasta_of_bed : genome -> 'a Named_bed.file -> Fasta.file
+val fasta_of_bed : genome -> 'a Bed.With_name.file -> Fasta.file
 val fetch_sequences : [`ucsc_2bit] file_path -> MBSchema.Location.t list -> string list
 
 val wig_of_bigWig : bigWig file -> wig file
