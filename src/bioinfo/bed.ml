@@ -7,13 +7,20 @@ type tabular data = {
   chromStart : int ;
   chromEnd : int 
 }
-type file' = Obj.t Guizmin_table.file
-type file_path' = Obj.t Guizmin_table.file_path
 
-type 'a file = (#Obj.t as 'a) Guizmin_table.file
-type 'a file_path = (#Obj.t as 'a) Guizmin_table.file_path
+type 'a format constraint 'a = #Obj.t
 
-include Guizmin_table.MakeOpen(Row)(Table)
+type file' = Obj.t format Guizmin_table.file
+type file_path' = Obj.t format Guizmin_table.file_path
+
+type 'a file = (#Obj.t as 'a) format Guizmin_table.file
+type 'a file_path = (#Obj.t as 'a) format Guizmin_table.file_path
+
+let with_rows ?header ?sep x ~f = Guizmin_table.with_rows (module Row) ?header ?sep x ~f
+let with_rows_obj ?header ?sep x ~f = Guizmin_table.with_rows (module Row) ?header ?sep x ~f:(fun xs ->
+  f (Biocaml_stream.map xs ~f:Obj.of_row)
+)
+let load ?header ?sep x = Guizmin_table.load (module Row) (module Table) ?header ?sep x
 
 let location_of_row { chrom ; chromStart ; chromEnd } = Location.make chrom chromStart chromEnd
 

@@ -18,9 +18,9 @@ module Wo_control : sig
   val run :
     ?tagsize:int -> ?bandwidth:int -> 
     genome:[< Ucsc.genome] -> pvalue:float -> 
-    Bam.file -> [`wo_control] output dir
+    Bam.file -> Peak.t output dir
 
-  val peaks : [`wo_control] output dir -> Peak.file
+  val peaks : Peak.t output dir -> Peak.file
 end
 
 module With_control : sig
@@ -43,19 +43,9 @@ module With_control : sig
     genome:[< Ucsc.genome] -> 
     pvalue:float -> 
     control:Bam.file ->
-    Bam.file -> [`with_control] output dir
+    Bam.file -> Peak.t output dir
 
-  val peaks : [`with_control] output dir -> Peak.file
+  val peaks : Peak.t output dir -> Peak.file
 end
 
 val bed : 'a output dir -> Bed.file'
-
-
-
-
-
-
-
-
-
-

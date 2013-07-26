@@ -6,16 +6,24 @@ type tabular data = {
   chromStart : int ;
   chromEnd : int 
 }
-type file' = Obj.t Guizmin_table.file
-type file_path' = Obj.t Guizmin_table.file_path
 
-type 'a file = (#Obj.t as 'a) Guizmin_table.file
-type 'a file_path = (#Obj.t as 'a) Guizmin_table.file_path
+type 'a format constraint 'a = #Obj.t
+
+type file' = Obj.t format Guizmin_table.file
+type file_path' = Obj.t format Guizmin_table.file_path
+
+type 'a file = (#Obj.t as 'a) format Guizmin_table.file
+type 'a file_path = (#Obj.t as 'a) format Guizmin_table.file_path
 
 val with_rows : 
   ?header:bool ->
   ?sep:char ->
   'a file_path -> f:(Row.t Stream.t -> 'b) -> 'b
+
+val with_rows_obj : 
+  ?header:bool ->
+  ?sep:char ->
+  'a file_path -> f:(Obj.t Stream.t -> 'b) -> 'b
 
 val load : 
   ?header:bool ->

@@ -58,7 +58,7 @@ let with_rows
     |> BatStream.map (fun x -> R.of_array (split ~on:sep x))
     |> f
   )
-    
+
 let load
     (type row) (type table)
     (module R : Row with type t = row)
@@ -68,6 +68,15 @@ let load
 
 module MakeOpen(R : Row)(T : Table) =
 struct
+  let with_rows ?header ?sep file ~f = with_rows (module R) ?header ?sep file ~f
+  let load ?header ?sep file = load (module R) (module T) ?header ?sep file
+end
+
+module MakeFamily(R : Row)(T : Table)(F : sig type 'a t end) =
+struct
+  type 'a file = 'a F.t format Guizmin.file
+  type 'a file_path = 'a F.t format Guizmin.file_path
+
   let with_rows ?header ?sep file ~f = with_rows (module R) ?header ?sep file ~f
   let load ?header ?sep file = load (module R) (module T) ?header ?sep file
 end

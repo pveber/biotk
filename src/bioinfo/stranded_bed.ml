@@ -9,12 +9,14 @@ type tabular data = {
   score : float ;
   strand : [`sense "+" | `antisense "-"] ;
 }
-type file = Obj.t Guizmin_table.file
-type file_path = Obj.t Guizmin_table.file_path
 
-type 'a file' = (#Obj.t as 'a) Guizmin_table.file
-type 'a file_path' = (#Obj.t as 'a) Guizmin_table.file_path
+type file' = Obj.t Bed.format Guizmin_table.file
+type file_path' = Obj.t Bed.format Guizmin_table.file_path
 
-include Guizmin_table.MakeOpen(Row)(Table)
+type 'a file = (#Obj.t as 'a) Bed.format Guizmin_table.file
+type 'a file_path = (#Obj.t as 'a) Bed.format Guizmin_table.file_path
+
+let with_rows ?header ?sep x ~f = Guizmin_table.with_rows (module Row) ?header ?sep x ~f
+let load ?header ?sep x = Guizmin_table.load (module Row) (module Table) ?header ?sep x
 
 let location_of_row { chrom ; chromStart ; chromEnd } = Location.make chrom chromStart chromEnd
