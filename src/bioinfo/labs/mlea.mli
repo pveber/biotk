@@ -36,8 +36,9 @@ module Tsv_output : sig
     pval_adj : float ;
     fdr : float
   }
+  include Guizmin_table.S with type row = Row.t and type table = Table.t and type obj = Obj.t
 
-  val of_test : result list pipeline -> line Guizmin_table.file
+  val of_test : result list pipeline -> file
 end
 
 val latex_output : result list pipeline -> [`latex] file

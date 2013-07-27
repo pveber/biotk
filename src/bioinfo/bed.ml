@@ -2,27 +2,16 @@ open Core.Std
 open Guizmin
 open MBSchema
 
-type 'a format constraint 'a = < chrom : string ; chromStart : int ; chromEnd : int ; .. >
-type 'a file = 'a format Guizmin_table.file
-type 'a basic_file = 'a file
-type 'a named_file = 'a file constraint 'a = < name : string ; .. >
-type 'a stranded_file = 'a named_file constraint 'a = < strand : [`sense | `antisense ] ; .. >
-
 module Basic = struct
-  type tabular data = {
-    chrom : string ;
-    chromStart : int ;
-    chromEnd : int 
-  }
-
-  type file = Obj.t format Guizmin_table.file
-  type 'a file_path = (#Obj.t as 'a) format Guizmin_table.file_path
-
-  let with_rows ?header ?sep x ~f = Guizmin_table.with_rows (module Row) ?header ?sep x ~f
-  let with_rows_obj ?header ?sep x ~f = Guizmin_table.with_rows (module Row) ?header ?sep x ~f:(fun xs ->
-    f (Biocaml_stream.map xs ~f:Obj.of_row)
-  )
-  let load ?header ?sep x = Guizmin_table.load (module Row) (module Table) ?header ?sep x
+  module X = struct
+    type tabular data = {
+      chrom : string ;
+      chromStart : int ;
+      chromEnd : int 
+    }
+  end
+  include X
+  include Guizmin_table.Make(X)
 
   let location_of_row { chrom ; chromStart ; chromEnd } = Location.make chrom chromStart chromEnd
 
@@ -45,18 +34,16 @@ end
 
 
 module Named = struct
-  type tabular data = {
-    chrom : string ;
-    chromStart : int ;
-    chromEnd : int ;
-    name : string ;
-  }
-
-  type file = Obj.t format Guizmin_table.file
-  type 'a file_path = (#Obj.t as 'a) format Guizmin_table.file_path
-
-  let with_rows ?header ?sep x ~f = Guizmin_table.with_rows (module Row) ?header ?sep x ~f
-  let load ?header ?sep x = Guizmin_table.load (module Row) (module Table) ?header ?sep x
+  module X = struct
+    type tabular data = {
+      chrom : string ;
+      chromStart : int ;
+      chromEnd : int ;
+      name : string ;
+    }
+  end
+  include X
+  include Guizmin_table.Make(X)
 
   let make ?(prefix = "seq_") bed =
     f1
@@ -84,23 +71,25 @@ module Named = struct
 end
 
 module Stranded = struct
-  type tabular data = {
-    chrom : string ;
-    chromStart : int ;
-    chromEnd : int ;
-    name : string ;
-    score : float ;
-    strand : [`sense "+" | `antisense "-"] ;
-  }
-
-  type file = Obj.t format Guizmin_table.file
-  type 'a file_path = (#Obj.t as 'a) format Guizmin_table.file_path
-
-  let with_rows ?header ?sep x ~f = Guizmin_table.with_rows (module Row) ?header ?sep x ~f
-  let load ?header ?sep x = Guizmin_table.load (module Row) (module Table) ?header ?sep x
+  module X = struct
+    type tabular data = {
+      chrom : string ;
+      chromStart : int ;
+      chromEnd : int ;
+      name : string ;
+      score : float ;
+      strand : [`sense "+" | `antisense "-"] ;
+    }
+  end
+  include X
+  include Guizmin_table.Make(X)
 
   let location_of_row { chrom ; chromStart ; chromEnd } = Location.make chrom chromStart chromEnd
 end
+
+type 'a file = 'a Basic.file'
+type 'a named_file = 'a Named.file'
+type 'a stranded_file = 'a Stranded.file'
 
 
 type track

@@ -2,20 +2,7 @@
 open Core.Std
 open Guizmin
 
-module type Row = sig
-  type t
-  val labels : string list
-  val of_array : string array -> t
-end
-
-module type Table = sig
-  type t
-  val of_file : ?line_numbers:bool -> ?header: bool -> ?sep: char -> string -> t
-end
-
 type 'a format
-type 'a file = 'a format Guizmin.file
-type 'a file_path = 'a format Guizmin.file_path
 
 let count_occurences ch s =
   let accu = ref 0 in
@@ -48,46 +35,103 @@ let line_stream_of_channel ic =
   in
   Stream.from f
 
+
+module type T = sig
+  module Row : sig
+    type t
+    type 'a ty
+    val labels : string list
+    val of_array : string array -> t
+  end
+
+  module Obj : sig
+    type t
+    val of_row : Row.t -> t
+    val to_row : t -> Row.t
+  end
+
+  module Table : sig
+    type t
+    val of_file : ?line_numbers:bool -> ?header: bool -> ?sep: char -> string -> t
+  end
+end
+
 let with_rows 
-    (type row) (module R : Row with type t = row)
+    (type row) (type obj) (module T : T with type Row.t = row)
     ?(header = false) ?(sep = '\t') 
     (File file) ~f =
   In_channel.with_file file ~f:(fun ic ->
     line_stream_of_channel ic
     |> (if header then BatStream.drop 1 else ident)
-    |> BatStream.map (fun x -> R.of_array (split ~on:sep x))
+    |> BatStream.map (fun x -> T.Row.of_array (split ~on:sep x))
     |> f
   )
 
+let with_obj_rows
+    (type obj) (module T : T with type Obj.t = obj)
+    ?header ?sep
+    file ~f =
+  with_rows (module T) file ~f:(fun xs ->
+    f (BatStream.map T.Obj.of_row xs)
+  )
+
 let load
-    (type row) (type table)
-    (module R : Row with type t = row)
-    (module T : Table with type t = table)
+    (type table) (module T : T with type Table.t = table)
     ?line_numbers ?header ?sep (File f) =
-  T.of_file ?line_numbers ?header ?sep f
+  T.Table.of_file ?line_numbers ?header ?sep f
 
-module MakeOpen(R : Row)(T : Table) =
-struct
-  let with_rows ?header ?sep file ~f = with_rows (module R) ?header ?sep file ~f
-  let load ?header ?sep file = load (module R) (module T) ?header ?sep file
+module type S = sig
+  type row
+  type obj
+  type table
+  type 'a ty
+
+  type file = unit ty format Guizmin.file
+  type file_path = unit ty format Guizmin.file_path
+
+  type 'a file' = 'a ty format Guizmin.file
+  type 'a file_path' = 'a ty format Guizmin.file_path
+
+  val with_rows :
+    ?header:bool ->
+    ?sep:char ->
+    'a file_path' -> f:(row Stream.t -> 'b) -> 'b
+
+  val with_obj_rows :
+    ?header:bool ->
+    ?sep:char ->
+    'a file_path' -> f:(obj Stream.t -> 'b) -> 'b
+
+  val load : ?header:bool -> ?sep:char -> 'a file_path' -> table
 end
 
-module MakeFamily(R : Row)(T : Table)(F : sig type 'a t end) =
+module Make(X : T) =
 struct
-  type 'a file = 'a F.t format Guizmin.file
-  type 'a file_path = 'a F.t format Guizmin.file_path
+  type row = X.Row.t
+  type obj = X.Obj.t
+  type table = X.Table.t
+  type 'a ty = 'a X.Row.ty
 
-  let with_rows ?header ?sep file ~f = with_rows (module R) ?header ?sep file ~f
-  let load ?header ?sep file = load (module R) (module T) ?header ?sep file
+  type file = unit ty format Guizmin.file
+  type file_path = unit ty format Guizmin.file_path
+
+  type 'a file' = 'a ty format Guizmin.file
+  type 'a file_path' = 'a ty format Guizmin.file_path
+
+  let with_rows ?header ?sep file ~f = with_rows (module X) ?header ?sep file ~f
+  let with_obj_rows ?header ?sep file ~f = with_obj_rows (module X) ?header ?sep file ~f
+  let load ?header ?sep file = load (module X) ?header ?sep file
 end
 
-module Make(R : Row)(T : Table) =
-struct
-  type file = R.t format Guizmin.file
-  type file_path = R.t format Guizmin.file_path
 
-  include MakeOpen(R)(T)
-end
+
+
+
+
+
+
+
+
 
 
 

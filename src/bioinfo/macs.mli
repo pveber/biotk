@@ -13,8 +13,9 @@ module Wo_control : sig
       pvalue : float ;
       fold : float ;
     }
-    include module type of Guizmin_table.Make(Row)(Table)
+    include Guizmin_table.S with type row = Row.t and type table = Table.t and type obj = Obj.t and type 'a ty = 'a Row.ty
   end
+
   val run :
     ?tagsize:int -> ?bandwidth:int -> 
     genome:[< Ucsc.genome] -> pvalue:float -> 
@@ -35,7 +36,7 @@ module With_control : sig
       fold : float ;
       fdr : float ;
     }
-    include module type of Guizmin_table.Make(Row)(Table)
+    include Guizmin_table.S with type row = Row.t and type table = Table.t and type obj = Obj.t and type 'a ty = 'a Row.ty
   end
 
   val run : 
@@ -49,3 +50,24 @@ module With_control : sig
 end
 
 val bed : 'a output dir -> Bed.Basic.file
+val best_peaks : n:int -> 'a Wo_control.Peak.file' -> 'a Wo_control.Peak.file'
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

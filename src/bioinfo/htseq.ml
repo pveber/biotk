@@ -1,12 +1,14 @@
 open Guizmin
 
 module Output = struct
-  type tabular data = {
-    id : string ;
-    count : int
-  }
-  type format
-  type file = format Guizmin_table.file
+  module X = struct
+    type tabular data = {
+      id : string ;
+      count : int
+    }
+  end
+  include X
+  include Guizmin_table.Make(X)
 end
 
 let count ?(feature = "exon") sam gtf = 

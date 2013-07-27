@@ -52,16 +52,19 @@ let run14 ~genome ?tagsize ?bandwidth ~pvalue ?control chIP =
 
 module Wo_control = struct
   module Peak = struct
-    type tabular t = {
-      chrom : string ;
-      chromStart : int ;
-      chromEnd : int ;
-      summit : int ;
-      tags : int ;
-      pvalue : float ;
-      fold : float ;
-    }
-    include Guizmin_table.Make(Row)(Table)
+    module X = struct
+      type tabular t = {
+        chrom : string ;
+        chromStart : int ;
+        chromEnd : int ;
+        summit : int ;
+        tags : int ;
+        pvalue : float ;
+        fold : float ;
+      }
+    end
+    include X
+    include Guizmin_table.Make(X)
   end
   let run ?tagsize ?bandwidth ~genome ~pvalue chIP =
     run14 ~genome ?tagsize ?bandwidth ~pvalue chIP
@@ -75,17 +78,20 @@ end
 
 module With_control = struct
   module Peak = struct
-    type tabular t = {
-      chrom : string ;
-      chromStart : Natural ;
-      chromEnd : int ;
-      summit : int ;
-      tags : int ;
-      pvalue : float ;
-      fold : float ;
-      fdr : float ;
-    }
-    include Guizmin_table.Make(Row)(Table)
+    module X = struct
+      type tabular t = {
+        chrom : string ;
+        chromStart : Natural ;
+        chromEnd : int ;
+        summit : int ;
+        tags : int ;
+        pvalue : float ;
+        fold : float ;
+        fdr : float ;
+      }
+    end
+    include X
+    include Guizmin_table.Make(X)
   end
   let run ?tagsize ?bandwidth ~genome ~pvalue ~control chIP =
     run14 ~genome ?tagsize ?bandwidth ~pvalue ~control chIP
@@ -124,3 +130,4 @@ end
  
 (* let peaks mo = select mo "macs_peaks.xls" *)
 let bed mo = select mo "macs_peaks.bed"
+let best_peaks ~n peaks = assert false

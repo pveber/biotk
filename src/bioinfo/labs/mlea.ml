@@ -98,6 +98,9 @@ let single_test preds (motif_id, pwm) =
      R.floats_of_t (r ## positions),
      R.float_of_t (r ## fold),
      R.float_of_t (r ## p'value))
+
+let f (g : 'a Guizmin_bioinfo.Bed.Basic.ty -> int) (x : unit Guizmin_bioinfo.Bed.Named.ty) = g x 
+
       
 let graph org bed motif =
   let bed = Ucsc.(bedClip (chrom_info org)) (bed_recenter ~radius bed) in
@@ -176,6 +179,7 @@ module Tsv_output = struct
       fdr : Float
     }
   end
+  include Guizmin_table.Make(Data)
 
   let of_test r = 
     Guizmin.f1

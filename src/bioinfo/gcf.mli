@@ -9,7 +9,7 @@ type tabular data = {
   loc : Location
 }
 
-include module type of Guizmin_table.Make(Row)(Table)
+include Guizmin_table.S with type row = Row.t and type table = Table.t and type obj = Obj.t and type 'a ty = 'a Row.ty
 
 val to_bed : file -> Bed.Basic.file
 

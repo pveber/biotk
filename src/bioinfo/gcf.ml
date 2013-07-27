@@ -3,11 +3,14 @@ open Biocaml_stream.Infix
 open Guizmin
 open MBSchema
 
-type tabular data = {
-  loc : Location
-}
+module X = struct
+  type tabular data = {
+    loc : Location
+  }
+end
 
-include Guizmin_table.Make(Row)(Table)
+include X
+include Guizmin_table.Make(X)
 
 let bed_row_of_genomic_coordinate { loc = (chrom, { Biocaml.Range.lo ; hi } ) } =
   {

@@ -26,8 +26,7 @@ module Chrom_info : sig
     chrom : string ;
     chrom_length : int
   }
-  type format
-  type file = format Guizmin_table.file
+  include Guizmin_table.S with type row = Row.t and type table = Table.t and type obj = Obj.t and type 'a ty = 'a Row.ty
 end
 val chrom_info : genome -> Chrom_info.file
 val bedClip : Chrom_info.file -> 'a Bed.file -> 'a Bed.file
