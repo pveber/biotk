@@ -109,7 +109,7 @@ Executable test_mouse_ES
   Path:         src/examples
   BuildTools:   ocamlbuild
   MainIs:       test_mouse_ES.ml
-  BuildDepends: guizmin.bioinfo,tabular.syntax,threads
+  BuildDepends: guizmin.bioinfo,guizmin.bioinfo.labs,tabular.syntax,threads
   Install:      false
 
 Executable guizmin_mb_pipeline

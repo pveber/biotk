@@ -1,5 +1,9 @@
+open Core.Std
+open Biocaml
 open Guizmin
 open MBSchema
+
+open Biocaml_stream.Infix
 
 type 'a output
 
@@ -99,35 +103,50 @@ module With_control = struct
   let peaks mo = select mo "macs_peaks.xls"
 end
 
-(* type peak = { *)
-(*   loc : Location.t ; *)
-(*   length : int ; *)
-(*   summit : int ; *)
-(*   tags : int ; *)
-(*   pvalue : float ; *)
-(*   fold : float ; *)
-(*   fdr : float option ; *)
-(* } *)
-
-(* let peak_line_parser line = { *)
-(*   loc = ( *)
-(*     Location.make f.(0) (max 1 (int_of_string f.(1))) (int_of_string f.(2))  *)
-(*     (\* shitty macs that may return negative coordinates !!! *\) *)
-(*   ) ; *)
-(*   length = int_of_string f.(3) ; *)
-(*   summit = int_of_string f.(4) ;  *)
-(*   tags = int_of_string f.(5) ; *)
-(*   pvalue = float_of_string f.(6) ; *)
-(*   fold = float_of_string f.(7) ; *)
-(*   fdr =  *)
-(*     if Array.length f = 9  *)
-(*     then Some (float_of_string f.(8)) *)
-(*     else None *)
-(* } *)
-
-(* let peak_parser fp =  *)
-(*   Guizmin_table.parse ~header:true peak_line_parser fp *)
- 
-(* let peaks mo = select mo "macs_peaks.xls" *)
 let bed mo = select mo "macs_peaks.bed"
-let best_peaks ~n peaks = assert false
+
+(** parses a line of a peak file *)
+let parse_peak_line line = Wo_control.Peak.(
+  String.split (line : Biocaml_lines.item :> string) ~on:'\t' 
+  |! Array.of_list
+  |! Row.of_array
+  |! Obj.of_row
+)
+
+let best_peaks ~n peaks =
+  f1
+    "guizmin.bioinfo.macs.best_peaks[r1]" Param.([int "n" n])
+    peaks
+    (
+      fun env (File peaks) path ->
+        
+        let peaks = In_channel.with_file peaks ~f:(fun ic ->
+          Biocaml_lines.of_channel ic
+          |> Stream.map ~f:(fun l -> l, parse_peak_line l)
+          |> Stream.to_list
+        )
+        in
+        let sorted_peaks = List.sort ~cmp:(fun x y -> Float.compare (snd y)#pvalue (snd x)#pvalue) peaks in
+        Stream.of_list sorted_peaks
+        /@ fst
+        |> Stream.take ~n
+        |> fun xs -> Out_channel.with_file path ~f:(Biocaml_lines.to_channel xs)
+    )
+    
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
