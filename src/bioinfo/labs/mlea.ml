@@ -99,9 +99,6 @@ let single_test preds (motif_id, pwm) =
      R.float_of_t (r ## fold),
      R.float_of_t (r ## p'value))
 
-let f (g : 'a Guizmin_bioinfo.Bed.Basic.ty -> int) (x : unit Guizmin_bioinfo.Bed.Named.ty) = g x 
-
-      
 let graph org bed motif =
   let bed = Ucsc.(bedClip (chrom_info org)) (bed_recenter ~radius bed) in
   let fa = Ucsc.(fasta_of_bed org bed) in
@@ -179,7 +176,6 @@ module Tsv_output = struct
       fdr : Float
     }
   end
-  include Guizmin_table.Make(Data)
 
   let of_test r = 
     Guizmin.f1
@@ -194,6 +190,7 @@ module Tsv_output = struct
         |! fun lines -> Out_channel.with_file path ~f:(fun oc -> Data.Row.stream_to_channel oc lines)
       )
   include Data
+  include Guizmin_table.Make(Row)(Obj)(Table)(Guizmin_table.No_comment_nor_header)
 end
 
 let latex_output r =

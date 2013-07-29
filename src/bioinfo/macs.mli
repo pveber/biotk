@@ -13,7 +13,7 @@ module Wo_control : sig
       pvalue : float ;
       fold : float ;
     }
-    include Guizmin_table.S with type row = Row.t and type table = Table.t and type obj = Obj.t and type 'a ty = 'a Row.ty
+    include module type of Guizmin_table.Make(Row)(Obj)(Table)(Guizmin_table.Sharp_comment_no_header)
   end
 
   val run :
@@ -36,7 +36,7 @@ module With_control : sig
       fold : float ;
       fdr : float ;
     }
-    include Guizmin_table.S with type row = Row.t and type table = Table.t and type obj = Obj.t and type 'a ty = 'a Row.ty
+    include module type of Guizmin_table.Make(Row)(Obj)(Table)(Guizmin_table.Sharp_comment_no_header)
   end
 
   val run : 

@@ -3,15 +3,12 @@ open Guizmin
 open MBSchema
 
 module Basic = struct
-  module X = struct
-    type tabular data = {
-      chrom : string ;
-      chromStart : int ;
-      chromEnd : int 
-    }
-  end
-  include X
-  include Guizmin_table.Make(X)
+  type tabular data = {
+    chrom : string ;
+    chromStart : int ;
+    chromEnd : int 
+  }
+  include Guizmin_table.Make(Row)(Obj)(Table)(Guizmin_table.No_comment_nor_header)
 
   let location_of_row { chrom ; chromStart ; chromEnd } = Location.make chrom chromStart chromEnd
 
@@ -34,16 +31,13 @@ end
 
 
 module Named = struct
-  module X = struct
-    type tabular data = {
-      chrom : string ;
-      chromStart : int ;
-      chromEnd : int ;
-      name : string ;
-    }
-  end
-  include X
-  include Guizmin_table.Make(X)
+  type tabular data = {
+    chrom : string ;
+    chromStart : int ;
+    chromEnd : int ;
+    name : string ;
+  }
+  include Guizmin_table.Make(Row)(Obj)(Table)(Guizmin_table.No_comment_nor_header)
 
   let make ?(prefix = "seq_") bed =
     f1
@@ -71,18 +65,15 @@ module Named = struct
 end
 
 module Stranded = struct
-  module X = struct
-    type tabular data = {
-      chrom : string ;
-      chromStart : int ;
-      chromEnd : int ;
-      name : string ;
-      score : float ;
-      strand : [`sense "+" | `antisense "-"] ;
-    }
-  end
-  include X
-  include Guizmin_table.Make(X)
+  type tabular data = {
+    chrom : string ;
+    chromStart : int ;
+    chromEnd : int ;
+    name : string ;
+    score : float ;
+    strand : [`sense "+" | `antisense "-"] ;
+  }
+  include Guizmin_table.Make(Row)(Obj)(Table)(Guizmin_table.No_comment_nor_header)
 
   let location_of_row { chrom ; chromStart ; chromEnd } = Location.make chrom chromStart chromEnd
 end

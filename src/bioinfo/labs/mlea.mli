@@ -36,7 +36,7 @@ module Tsv_output : sig
     pval_adj : float ;
     fdr : float
   }
-  include Guizmin_table.S with type row = Row.t and type table = Table.t and type obj = Obj.t
+  include module type of Guizmin_table.Make(Row)(Obj)(Table)(Guizmin_table.No_comment_nor_header)
 
   val of_test : result list pipeline -> file
 end

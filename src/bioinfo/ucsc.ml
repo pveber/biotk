@@ -105,14 +105,11 @@ let fetch_sequences (File seq2b) locations =
   )
 
 module Chrom_info = struct
-  module X = struct
-    type tabular data = {
-      chrom : string ;
-      chrom_length : int
-    }
-  end
-  include X
-  include Guizmin_table.Make(X)
+  type tabular data = {
+    chrom : string ;
+    chrom_length : int
+  }
+  include Guizmin_table.Make(Row)(Obj)(Table)(Guizmin_table.No_comment_nor_header)
 end
 
 let chrom_info_cmd1 org = Printf.sprintf "\

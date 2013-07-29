@@ -5,7 +5,7 @@ module Output : sig
     id : string ;
     count : int
   }
-  include Guizmin_table.S with type row = Row.t and type table = Table.t and type obj = Obj.t and type 'a ty = 'a Row.ty
+  include module type of Guizmin_table.Make(Row)(Obj)(Table)(Guizmin_table.No_comment_nor_header)
 end
 
 val count : ?feature:string -> Sam.file -> Gtf.file -> Output.file
