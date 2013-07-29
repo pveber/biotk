@@ -43,10 +43,16 @@ type cached_file = {
 }
 type cache_selection = base_directory * cached_file list
 
-let less_tagged tag ~during:period ~than:limit x =
+let less_tagged tag ~during:(period_start, period_end) ~than:limit x =
   let open CalendarLib in
   let now = Date.today () in
-  List.count x.history ~f:(fun (t,stamp) -> t = tag && Date.(Period.nb_days (sub stamp now) < period)) <= limit
+  let n_tags =
+    List.count x.history ~f:(fun (t,stamp) -> 
+      let stamp_date = Date.(Period.nb_days (sub stamp now)) in
+      t = tag && period_start <= stamp_date && stamp_date <= period_end
+    )
+  in
+  n_tags <= limit
 
 let cache_selection
     ?used_less_than ?req_less_than 
@@ -54,12 +60,12 @@ let cache_selection
     base =
   let default _ = true in
   let used_less_than = 
-    Option.value_map used_less_than ~default ~f:(fun (ntimes, period) -> 
-      less_tagged `used ~than:ntimes ~during:period
+    Option.value_map used_less_than ~default ~f:(fun (ntimes, period_start, period_end) -> 
+      less_tagged `used ~than:ntimes ~during:(period_start, period_end)
     )
   and req_less_than  = 
-    Option.value_map req_less_than ~default ~f:(fun (ntimes, period) -> 
-      less_tagged `requested ~than:ntimes ~during:period
+    Option.value_map req_less_than ~default ~f:(fun (ntimes, period_start, period_end) -> 
+      less_tagged `requested ~than:ntimes ~during:(period_start, period_end)
     )
   and bigger_than =
     Option.value_map bigger_than ~default ~f:(fun size_limit ->
