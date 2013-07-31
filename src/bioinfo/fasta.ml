@@ -1,8 +1,8 @@
 open Core.Std
 open Guizmin
 
-type ty
-type file = ty Guizmin.file
+type format
+type file = format Guizmin.file
 
 let with_contents (File fa) ~f =
   In_channel.with_file
@@ -12,6 +12,10 @@ let with_contents (File fa) ~f =
       |! map ~f:Biocaml.Fasta.(fun it -> it.header, it.sequence)
       |! f
     )
+
+let contents fa  = with_contents ~f:Biocaml.Stream.to_list fa
+let sequences fa = with_contents ~f:(fun xs -> Biocaml.Stream.(to_list (map xs snd))) fa
+
 
 
 
