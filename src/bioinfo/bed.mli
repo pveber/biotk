@@ -43,6 +43,7 @@ module Scored : sig
   include module type of Guizmin_table.Make(Row)(Obj)(Table)(Guizmin_table.No_comment_nor_header)
 
   val location_of_row : Row.t -> Location.t
+  val filter : ?less_than:float -> ?more_than:float -> 'a file' ->  'a file'
 end
 
 module Stranded : sig
