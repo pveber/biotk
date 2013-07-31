@@ -54,6 +54,7 @@ and _ kind =
   | Val4 : 'b pipeline * 'c pipeline * 'd pipeline * 'e pipeline * (env -> 'b -> 'c -> 'd -> 'e -> 'a) -> 'a kind
   | Val5 : 'b pipeline * 'c pipeline * 'd pipeline * 'e pipeline * 'f pipeline * (env -> 'b -> 'c -> 'd -> 'e -> 'f -> 'a) -> 'a kind
   | Val6 : 'b pipeline * 'c pipeline * 'd pipeline * 'e pipeline * 'f pipeline * 'g pipeline * (env -> 'b -> 'c -> 'd -> 'e -> 'f -> 'g -> 'a) -> 'a kind
+  | Val7 : 'b pipeline * 'c pipeline * 'd pipeline * 'e pipeline * 'f pipeline * 'g pipeline * 'h pipeline * (env -> 'b -> 'c -> 'd -> 'e -> 'f -> 'g -> 'h -> 'a) -> 'a kind
 
   | File_input : path -> 'a file_path kind
   | File0 : (env -> path -> unit) -> 'a file_path kind
@@ -135,6 +136,12 @@ let v6 id params x y z w r s f = {
   id ; params ;
   hash = make_hash id params `value [ x.hash ; y.hash ; z.hash ; w.hash ; r.hash ; s.hash ] ;
   kind = Val6 (x, y, z, w, r, s, f)
+}
+
+let v7 id params x y z w r s t f = {
+  id ; params ;
+  hash = make_hash id params `value [ x.hash ; y.hash ; z.hash ; w.hash ; r.hash ; s.hash ; t.hash ] ;
+  kind = Val7 (x, y, z, w, r, s, t, f)
 }
 
 let file path =
@@ -330,6 +337,16 @@ let rec string_descr : type s. ?tab:int -> s pipeline -> string = fun ?(tab = 0)
             (string_descr ~tab:(tab + 2) x5)
             (string_descr ~tab:(tab + 2) x6)
             space
+      | Val7 (x1,x2,x3,x4,x5,x6,x7,_) -> 
+          sprintf "[\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s]"
+            (string_descr ~tab:(tab + 2) x1)
+            (string_descr ~tab:(tab + 2) x2)
+            (string_descr ~tab:(tab + 2) x3)
+            (string_descr ~tab:(tab + 2) x4)
+            (string_descr ~tab:(tab + 2) x5)
+            (string_descr ~tab:(tab + 2) x6)
+            (string_descr ~tab:(tab + 2) x7)
+            space
 
       | File_input _ -> "[]"
       | File0 _ -> "[]"
@@ -408,7 +425,7 @@ let path : type s. base:string -> s pipeline -> string = fun ~base x ->
       cache_dir base ^ "/" ^ dir.hash ^ "/" ^ subpath
   | File_input path -> path
   | Dir_input path -> path
-  | Val0 _ | Val1 _ | Val2 _ | Val3 _ | Val4 _ | Val5 _ | Val6 _ -> cache_path
+  | Val0 _ | Val1 _ | Val2 _ | Val3 _ | Val4 _ | Val5 _ | Val6 _ | Val7 _ -> cache_path
   | File0 _ -> cache_path
   | File1 _ -> cache_path
   | File2 _ -> cache_path
@@ -482,6 +499,7 @@ let rec fold : type a. 's update -> 's -> a pipeline -> 's = fun up init x ->
     | Val4 (x1,x2,x3,x4,_) -> up.f (fold up (fold up (fold up (fold up init x1) x2) x3) x4) x
     | Val5 (x1,x2,x3,x4,x5,_) -> up.f (fold up (fold up (fold up (fold up (fold up init x1) x2) x3) x4) x5) x
     | Val6 (x1,x2,x3,x4,x5,x6,_) -> up.f (fold up (fold up (fold up (fold up (fold up (fold up init x1) x2) x3) x4) x5) x6) x
+    | Val7 (x1,x2,x3,x4,x5,x6,x7,_) -> up.f (fold up (fold up (fold up (fold up (fold up (fold up (fold up init x1) x2) x3) x4) x5) x6) x7) x
     | File_input _ -> up.f init x
     | File0 _ -> up.f init x
     | File1 (y,_) ->  up.f (fold up init y) x
@@ -510,6 +528,7 @@ let fold_deps : type a. 's update -> 's -> a pipeline -> 's = fun up init x ->
     | Val4 (x1,x2,x3,x4,_) -> up.f (up.f (up.f (up.f init x1) x2) x3) x4
     | Val5 (x1,x2,x3,x4,x5,_) -> up.f (up.f (up.f (up.f (up.f init x1) x2) x3) x4) x5
     | Val6 (x1,x2,x3,x4,x5,x6,_) -> up.f (up.f (up.f (up.f (up.f (up.f init x1) x2) x3) x4) x5) x6
+    | Val7 (x1,x2,x3,x4,x5,x6,x7,_) -> up.f (up.f (up.f (up.f (up.f (up.f (up.f init x1) x2) x3) x4) x5) x6) x7
     | File_input _ -> init
     | File0 _ -> init
     | File1 (y,_) ->  up.f init y
@@ -534,7 +553,7 @@ let rec built : type a. base:string -> a pipeline -> bool = fun ~base x ->
   | Select (_,dir) -> built ~base dir
   | Adapter (y,_) -> built ~base y
   | Map _ -> Sys.file_exists (path ~base x)
-  | Val0 _ | Val1 _ | Val2 _ | Val3 _ | Val4 _ | Val5 _ | Val6 _ ->
+  | Val0 _ | Val1 _ | Val2 _ | Val3 _ | Val4 _ | Val5 _ | Val6 _ | Val7 _ ->
       Sys.file_exists (path ~base x)
   | File_input _ -> Sys.file_exists (path ~base x)
   | File0 _ -> Sys.file_exists (path ~base x)
@@ -559,7 +578,7 @@ let rec history : type a. base:string -> msg:string -> a pipeline -> unit = fun 
   | Select (_,dir) -> history ~base ~msg dir
   | Adapter (y,_) -> history ~base ~msg y
   | Map _ -> log x
-  | Val0 _ | Val1 _ | Val2 _ | Val3 _ | Val4 _ | Val5 _ | Val6 _ ->
+  | Val0 _ | Val1 _ | Val2 _ | Val3 _ | Val4 _ | Val5 _ | Val6 _ | Val7 _ ->
       log x
   | File_input _ -> log x
   | File0 _ -> log x
@@ -579,7 +598,7 @@ let log_requested ~base = history ~base ~msg:"REQ"
 
 let rec unsafe_eval : type a. base:string -> a pipeline -> a = fun ~base x ->
   match x.kind with
-  | Val0 _ | Val1 _ | Val2 _ | Val3 _ | Val4 _ | Val5 _ | Val6 _ -> load_value (path base x)
+  | Val0 _ | Val1 _ | Val2 _ | Val3 _ | Val4 _ | Val5 _ | Val6 _ | Val7 _ -> load_value (path base x)
   | Map _ -> load_value (path base x)
   | File_input path -> File path
   | File0 _ -> File (path base x)
@@ -630,6 +649,7 @@ let exec : type a. a pipeline -> env -> unit = fun x env ->
   | Val4 (x1, x2, x3, x4, f) -> val_wrap x (fun env -> f env (eval x1) (eval x2) (eval x3) (eval x4))
   | Val5 (x1, x2, x3, x4, x5, f) -> val_wrap x (fun env -> f env (eval x1) (eval x2) (eval x3) (eval x4) (eval x5))
   | Val6 (x1, x2, x3, x4, x5, x6, f) -> val_wrap x (fun env -> f env (eval x1) (eval x2) (eval x3) (eval x4) (eval x5) (eval x6))
+  | Val7 (x1, x2, x3, x4, x5, x6, x7, f) -> val_wrap x (fun env -> f env (eval x1) (eval x2) (eval x3) (eval x4) (eval x5) (eval x6) (eval x7))
 
   | File_input path ->
       if not (file_exists path) then (
