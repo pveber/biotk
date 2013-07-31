@@ -64,6 +64,19 @@ module Named = struct
   let location_of_row { chrom ; chromStart ; chromEnd } = Location.make chrom chromStart chromEnd
 end
 
+module Scored = struct
+  type tabular data = {
+    chrom : string ;
+    chromStart : int ;
+    chromEnd : int ;
+    name : string ;
+    score : float ;
+  }
+  include Guizmin_table.Make(Row)(Obj)(Table)(Guizmin_table.No_comment_nor_header)
+
+  let location_of_row { chrom ; chromStart ; chromEnd } = Location.make chrom chromStart chromEnd
+end
+
 module Stranded = struct
   type tabular data = {
     chrom : string ;
@@ -80,6 +93,7 @@ end
 
 type 'a file = 'a Basic.file'
 type 'a named_file = 'a Named.file'
+type 'a scored_file = 'a Scored.file'
 type 'a stranded_file = 'a Stranded.file'
 
 

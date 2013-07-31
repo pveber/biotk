@@ -31,6 +31,20 @@ module Named : sig
   val location_of_row : Row.t -> Location.t
 end
 
+module Scored : sig
+  type tabular data = {
+    chrom : string ;
+    chromStart : int ;
+    chromEnd : int ;
+    name : string ;
+    score : float ;
+  }
+
+  include module type of Guizmin_table.Make(Row)(Obj)(Table)(Guizmin_table.No_comment_nor_header)
+
+  val location_of_row : Row.t -> Location.t
+end
+
 module Stranded : sig
 
   type tabular data = {
@@ -49,6 +63,7 @@ end
 
 type 'a file = 'a Basic.file'
 type 'a named_file = 'a Named.file'
+type 'a scored_file = 'a Scored.file'
 type 'a stranded_file = 'a Stranded.file'
 
 
