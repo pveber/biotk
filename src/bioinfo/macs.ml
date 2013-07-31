@@ -65,7 +65,7 @@ module Wo_control = struct
       pvalue : float ;
       fold : float ;
     }
-    include Guizmin_table.Make(Row)(Obj)(Table)(Guizmin_table.Sharp_comment_no_header)
+    include Guizmin_table.Make(Row)(Obj)(Table)(Guizmin_table.Sharp_comment_and_header)
   end
   let run ?tagsize ?bandwidth ~genome ~pvalue chIP =
     run14 ~genome ?tagsize ?bandwidth ~pvalue chIP
@@ -89,7 +89,7 @@ module With_control = struct
       fold : float ;
       fdr : float ;
     }
-    include Guizmin_table.Make(Row)(Obj)(Table)(Guizmin_table.Sharp_comment_no_header)
+    include Guizmin_table.Make(Row)(Obj)(Table)(Guizmin_table.Sharp_comment_and_header)
   end
 
   let run ?tagsize ?bandwidth ~genome ~pvalue ~control chIP =
@@ -117,6 +117,8 @@ let best_peaks ~n peaks =
         
         let peaks = In_channel.with_file peaks ~f:(fun ic ->
           Biocaml_lines.of_channel ic
+          |> Stream.filter ~f:(fun l -> let l = (l : Biocaml_lines.item :> string) in l <> "" && l.[0] <> '#')
+          |> Stream.skip ~n:1
           |> Stream.map ~f:(fun l -> l, parse_peak_line l)
           |> Stream.to_list
         )

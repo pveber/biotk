@@ -73,6 +73,12 @@ module Sharp_comment_no_header = struct
   let header = false
 end
 
+module Sharp_comment_and_header = struct
+  type comment = [`sharp]
+  type header  = [`header]
+  let header = true
+end
+
 
 
 let with_rows 
@@ -112,31 +118,25 @@ struct
   let load file = load (module Table) ~header:Layout.header file
 end
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+let remove_comments sep header file =
+  f1
+    "guizmin.tools.remove_sharp_comments[r1]"
+    Param.([ string "sep" (Char.to_string sep) ])
+    file
+    (
+      fun env (File file) path ->
+        In_channel.with_file file ~f:(fun ic ->
+          line_stream_of_channel ic
+          |! BatStream.filter (fun line -> String.length line > 0 && line.[0] <> sep)
+          |! (if header then BatStream.drop 1 else ident)
+          |! fun xs -> Out_channel.with_file path ~f:(fun oc -> 
+            BatStream.iter 
+              (fun line -> output_string oc line ; output_char oc '\n')
+              xs
+          )
+        )
+    )
+  
+let remove_sharp_comments file = remove_comments '#' false file
+let remove_sharp_comments_and_header file = remove_comments '#' true file
 

@@ -33,6 +33,9 @@ module No_comment_nor_header : Layout with type comment = [`none]
 module Sharp_comment_no_header : Layout with type comment = [`sharp]
                                         and  type header  = [`none]
 
+module Sharp_comment_and_header : Layout with type comment = [`sharp]
+                                         and  type header  = [`header]
+
 module Make : 
   functor (Row : Row) ->
     functor (Obj : Obj with type row = Row.t) ->
@@ -53,5 +56,26 @@ sig
 
   val load : 'a file_path' -> Table.t
 end
+
+val remove_sharp_comments : ('a, [`sharp], 'b) format file -> ('a, [`none], 'b) format file
+val remove_sharp_comments_and_header : ('a, [`sharp], [`header]) format file -> ('a, [`none], [`none]) format file
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 

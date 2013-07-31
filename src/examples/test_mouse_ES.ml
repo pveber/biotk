@@ -51,7 +51,7 @@ let sox2_motif =
     ~meme_nmotifs:3
     ~meme_minw:8
     ~meme_maxw:14
-    (Ucsc.fasta_of_bed `mm9 (Bed.Named.make (Macs.best_peaks ~n:100 sox2_peaks)))
+    (Ucsc.fasta_of_bed `mm9 (Bed.Named.make (Guizmin_table.remove_sharp_comments_and_header (Macs.best_peaks ~n:500 sox2_peaks))))
 
 let wget_gzipped_bed url : Bed.Basic.file = Guizmin_unix.(
   gunzip (wget url)
