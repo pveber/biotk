@@ -78,7 +78,7 @@ module Scored = struct
 
   let filter ?less_than ?more_than bed =
     f1
-      "guizmin.bioinfo.bed.scored.filter[r1]"
+      "guizmin.bioinfo.bed.scored.filter[r2]"
       Param.([opt float "less_than" less_than ; opt float "more_than" more_than])
       bed
       (
@@ -91,7 +91,7 @@ module Scored = struct
           let true_ _ = true in
           let pred =
             let less_than = Option.value_map less_than ~default:true_ ~f:(fun ub -> fun x -> x <= ub)
-            and more_than = Option.value_map less_than ~default:true_ ~f:(fun lb -> fun x -> lb <= x) in
+            and more_than = Option.value_map more_than ~default:true_ ~f:(fun lb -> fun x -> lb <= x) in
             fun x -> less_than x && more_than x
           in
           In_channel.with_file bed ~f:(fun ic ->
