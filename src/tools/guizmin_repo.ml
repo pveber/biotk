@@ -3,7 +3,7 @@ open Core.Std
 open GzmUtils
 
 type path = string list
-type item = 
+type item =
   | Item : 'a Guizmin.pipeline * string * path -> item
 let item ?(descr = "") path pipeline = Item (pipeline, descr, path)
 
@@ -21,10 +21,10 @@ let fail_on_duplicate_paths items = match find_duplicate_paths items with
     let path = String.concat ~sep:"/" p in
     failwithf "Path %s is present several times in the repo!" path ()
 
-let create ?(np = 0) ~base ~repo_base items =
+let create ?(np = 0) ?(wipeout = false) ~base ~repo_base items =
   fail_on_duplicate_paths items ;
-  sh "rm -rf %s" repo_base ;
-  sh "mkdir -p %s" repo_base ;
+  if not (Sys.file_exists repo_base) then sh "mkdir -p %s" repo_base ;
+  if wipeout then sh "rm -rf %s/*" repo_base ;
   List.iter items ~f:(
     function Item (pipeline,_,rel_path)  ->
       let abs_path = repo_base ^ "/" ^ (String.concat ~sep:"/" rel_path) in
@@ -34,7 +34,7 @@ let create ?(np = 0) ~base ~repo_base items =
         sp "ln -s `readlink -f %s` %s" (Guizmin.path ~base pipeline) abs_path
       ]
   )
-    
+
 
 
 
