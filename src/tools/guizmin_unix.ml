@@ -1,7 +1,7 @@
 open Guizmin
 open GzmUtils
 
-let wget url = 
+let wget url =
   f0
     "guizmin.unix.wget[r1]"
     [Param.string "url" url]

@@ -11,13 +11,13 @@ let cmd_tokens_of_string s =
   in
   let rec aux i current accu =
     if i < 0 then accept current accu
-    else 
+    else
       match s.[i] with
       | ' ' | '\t' | '\n' | '\r' ->
         aux (i - 1) "" (accept current accu)
       | '\'' | '"' | '`' as c ->
         quote c (i - 1) "" (accept current accu)
-      | c -> 
+      | c ->
         aux (i - 1) (sp "%c%s" c current) accu
   and quote c i current accu =
     if i < 0 then failwith "GzmUtils.cmd_of_string: unfinished quotation"
@@ -34,15 +34,15 @@ type 'a logger = ('a,unit,string,unit) format4 -> 'a
 let null_logger fmt =
   Printf.ksprintf ignore fmt
 
-let sh 
-    ?(debug : 'a logger = null_logger) 
-    ?(error : 'a logger = null_logger) 
-    ?(stdout = stdout) 
+let sh
+    ?(debug : 'a logger = null_logger)
+    ?(error : 'a logger = null_logger)
+    ?(stdout = stdout)
     ?(stderr = stderr)
-    fmt = 
+    fmt =
   let shell s =
     debug "sh call:\n\n%s\n\n" s ;
-    try 
+    try
       Shell.call
         ~stdout:(Shell.to_fd (Unix.descr_of_out_channel stdout))
         ~stderr:(Shell.to_fd (Unix.descr_of_out_channel stderr))
@@ -54,15 +54,15 @@ let sh
   in
   Printf.ksprintf shell fmt
 
-let shout 
-    ?(debug : 'a logger = null_logger) 
-    ?(error : 'a logger = null_logger) 
+let shout
+    ?(debug : 'a logger = null_logger)
+    ?(error : 'a logger = null_logger)
     ?(stderr = stderr)
-    fmt = 
+    fmt =
   let shell s =
     debug "sh call:\n\n%s\n\n" s ;
     let buf = Buffer.create 1024 in
-    try 
+    try
       Shell.call
         ~stdout:(Shell.to_buffer buf)
         ~stderr:(Shell.to_fd (Unix.descr_of_out_channel stderr))
@@ -76,21 +76,21 @@ let shout
   Printf.ksprintf shell fmt
 
 
-let bash ?(debug = false) ?(stdout = stdout) ?(stderr = stderr) cmds = 
+let bash ?(debug = false) ?(stdout = stdout) ?(stderr = stderr) cmds =
   Shell.call
     ~stdout:(Shell.to_fd (Unix.descr_of_out_channel stdout))
     ~stderr:(Shell.to_fd (Unix.descr_of_out_channel stderr))
     [ Shell.cmd "bash" [ "-c" ; String.concat " && " cmds ] ]
 
-let pipefail cmd1 cmd2 = 
+let pipefail cmd1 cmd2 =
   Printf.sprintf "exec 3>&1; s=$(exec 4>&1 >&3; { %s; echo $? >&4; } | %s) && exit $s" cmd1 cmd2;;
 
-let load fn = 
+let load fn =
   let ic = open_in fn in
   let v  = Marshal.from_channel ic in
   close_in ic ; v
 
-let save fn v = 
+let save fn v =
   let oc = open_out fn in
   Marshal.to_channel oc v [] ;
   close_out oc
@@ -101,7 +101,7 @@ let lines_to_file dest xs =
   (*   dest  *)
   (*   ~f:(Biocaml.Stream.lines_to_channel xs) *)
 
-let lines_of_file path = 
+let lines_of_file path =
   BatList.of_enum (BatFile.lines_of path)
   (* Core.Std.In_channel.with_file *)
   (*   path *)
