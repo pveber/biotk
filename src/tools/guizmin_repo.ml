@@ -23,7 +23,7 @@ let fail_on_duplicate_paths items = match find_duplicate_paths items with
 
 let create ?(np = 0) ?(wipeout = false) ~base ~repo_base items =
   fail_on_duplicate_paths items ;
-  if not (Sys.file_exists repo_base) then sh "mkdir -p %s" repo_base ;
+  if Sys.file_exists repo_base <> `Yes then sh "mkdir -p %s" repo_base ;
   if wipeout then sh "rm -rf %s/*" repo_base ;
   List.iter items ~f:(
     function Item (pipeline,_,rel_path)  ->
