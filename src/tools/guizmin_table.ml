@@ -10,7 +10,7 @@ let count_occurences ch s =
     if s.[i] = ch then incr accu
   done ;
   !accu
-    
+
 let split ~on x =
   let n = String.length x in
   let m = count_occurences on x + 1 in
@@ -81,9 +81,9 @@ end
 
 
 
-let with_rows 
+let with_rows
     (type row) (type obj) (module Row : Row with type t = row)
-    ?(header = false) ?(sep = '\t') 
+    ?(header = false) ?(sep = '\t')
     (File file) ~f =
   In_channel.with_file file ~f:(fun ic ->
     line_stream_of_channel ic
@@ -129,14 +129,15 @@ let remove_comments sep header file =
           line_stream_of_channel ic
           |! BatStream.filter (fun line -> String.length line > 0 && line.[0] <> sep)
           |! (if header then BatStream.drop 1 else ident)
-          |! fun xs -> Out_channel.with_file path ~f:(fun oc -> 
-            BatStream.iter 
+          |! fun xs -> Out_channel.with_file path ~f:(fun oc ->
+            BatStream.iter
               (fun line -> output_string oc line ; output_char oc '\n')
               xs
           )
         )
     )
-  
+
 let remove_sharp_comments file = remove_comments '#' false file
 let remove_sharp_comments_and_header file = remove_comments '#' true file
 
+external red3 : ('a * ('b * ('c * 'd)), 'e, 'f) format file -> ('a * ('b * ('c * unit)), 'd, 'f) format file = "%identity"
