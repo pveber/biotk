@@ -60,7 +60,7 @@ end
 val remove_sharp_comments : ('a, [`sharp], 'b) format file -> ('a, [`none], 'b) format file
 val remove_sharp_comments_and_header : ('a, [`sharp], [`header]) format file -> ('a, [`none], [`none]) format file
 
-val red3 : ('a * ('b * ('c * 'd)), 'e, 'f) format file -> ('a * ('b * ('c * unit)), 'd, 'f) format file
+val red3 : ('a * ('b * ('c * 'd)), 'e, 'f) format file -> ('a * ('b * ('c * unit)), 'e, 'f) format file
 
 
 

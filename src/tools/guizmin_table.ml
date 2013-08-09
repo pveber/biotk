@@ -140,4 +140,4 @@ let remove_comments sep header file =
 let remove_sharp_comments file = remove_comments '#' false file
 let remove_sharp_comments_and_header file = remove_comments '#' true file
 
-external red3 : ('a * ('b * ('c * 'd)), 'e, 'f) format file -> ('a * ('b * ('c * unit)), 'd, 'f) format file = "%identity"
+external red3 : ('a * ('b * ('c * 'd)), 'e, 'f) format file -> ('a * ('b * ('c * unit)), 'e, 'f) format file = "%identity"
