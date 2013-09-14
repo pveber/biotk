@@ -65,7 +65,7 @@ module Wo_control = struct
       pvalue : float ;
       fold : float ;
     }
-    include Guizmin_table.Make(Row)(Obj)(Table)(Guizmin_table.Sharp_comment)(Guizmin_table.No_header)
+    include Guizmin_table.Make(Row)(Obj)(Table)(Guizmin_table.Sharp_comment)(Guizmin_table.Some_header)
   end
   let run ?tagsize ?bandwidth ~genome ~pvalue chIP =
     run14 ~genome ?tagsize ?bandwidth ~pvalue chIP
@@ -89,7 +89,7 @@ module With_control = struct
       fold : float ;
       fdr : float ;
     }
-    include Guizmin_table.Make(Row)(Obj)(Table)(Guizmin_table.Sharp_comment)(Guizmin_table.No_header)
+    include Guizmin_table.Make(Row)(Obj)(Table)(Guizmin_table.Sharp_comment)(Guizmin_table.Some_header)
   end
 
   let run ?tagsize ?bandwidth ~genome ~pvalue ~control chIP =
