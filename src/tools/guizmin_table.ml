@@ -86,8 +86,8 @@ let with_rows
     (File file) ~f =
   In_channel.with_file file ~f:(fun ic ->
     line_stream_of_channel ic
-    |> (if header then BatStream.drop 1 else ident)
     |> BatStream.filter (fun x -> not (x = "" || x.[0] = comment_char))
+    |> (if header then BatStream.drop 1 else ident)
     |> BatStream.map (fun x -> Row.of_array (split ~on:sep x))
     |> f
   )
