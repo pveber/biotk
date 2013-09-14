@@ -18,35 +18,35 @@ end
 
 module type Table = sig
   type t
-  val of_file : ?line_numbers:bool -> ?header: bool -> ?sep: char -> string -> t
+  val of_file : ?line_numbers:bool -> ?header: bool -> ?sep: char -> ?comment_char: char -> string -> t
 end
 
-module type Layout = sig
-  type comment
-  type header
-  val header : bool
+module type Comment = sig
+  type t
+  val char : char
 end
 
-module No_comment_nor_header : Layout with type comment = [`none]
-                                      and  type header  = [`none]
+module type Header = sig
+  type t
+  val kind : [`none | `commented | `some]
+end
 
-module Sharp_comment_no_header : Layout with type comment = [`sharp]
-                                        and  type header  = [`none]
-
-module Sharp_comment_and_header : Layout with type comment = [`sharp]
-                                         and  type header  = [`header]
+module Sharp_comment : Comment with type t = [`sharp]
+module No_header : Header with type t = [`none]
+module Some_header : Header with type t = [`some]
 
 module Make :
   functor (Row : Row) ->
     functor (Obj : Obj with type row = Row.t) ->
       functor (Table : Table) ->
-        functor (Layout : Layout) ->
+        functor (Comment : Comment) ->
+          functor (Header : Header) ->
 sig
-  type file = (unit Row.ty, Layout.comment, Layout.header) format Guizmin.file
-  type file_path = (unit Row.ty, Layout.comment, Layout.header) format Guizmin.file_path
+  type file = (unit Row.ty, Comment.t, Header.t) format Guizmin.file
+  type file_path = (unit Row.ty, Comment.t, Header.t) format Guizmin.file_path
 
-  type 'a file' = ('a Row.ty, Layout.comment, Layout.header) format Guizmin.file
-  type 'a file_path' = ('a Row.ty, Layout.comment, Layout.header) format Guizmin.file_path
+  type 'a file' = ('a Row.ty, Comment.t, Header.t) format Guizmin.file
+  type 'a file_path' = ('a Row.ty, Comment.t, Header.t) format Guizmin.file_path
 
   val with_rows :
     'a file_path' -> f:(Row.t Stream.t -> 'b) -> 'b

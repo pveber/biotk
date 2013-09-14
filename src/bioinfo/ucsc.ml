@@ -16,7 +16,7 @@ let string_of_genome = function
 | `sacCer2 -> "sacCer2"
 
 let chromosome_sequences org =
-  let org = string_of_genome org in 
+  let org = string_of_genome org in
   d0
     "guizmin.bioinfo.ucsc.chromosome_sequences[1]"
     [ Param.string "org" org ]
@@ -28,22 +28,22 @@ let chromosome_sequences org =
 	"gunzip *.gz"
       ])
 
-let genome_sequence org = 
+let genome_sequence org =
   f1
     "guizmin.bioinfo.ucsc.genome_sequence[1]" []
     (chromosome_sequences org)
     (fun env (Dir gp) path ->
-      env.bash [ 
+      env.bash [
         "shopt -s nullglob" ;
-        sp "cat %s/{chr?.fa,chr??.fa,chr???.fa,chr????.fa} > %s" gp path 
+        sp "cat %s/{chr?.fa,chr??.fa,chr???.fa,chr????.fa} > %s" gp path
       ])
 
 
 (* UGLY hack due to twoBitToFa: this tool requires that the 2bit
    sequence should be put in a file with extension 2bit. So I'm forced
    to create first a directory and then to select the unique file in it...*)
-let genome_2bit_sequence_dir org = 
-  let org = string_of_genome org in 
+let genome_2bit_sequence_dir org =
+  let org = string_of_genome org in
   d0
     "guizmin.bioinfo.ucsc.genome_sequence[1]"
     [ Param.string "org" org ]
@@ -54,7 +54,7 @@ let genome_2bit_sequence_dir org =
         sp "wget ftp://hgdownload.cse.ucsc.edu/goldenPath/%s/bigZips/%s.2bit" org org
       ])
 
-let genome_2bit_sequence org = 
+let genome_2bit_sequence org =
   select (genome_2bit_sequence_dir org) ((string_of_genome org) ^ ".2bit")
 
 
@@ -76,7 +76,7 @@ let twoBitToFa ~positions ~seq2b ~fa =
   in
   sh "twoBitToFa -%s=%s %s %s" arg fn seq2b fa
 
-let fasta_of_bed org bed = 
+let fasta_of_bed org bed =
   let seq2b = genome_2bit_sequence org in
   f2
     "guizmin.bioinfo.ucsc.fasta_of_bed[1]" []
@@ -91,7 +91,7 @@ let fetch_sequences (File seq2b) locations =
       (* Write locations to a file *)
       List.map locations MBSchema.Location.to_string
       |> Out_channel.write_lines seqList ;
-      
+
       (* run twoBitToFa *)
       twoBitToFa ~positions:(`seqList seqList) ~seq2b ~fa ;
 
@@ -109,7 +109,7 @@ module Chrom_info = struct
     chrom : string ;
     chrom_length : int
   }
-  include Guizmin_table.Make(Row)(Obj)(Table)(Guizmin_table.No_comment_nor_header)
+  include Guizmin_table.Make(Row)(Obj)(Table)(Guizmin_table.Sharp_comment)(Guizmin_table.No_header)
 end
 
 let chrom_info_cmd1 org = Printf.sprintf "\
@@ -137,7 +137,7 @@ let bedClip chrom_info bed =
     (fun env (File chrom_info) (File bed) path ->
        env.sh "bedClip -verbose=2 %s %s %s" bed chrom_info path)
 
-let wig_of_bigWig bigWig = 
+let wig_of_bigWig bigWig =
   f1
     "guizmin.bioinfo.ucsc.wig_of_bigWig[r1]" []
     bigWig
@@ -158,9 +158,9 @@ module Lift_over = struct
   let chain_file ~org_from ~org_to =
     let org_from = string_of_genome org_from
     and org_to = string_of_genome org_to in
-    let url = 
-      sprintf 
-        "ftp://hgdownload.cse.ucsc.edu/goldenPath/%s/liftOver/%sTo%s.over.chain.gz" 
+    let url =
+      sprintf
+        "ftp://hgdownload.cse.ucsc.edu/goldenPath/%s/liftOver/%sTo%s.over.chain.gz"
         org_from org_from (String.capitalize org_to)
     in
     Guizmin_unix.(gunzip (wget url))
@@ -171,16 +171,16 @@ module Lift_over = struct
     |! lines_to_file fn ;
     fn
 
-  let liftOver_cmd ~output ~chain_file ~old_locs ~new_locs ~unmapped_locs = 
+  let liftOver_cmd ~output ~chain_file ~old_locs ~new_locs ~unmapped_locs =
     let string_of_output = function
     | `bed -> ""
     | `position -> "-positions"
     in
     sprintf
       "liftOver %s %s %s %s %s"
-      (string_of_output output) 
+      (string_of_output output)
       old_locs chain_file new_locs unmapped_locs
-    
+
   let conversion (File chain_file) xs =
     let old_locs_fn = create_input_file xs in
     let new_locs_fn = Filename.temp_file "gzm" ".locations"
@@ -188,7 +188,7 @@ module Lift_over = struct
       Filename.temp_file "gzm" ".locations" in
     let cmd = liftOver_cmd ~output:`position ~chain_file ~old_locs:old_locs_fn ~new_locs:new_locs_fn ~unmapped_locs:unmapped_locs_fn in
     sh "%s 2> /dev/null" cmd ;
-    let new_locs = 
+    let new_locs =
       List.map (lines_of_file new_locs_fn) ~f:Location.of_string
     and unmp_locs =
       List.map (lines_of_file unmapped_locs_fn) ~f:Location.of_string
@@ -206,12 +206,12 @@ module Lift_over = struct
         env.sh "%s" (
           liftOver_cmd
             ~output:`bed
-            ~chain_file 
+            ~chain_file
             ~old_locs:bed
-            ~new_locs:(path ^ "/mapped.bed") 
+            ~new_locs:(path ^ "/mapped.bed")
             ~unmapped_locs:(path ^ "/unmapped.bed")
         ))
-          
+
   let mapped x = select x "mapped.bed"
   let unmapped x = select x "unmapped.bed"
 end
@@ -219,9 +219,9 @@ end
 module CustomTrack = struct
   open Printf
 
-  type option = [ 
+  type option = [
     `track_type of string
-  | `name of string 
+  | `name of string
   | `description of string
   | `visibility of [ `hide | `full | `dense ]
   | `color of int * int * int
@@ -232,7 +232,7 @@ module CustomTrack = struct
   | `maxHeightPixels of int * int * int
   | `graphType of [ `bar | `points ]
   | `viewLimits of [ `lower | `upper ]
-  | `yLineMark of float 
+  | `yLineMark of float
   | `yLineOnOff of bool
   | `windowingFunction of [ `maximum | `mean | `minimum ]
   | `smoothingWindow of [ `off | `width of int ]
@@ -247,15 +247,15 @@ module CustomTrack = struct
     | `dataUrl u -> bprintf buf " dataUrl=%s" u
     | `bigDataUrl u -> bprintf buf " bigDataUrl=%s" u
     | `description d -> bprintf buf " description=\"%s\"" d
-    | `visibility v -> bprintf buf " visibility=%s" 
+    | `visibility v -> bprintf buf " visibility=%s"
 	(match v with
 	     `full -> "full"
 	   | `dense -> "dense"
 	   | `hide -> "hide")
     | `color (r,g,b) ->
-	bprintf buf " color=%d,%d,%d" r g b 
+	bprintf buf " color=%d,%d,%d" r g b
     | `altColor (r,g,b) ->
-	bprintf buf " altColor=%d,%d,%d" r g b 
+	bprintf buf " altColor=%d,%d,%d" r g b
     | `yLineOnOff b ->
 	bprintf buf " yLineOnOff=%s" (if b then "on" else "off")
     | `priority p ->
@@ -264,14 +264,14 @@ module CustomTrack = struct
     | _ -> assert false
 
   let header_of_options opt =
-    let buf = Buffer.create 1024 in 
-      bprintf buf "track" ; 
+    let buf = Buffer.create 1024 in
+      bprintf buf "track" ;
       List.iter (unparse_option buf) opt ;
       Buffer.contents buf
 
   let url org track_options =
-    let base = "http://genome.ucsc.edu/cgi-bin/hgTracks?db=" ^ (string_of_genome org) 
-    and escaped_custom_text = Netencoding.Url.encode ~plus:false (header_of_options track_options) 
+    let base = "http://genome.ucsc.edu/cgi-bin/hgTracks?db=" ^ (string_of_genome org)
+    and escaped_custom_text = Netencoding.Url.encode ~plus:false (header_of_options track_options)
     in
       sprintf "%s&hgct_customText=%s" base escaped_custom_text
 end

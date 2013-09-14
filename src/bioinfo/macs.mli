@@ -13,12 +13,12 @@ module Wo_control : sig
       pvalue : float ;
       fold : float ;
     }
-    include module type of Guizmin_table.Make(Row)(Obj)(Table)(Guizmin_table.Sharp_comment_and_header)
+    include module type of Guizmin_table.Make(Row)(Obj)(Table)(Guizmin_table.Sharp_comment)(Guizmin_table.No_header)
   end
 
   val run :
-    ?tagsize:int -> ?bandwidth:int -> 
-    genome:[< Ucsc.genome] -> pvalue:float -> 
+    ?tagsize:int -> ?bandwidth:int ->
+    genome:[< Ucsc.genome] -> pvalue:float ->
     Bam.file -> Peak.t output dir
 
   val peaks : Peak.t output dir -> Peak.file
@@ -36,13 +36,13 @@ module With_control : sig
       fold : float ;
       fdr : float ;
     }
-    include module type of Guizmin_table.Make(Row)(Obj)(Table)(Guizmin_table.Sharp_comment_and_header)
+    include module type of Guizmin_table.Make(Row)(Obj)(Table)(Guizmin_table.Sharp_comment)(Guizmin_table.No_header)
   end
 
-  val run : 
-    ?tagsize:int -> ?bandwidth:int -> 
-    genome:[< Ucsc.genome] -> 
-    pvalue:float -> 
+  val run :
+    ?tagsize:int -> ?bandwidth:int ->
+    genome:[< Ucsc.genome] ->
+    pvalue:float ->
     control:Bam.file ->
     Bam.file -> Peak.t output dir
 

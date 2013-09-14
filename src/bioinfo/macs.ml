@@ -14,15 +14,15 @@ let effective_genome_size = function
 
 let run14 ~genome ?tagsize ?bandwidth ~pvalue ?control chIP =
   let gsize = effective_genome_size genome in
-  match control with 
-    | None -> 
-      d1 
+  match control with
+    | None ->
+      d1
         "guizmin.bioinfo.gzmMacs.run14[r2]"
-        Param.([ 
-          int "gsize" gsize ; 
-          opt int "tagsize" tagsize ; 
-          opt int "bandwidth" bandwidth ; 
-          float "pvalue" pvalue 
+        Param.([
+          int "gsize" gsize ;
+          opt int "tagsize" tagsize ;
+          opt int "bandwidth" bandwidth ;
+          float "pvalue" pvalue
         ])
         chIP
 	(fun env (File chIP) path ->
@@ -37,11 +37,11 @@ let run14 ~genome ?tagsize ?bandwidth ~pvalue ?control chIP =
     | Some control ->
       d2
 	"guizmin.bioinfo.gzmMacs.run14[r2]"
-	Param.([ 
-          int "gsize" gsize ; 
-          opt int "tagsize" tagsize ; 
-          opt int "bandwidth" bandwidth ; 
-          float "pvalue" pvalue 
+	Param.([
+          int "gsize" gsize ;
+          opt int "tagsize" tagsize ;
+          opt int "bandwidth" bandwidth ;
+          float "pvalue" pvalue
         ])
 	chIP control
 	(fun env (File chIP) (File control) path ->
@@ -65,7 +65,7 @@ module Wo_control = struct
       pvalue : float ;
       fold : float ;
     }
-    include Guizmin_table.Make(Row)(Obj)(Table)(Guizmin_table.Sharp_comment_and_header)
+    include Guizmin_table.Make(Row)(Obj)(Table)(Guizmin_table.Sharp_comment)(Guizmin_table.No_header)
   end
   let run ?tagsize ?bandwidth ~genome ~pvalue chIP =
     run14 ~genome ?tagsize ?bandwidth ~pvalue chIP
@@ -89,7 +89,7 @@ module With_control = struct
       fold : float ;
       fdr : float ;
     }
-    include Guizmin_table.Make(Row)(Obj)(Table)(Guizmin_table.Sharp_comment_and_header)
+    include Guizmin_table.Make(Row)(Obj)(Table)(Guizmin_table.Sharp_comment)(Guizmin_table.No_header)
   end
 
   let run ?tagsize ?bandwidth ~genome ~pvalue ~control chIP =
@@ -102,7 +102,7 @@ let bed mo = select mo "macs_peaks.bed"
 
 (** parses a line of a peak file *)
 let parse_peak_line line = Wo_control.Peak.(
-  String.split (line : Biocaml_lines.item :> string) ~on:'\t' 
+  String.split (line : Biocaml_lines.item :> string) ~on:'\t'
   |! Array.of_list
   |! Row.of_array
   |! Obj.of_row
@@ -114,7 +114,7 @@ let best_peaks ~n peaks =
     peaks
     (
       fun env (File peaks) path ->
-        
+
         let peaks = In_channel.with_file peaks ~f:(fun ic ->
           Biocaml_lines.of_channel ic
           |> Stream.filter ~f:(fun l -> let l = (l : Biocaml_lines.item :> string) in l <> "" && l.[0] <> '#')
@@ -129,8 +129,8 @@ let best_peaks ~n peaks =
         |> Stream.take ~n
         |> fun xs -> Out_channel.with_file path ~f:(Biocaml_lines.to_channel xs)
     )
-    
-    
+
+
 
 
 

@@ -8,8 +8,7 @@ open MBSchema
 type tabular data = {
   loc : Location
 }
-
-include module type of Guizmin_table.Make(Row)(Obj)(Table)(Guizmin_table.No_comment_nor_header)
+include module type of Guizmin_table.Make(Row)(Obj)(Table)(Guizmin_table.Sharp_comment)(Guizmin_table.No_header)
 
 val to_bed : file -> Bed.Basic.file
 

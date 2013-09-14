@@ -5,9 +5,9 @@ module Location : sig
 
   val make : string -> int -> int -> t
 
-  val chr : t -> string 
-  val st : t -> int 
-  val ed : t -> int 
+  val chr : t -> string
+  val st : t -> int
+  val ed : t -> int
   val size : t -> int
 
   val overlaps : t -> t -> bool
@@ -21,7 +21,7 @@ module Location : sig
   (** [center l] is the tiniest location at the center of [l] that is
       exactly at the same distance from both ends of [l]. It is of
       length 1 if [l] has an odd length and 2 otherwise. *)
-    
+
   val upstream : up:int -> down:int -> [`sense | `antisense] -> t -> t
 
   val to_string : t -> string
@@ -59,7 +59,7 @@ module ConfigFile : sig
   open Sexplib.Std
 
   type t = statement list
-  and statement = 
+  and statement =
     | Condition of condition
     | Sample of sample
     | Model of model

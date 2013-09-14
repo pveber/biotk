@@ -8,7 +8,7 @@ module Basic = struct
     chromStart : int ;
     chromEnd : int
   }
-  include Guizmin_table.Make(Row)(Obj)(Table)(Guizmin_table.No_comment_nor_header)
+  include Guizmin_table.Make(Row)(Obj)(Table)(Guizmin_table.Sharp_comment)(Guizmin_table.No_header)
 
   let location_of_row { chrom ; chromStart ; chromEnd } = Location.make chrom chromStart chromEnd
 
@@ -37,7 +37,7 @@ module Named = struct
     chromEnd : int ;
     name : string ;
   }
-  include Guizmin_table.Make(Row)(Obj)(Table)(Guizmin_table.No_comment_nor_header)
+  include Guizmin_table.Make(Row)(Obj)(Table)(Guizmin_table.Sharp_comment)(Guizmin_table.No_header)
 
   let make ?(prefix = "seq_") bed =
     f1
@@ -72,7 +72,7 @@ module Scored = struct
     name : string ;
     score : float ;
   }
-  include Guizmin_table.Make(Row)(Obj)(Table)(Guizmin_table.No_comment_nor_header)
+  include Guizmin_table.Make(Row)(Obj)(Table)(Guizmin_table.Sharp_comment)(Guizmin_table.No_header)
 
   let location_of_row { chrom ; chromStart ; chromEnd } = Location.make chrom chromStart chromEnd
 
@@ -112,7 +112,7 @@ module Stranded = struct
     score : float ;
     strand : [`sense "+" | `antisense "-"] ;
   }
-  include Guizmin_table.Make(Row)(Obj)(Table)(Guizmin_table.No_comment_nor_header)
+  include Guizmin_table.Make(Row)(Obj)(Table)(Guizmin_table.Sharp_comment)(Guizmin_table.No_header)
 
   let location_of_row { chrom ; chromStart ; chromEnd } = Location.make chrom chromStart chromEnd
 end

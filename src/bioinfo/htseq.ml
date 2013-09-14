@@ -5,12 +5,12 @@ module Output = struct
     id : string ;
     count : int
   }
-  include Guizmin_table.Make(Row)(Obj)(Table)(Guizmin_table.No_comment_nor_header)
+  include Guizmin_table.Make(Row)(Obj)(Table)(Guizmin_table.Sharp_comment)(Guizmin_table.No_header)
 end
 
-let count ?(feature = "exon") sam gtf = 
+let count ?(feature = "exon") sam gtf =
   f2
-    "guizmin.bioinfo.htseq.count[r1]"      
+    "guizmin.bioinfo.htseq.count[r1]"
     [ Param.string "feature" feature ]
     sam gtf
     (fun env (File sam) (File gtf) path ->

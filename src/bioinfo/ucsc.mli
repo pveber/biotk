@@ -26,7 +26,7 @@ module Chrom_info : sig
     chrom : string ;
     chrom_length : int
   }
-  include module type of Guizmin_table.Make(Row)(Obj)(Table)(Guizmin_table.No_comment_nor_header)
+  include module type of Guizmin_table.Make(Row)(Obj)(Table)(Guizmin_table.Sharp_comment)(Guizmin_table.No_header)
 end
 val chrom_info : genome -> Chrom_info.file
 val bedClip : Chrom_info.file -> 'a Bed.file -> 'a Bed.file

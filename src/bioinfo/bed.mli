@@ -5,9 +5,9 @@ module Basic : sig
   type tabular data = {
     chrom : string ;
     chromStart : int ;
-    chromEnd : int 
+    chromEnd : int
   }
-  include module type of Guizmin_table.Make(Row)(Obj)(Table)(Guizmin_table.No_comment_nor_header)
+  include module type of Guizmin_table.Make(Row)(Obj)(Table)(Guizmin_table.Sharp_comment)(Guizmin_table.No_header)
 
   val location_of_row : Row.t -> Location.t
   val row_of_location : Location.t -> Row.t
@@ -21,13 +21,13 @@ module Named : sig
     chromEnd : int ;
     name : string ;
   }
-  include module type of Guizmin_table.Make(Row)(Obj)(Table)(Guizmin_table.No_comment_nor_header)
+  include module type of Guizmin_table.Make(Row)(Obj)(Table)(Guizmin_table.Sharp_comment)(Guizmin_table.No_header)
 
   val make : ?prefix:string -> 'a Basic.file' -> file
   (** keeps the first three cols and adds a fourth with a generated
       identifier. This is necessary for certain routines to work,
       notably sequence retrieval *)
-    
+
   val location_of_row : Row.t -> Location.t
 end
 
@@ -39,8 +39,7 @@ module Scored : sig
     name : string ;
     score : float ;
   }
-
-  include module type of Guizmin_table.Make(Row)(Obj)(Table)(Guizmin_table.No_comment_nor_header)
+  include module type of Guizmin_table.Make(Row)(Obj)(Table)(Guizmin_table.Sharp_comment)(Guizmin_table.No_header)
 
   val location_of_row : Row.t -> Location.t
   val filter : ?less_than:float -> ?more_than:float -> 'a file' ->  'a file'
@@ -56,8 +55,7 @@ module Stranded : sig
     score : float ;
     strand : [`sense "+" | `antisense "-"] ;
   }
-
-  include module type of Guizmin_table.Make(Row)(Obj)(Table)(Guizmin_table.No_comment_nor_header)
+  include module type of Guizmin_table.Make(Row)(Obj)(Table)(Guizmin_table.Sharp_comment)(Guizmin_table.No_header)
 
   val location_of_row : Row.t -> Location.t
 end
