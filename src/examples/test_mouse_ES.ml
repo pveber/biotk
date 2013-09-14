@@ -22,7 +22,6 @@ v}
 
 open Core.Std
 open Guizmin_bioinfo
-open Guizmin_bioinfo_labs
 
 let sample x = Sra.(fastq_dump (sample x))
 
@@ -46,12 +45,12 @@ let sox2_peaks = Macs.With_control.(
   |! peaks
 )
 
-let sox2_motif = 
-  Meme_suite.meme_chip 
-    ~meme_nmotifs:3
-    ~meme_minw:8
-    ~meme_maxw:14
-    (Ucsc.fasta_of_bed `mm9 (Bed.Named.make (Guizmin_table.remove_sharp_comments_and_header (Macs.best_peaks ~n:500 sox2_peaks))))
+(* let sox2_motif =  *)
+(*   Meme_suite.meme_chip  *)
+(*     ~meme_nmotifs:3 *)
+(*     ~meme_minw:8 *)
+(*     ~meme_maxw:14 *)
+(*     (Ucsc.fasta_of_bed `mm9 (Bed.Named.make (Guizmin_table.remove_sharp_comments_and_header (Macs.best_peaks ~n:500 sox2_peaks)))) *)
 
 let wget_gzipped_bed url : Bed.Basic.file = Guizmin_unix.(
   gunzip (wget url)
@@ -60,12 +59,12 @@ let wget_gzipped_bed url : Bed.Basic.file = Guizmin_unix.(
 let published_sox2_peaks =
   wget_gzipped_bed "http://www.ncbi.nlm.nih.gov/geosuppl/?acc=GSM288347&file=GSM288347%5FES%5FSox2%2Etxt%2Egz"
 
-let () = Guizmin.(
-  let base = default_base_directory () in
-  let eval x = eval ~base ~np:1 x in
-  let Dir p = eval sox2_motif in
-  print_endline p
-)
+(* let () = Guizmin.( *)
+(*   let base = default_base_directory () in *)
+(*   let eval x = eval ~base ~np:1 x in *)
+(*   let Dir p = eval sox2_motif in *)
+(*   print_endline p *)
+(* ) *)
 
 
 

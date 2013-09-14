@@ -66,21 +66,6 @@ Library guizmin_bioinfo
   XMETARequires:	guizmin, guizmin.tools, biocaml, core_extended
   XMETADescription:	Bioinformatics components for guizmin
 
-Library guizmin_bioinfo_labs
-  Path:			src/bioinfo/labs
-  Pack:			true
-  Modules:		Binding_region_finder, Bioinfo_labs, Meme_suite,
-                        Mlea, Pwm
-  FindlibParent:	guizmin_bioinfo
-  FindlibName:		labs
-  BuildDepends:		batteries, biocaml, camlp4, core, format.syntax,
-                        fungen, gsl,
-                        guizmin, guizmin.tools, guizmin.bioinfo,
-                        R.graphics, R.grDevices, R.stats, R.syntax,
-                        sexplib.syntax, tabular.syntax, threads
-  XMETARequires:	guizmin, guizmin.tools, biocaml, guizmin.bioinfo, fungen
-  XMETADescription:	Experimental bioinformatics components for guizmin
-
 
 Executable test_yeast
   Path:         src/examples
@@ -109,7 +94,7 @@ Executable test_mouse_ES
   Path:         src/examples
   BuildTools:   ocamlbuild
   MainIs:       test_mouse_ES.ml
-  BuildDepends: guizmin.bioinfo,guizmin.bioinfo.labs,tabular.syntax,threads
+  BuildDepends: guizmin.bioinfo,tabular.syntax,threads
   Install:      false
 
 Executable guizmin_mb_pipeline
@@ -125,7 +110,7 @@ Document API
   InstallDir:      $docdir/api
   BuildTools:      ocamldoc, ocamlbuild
   XOCamlbuildPath: .
-  XOCamlbuildLibraries: guizmin,guizmin.tools,guizmin.bioinfo,guizmin.bioinfo.labs
+  XOCamlbuildLibraries: guizmin,guizmin.tools,guizmin.bioinfo
 
 
 SourceRepository head
