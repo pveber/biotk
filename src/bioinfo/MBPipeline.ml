@@ -1,9 +1,10 @@
 open Core.Std
+open CFStream
 open GzmUtils
 
 type ('a, 'b) assoc = ('a * 'b) list
 let assoc l ~f = List.map ~f:(fun x -> x, f x) l
-let rel_of_pairs l = Stream.of_list l |! Biocaml_accu.relation |! Biocaml_stream.to_list
+let rel_of_pairs l = Stream.of_list l |! Biocaml_accu.relation |! Stream.to_list
 let ( & ) l x = List.Assoc.find_exn l x
 
 type genome = MBSchema.ConfigFile.genome

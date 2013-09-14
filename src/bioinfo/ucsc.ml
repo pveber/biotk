@@ -1,7 +1,7 @@
 open GzmUtils
 open GzmCore
 
-module Stream = Biocaml.Stream
+open CFStream
 open Stream.Infix
 
 type bigWig
@@ -150,7 +150,8 @@ let wig_of_bigWig bigWig =
 module Lift_over = struct
   open Printf
   open Core.Std
-  open Biocaml_stream.Infix
+  open CFStream
+  open Stream.Infix
   open MBSchema
 
   type chain_file = [`lift_over_chain] file

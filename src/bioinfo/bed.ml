@@ -1,4 +1,5 @@
 open Core.Std
+open CFStream
 open Guizmin
 open MBSchema
 
@@ -57,7 +58,7 @@ module Named = struct
           )
         in
         Basic.with_rows bed ~f:(fun xs ->
-          Biocaml_stream.mapi xs ~f:rename |! save
+          Stream.mapi xs ~f:rename |! save
         )
       )
 
@@ -96,8 +97,8 @@ module Scored = struct
           in
           In_channel.with_file bed ~f:(fun ic ->
             Biocaml_lines.of_channel ic
-            |> Biocaml_stream.map ~f:(fun l -> l, parse l)
-            |> Biocaml_stream.filter_map ~f:(fun (l,r) -> if pred r.score then Some l else None)
+            |> Stream.map ~f:(fun l -> l, parse l)
+            |> Stream.filter_map ~f:(fun (l,r) -> if pred r.score then Some l else None)
             |> fun xs -> Out_channel.with_file path ~f:(Biocaml_lines.to_channel xs)
           )
       )

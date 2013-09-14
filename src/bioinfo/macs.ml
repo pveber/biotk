@@ -1,9 +1,9 @@
 open Core.Std
+open CFStream
+open Stream.Infix
 open Biocaml
 open Guizmin
 open MBSchema
-
-open Biocaml_stream.Infix
 
 type 'a output
 

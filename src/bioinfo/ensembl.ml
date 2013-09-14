@@ -1,8 +1,9 @@
 open Core.Std
+open CFStream
 open Printf
 open Guizmin
 
-module Stream = Biocaml_stream
+module Stream = Stream
 
 type species = [
 | `homo_sapiens

@@ -1,5 +1,6 @@
 open Core.Std
-open Biocaml_stream.Infix
+open CFStream
+open Stream.Infix
 open Guizmin
 open MBSchema
 

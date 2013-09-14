@@ -60,7 +60,9 @@ Library guizmin_bioinfo
                         Ucsc
   FindlibParent:	guizmin
   FindlibName:		bioinfo
-  BuildDepends:		batteries, biocaml, camlp4, core, core_extended, format.syntax,
+  BuildDepends:		batteries, biocaml, camlp4,
+                        cfstream, core, core_extended,
+                        format.syntax,
                         guizmin, guizmin.tools,
                         sexplib.syntax, tabular.syntax, threads
   XMETARequires:	guizmin, guizmin.tools, biocaml, core_extended

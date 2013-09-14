@@ -1,5 +1,6 @@
 open Core.Std
-open Biocaml_stream.Infix
+open CFStream
+open Stream.Infix
 open Guizmin
 open Guizmin_bioinfo
 open Guizmin_bioinfo.MBSchema
@@ -11,9 +12,9 @@ let url = "ftp://ftp.ncbi.nlm.nih.gov/pub/geo/DATA/supplementary/samples/GSM288n
 
 let mm8_peaks : Gcf.file = Guizmin_unix.(gunzip (wget url))
 
-let chain_file = 
+let chain_file =
   Ucsc.Lift_over.chain_file ~org_from:`mm8 ~org_to:`mm9
-    
+
 let load_table x = Gcf.load (eval x)
 
 let mm9_peaks, unmapped_peaks =
