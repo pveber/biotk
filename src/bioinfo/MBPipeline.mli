@@ -34,6 +34,7 @@ sig
 
     val fastq_files : (sample, [`fastq] Guizmin.file list) assoc
     val aligned_reads : (sample, Sam.file) assoc
+    val aligned_reads_bam : (sample, Bam.file) assoc
     val macs_peaks_wo_control : pvalue:float -> (sample, Macs.Wo_control.Peak.file) assoc
     val macs_peaks_with_control : pvalue:float -> (sample * sample, Macs.With_control.Peak.file) assoc
   end

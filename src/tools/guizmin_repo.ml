@@ -21,14 +21,21 @@ let fail_on_duplicate_paths items = match find_duplicate_paths items with
     let path = String.concat ~sep:"/" p in
     failwithf "Path %s is present several times in the repo!" path ()
 
-let create ?(np = 0) ?(wipeout = false) ~base ~repo_base items =
+let create ?(np = 0) ?(wipeout = false) ?log ~base ~repo_base items =
+  let log = match log with
+    | None -> GzmUtils.null_logger
+    | Some oc -> GzmUtils.logger stdout "INFO"
+  in
   fail_on_duplicate_paths items ;
   if Sys.file_exists repo_base <> `Yes then sh "mkdir -p %s" repo_base ;
   if wipeout then sh "rm -rf %s/*" repo_base ;
   List.iter items ~f:(
     function Item (pipeline,_,rel_path)  ->
       let abs_path = repo_base ^ "/" ^ (String.concat ~sep:"/" rel_path) in
-      if np > 0 then Guizmin.build ~base ~np pipeline ;
+      if np > 0 then (
+	log "Building %s" abs_path ;
+	Guizmin.build ~base ~np pipeline
+      ) ;
       bash [
         sp "mkdir -p %s" (Filename.dirname abs_path) ;
         sp "ln -s `readlink -f %s` %s" (Guizmin.path ~base pipeline) abs_path

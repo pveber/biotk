@@ -9,7 +9,11 @@ val item : ?descr:string -> path -> 'a pipeline -> item
     linking them. If [repo_base] already exists, use it otherwise
     mkdir it. If wipeout then remove any previous contents of
     [repo_base]. *)
-val create : ?np:int -> ?wipeout:bool -> base:base_directory -> repo_base:string -> item list -> unit
+val create :
+  ?np:int ->
+  ?wipeout:bool ->
+  ?log:out_channel ->
+  base:base_directory -> repo_base:string -> item list -> unit
 
 
 

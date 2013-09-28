@@ -34,6 +34,18 @@ type 'a logger = ('a,unit,string,unit) format4 -> 'a
 let null_logger fmt =
   Printf.ksprintf ignore fmt
 
+let logger (type s) oc label (fmt : (s, unit, string, unit) format4) =
+  let open Unix in
+  let open Printf in
+  let f msg =
+    let t = localtime (time ()) in
+      fprintf
+        oc "[%s][%04d-%02d-%02d %02d:%02d] %s%!"
+        label (1900 + t.tm_year) (t.tm_mon + 1)t.tm_mday t.tm_hour t.tm_min msg
+  in
+  ksprintf f fmt
+
+
 let sh
     ?(debug : 'a logger = null_logger)
     ?(error : 'a logger = null_logger)

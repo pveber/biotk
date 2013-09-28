@@ -15,8 +15,8 @@ let fastq_of_path s : [`fastq] Guizmin.file =
   else
     Guizmin.file s
 
-module Make(P : sig 
-                  val config_file : MBSchema.ConfigFile.t 
+module Make(P : sig
+                  val config_file : MBSchema.ConfigFile.t
                 end) =
 struct
   open P
@@ -62,8 +62,8 @@ struct
     | `mm9 -> `mus_musculus
 
     let gtf = assoc genomes ~f:(
-      fun g -> 
-        Ensembl.gtf 
+      fun g ->
+        Ensembl.gtf
           ~chr_name:`ucsc
           ~release:(release_of_genome g)
           ~species:(species_of_genome g)
@@ -79,25 +79,25 @@ struct
 
     let conditions = extract' (
       function
-      | Sample ({ sample_condition = c ; 
-                  sample_type = TF_ChIP_seq _ }) 
-      | Sample ({ sample_condition = c ; 
+      | Sample ({ sample_condition = c ;
+                  sample_type = TF_ChIP_seq _ })
+      | Sample ({ sample_condition = c ;
                   sample_type = ChIP_seq_input }) ->
           Some c
-      | _ -> 
+      | _ ->
           None
     )
 
     let chIP_samples = extract (
       function
-      | Sample ({ sample_type = TF_ChIP_seq _ } as sample) -> 
+      | Sample ({ sample_type = TF_ChIP_seq _ } as sample) ->
           Some sample
       | _ -> None
     )
 
     let input_controls = extract (
       function
-      | Sample ({ sample_type = ChIP_seq_input } as sample) -> 
+      | Sample ({ sample_type = ChIP_seq_input } as sample) ->
           Some sample
       | _ -> None
     )
@@ -107,7 +107,7 @@ struct
     let chIP_samples_by_factor_and_condition =
       extract (
         function
-        | Sample ({ sample_type = TF_ChIP_seq tf ; sample_condition } as sample) -> 
+        | Sample ({ sample_type = TF_ChIP_seq tf ; sample_condition } as sample) ->
             Some ((tf, sample_condition), sample)
         | _ -> None
       )
@@ -116,49 +116,49 @@ struct
     let input_controls_by_condition =
       extract (
         function
-        | Sample ({ sample_type = ChIP_seq_input ; sample_condition } as sample) -> 
+        | Sample ({ sample_type = ChIP_seq_input ; sample_condition } as sample) ->
             Some (sample_condition, sample)
         | _ -> None
       )
       |! rel_of_pairs
 
-    let fastq_files : (sample, [`fastq] Guizmin.file list) assoc = 
+    let fastq_files : (sample, [`fastq] Guizmin.file list) assoc =
       assoc samples (
         fun s -> List.map s.sample_files ~f:fastq_of_path
       )
 
     let aligned_reads = assoc samples (
-      fun s -> 
+      fun s ->
         let genome = (model s.sample_model).model_genome in
         Bowtie.align ~v:2 ~m:1 Genome.(bowtie_index & genome) (fastq_files & s)
     )
 
-    let bam_aligned_reads = assoc samples (
+    let aligned_reads_bam = assoc samples (
       fun s -> Samtools.bam_of_sam (aligned_reads & s)
     )
 
     let macs_peaks_wo_control ~pvalue = assoc chIP_samples (fun s ->
       let genome = (model s.sample_model).model_genome in
       Macs.Wo_control.(
-        run ~genome:genome ~pvalue (bam_aligned_reads & s)
+        run ~genome:genome ~pvalue (aligned_reads_bam & s)
         |! peaks
       )
     )
 
     let macs_peaks_with_control ~pvalue =
       List.cartesian_product chIP_samples input_controls
-      |! List.filter ~f:(fun (chIP,input) -> 
+      |! List.filter ~f:(fun (chIP,input) ->
            chIP.sample_condition = input.sample_condition
            && chIP.sample_model = input.sample_model
          )
       |! List.map ~f:(fun (chIP, input) ->
-           (chIP, input), 
+           (chIP, input),
            Macs.With_control.(
-             run 
+             run
                ~genome:(model chIP.sample_model).model_genome
-               ~control:(bam_aligned_reads & input)
+               ~control:(aligned_reads_bam & input)
                ~pvalue
-               (bam_aligned_reads & chIP)
+               (aligned_reads_bam & chIP)
              |! peaks
            )
          )
@@ -168,16 +168,16 @@ struct
 
     let conditions = extract' (
       function
-      | Sample ({ sample_condition = c ; 
+      | Sample ({ sample_condition = c ;
                   sample_type = ChIP_seq_input }) ->
           Some c
-      | _ -> 
+      | _ ->
           None
     )
 
     let samples = extract (
       function
-      | Sample ({ sample_type = RNA_seq } as sample) -> 
+      | Sample ({ sample_type = RNA_seq } as sample) ->
           Some sample
       | _ -> None
     )
@@ -185,22 +185,22 @@ struct
     let samples_by_condition =
       extract (
         function
-        | Sample ({ sample_type = RNA_seq ; sample_condition } as sample) -> 
+        | Sample ({ sample_type = RNA_seq ; sample_condition } as sample) ->
             Some (sample_condition, sample)
         | _ -> None
       )
       |! rel_of_pairs
 
-    let fastq_files : (sample, [`fastq] Guizmin.file list) assoc = 
+    let fastq_files : (sample, [`fastq] Guizmin.file list) assoc =
       assoc samples (
         fun s -> List.map s.sample_files ~f:fastq_of_path
       )
 
     let tophat_outputs =
       assoc samples (
-        fun s -> 
+        fun s ->
           let genome = (model s.sample_model).model_genome in
-          Tophat.run Genome.(bowtie_index & genome) (fastq_files & s)         
+          Tophat.run Genome.(bowtie_index & genome) (fastq_files & s)
       )
 
     let aligned_reads =
@@ -210,7 +210,7 @@ struct
 
     let counts =
       assoc samples (
-        fun s -> 
+        fun s ->
           let g = (model s.sample_model).model_genome in
           Htseq.count (Samtools.sam_of_bam (aligned_reads & s)) ((Transcriptome.gtf & g) :> Gtf.file)
       )
@@ -223,25 +223,25 @@ struct
     ]
 
   let macs_peaks_without_control_items pvalue =
-    List.map 
+    List.map
       (TF_ChIP_seq.macs_peaks_wo_control ~pvalue)
       ~f:(fun (sample, peaks) ->
-            Guizmin_repo.item 
-              ["chIP-seq" ; "peaks" ; "macs" ; "wo_control" ; sp "pvalue=%.0e" pvalue ; sample.sample_id ^ ".tsv" ] 
+            Guizmin_repo.item
+              ["chIP-seq" ; "peaks" ; "macs" ; "wo_control" ; sp "pvalue=%.0e" pvalue ; sample.sample_id ^ ".tsv" ]
               peaks)
 
   let macs_peaks_with_control_items pvalue =
-    List.map 
+    List.map
       (TF_ChIP_seq.macs_peaks_with_control ~pvalue)
       ~f:(fun ((chIP,input), peaks) ->
-            Guizmin_repo.item 
-              ["chIP-seq" ; "peaks" ; "macs" ; "with_control" ; sp "pvalue=%.0e" pvalue ; sp "%s.%s.tsv" chIP.sample_id input.sample_id ] 
+            Guizmin_repo.item
+              ["chIP-seq" ; "peaks" ; "macs" ; "with_control" ; sp "pvalue=%.0e" pvalue ; sp "%s.%s.tsv" chIP.sample_id input.sample_id ]
               peaks)
 
   let rnaseq_bam_bai_items =
     List.map RNA_seq.aligned_reads ~f:(
       fun (sample, reads) ->
-        Guizmin_repo.item 
+        Guizmin_repo.item
           [ "RNA-seq" ; "signal" ; sample.sample_id ]
           (Samtools.indexed_bam_of_bam reads)
     )
@@ -249,7 +249,7 @@ struct
   let rnaseq_count_items =
     List.map RNA_seq.counts ~f:(
       fun (sample, counts) ->
-        Guizmin_repo.item 
+        Guizmin_repo.item
           [ "RNA-seq" ; "counts" ; sample.sample_id ]
           counts
     )
@@ -267,7 +267,7 @@ struct
     let find_dups l =
       let rec aux seen dups = function
       | [] -> dups
-      | h :: t -> 
+      | h :: t ->
           if List.mem seen h then
             aux seen (h :: dups) t
           else
@@ -286,7 +286,7 @@ struct
     ]
     with sexp
 
-    let errors = 
+    let errors =
       List.(concat [
         map dup_conditions ~f:(fun x -> `duplicate_condition_id x) ;
         map dup_sample_ids ~f:(fun x -> `duplicate_sample_id x) ;

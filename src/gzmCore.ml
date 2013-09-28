@@ -307,20 +307,20 @@ let rec string_descr : type s. ?tab:int -> s pipeline -> string = fun ?(tab = 0)
             (string_descr ~tab:(tab + 2) x1)
             (string_descr ~tab:(tab + 2) x2)
             space
-      | Val3 (x1,x2,x3,_) -> 
+      | Val3 (x1,x2,x3,_) ->
           sprintf "[\n%s\n%s\n%s\n%s]"
             (string_descr ~tab:(tab + 2) x1)
             (string_descr ~tab:(tab + 2) x2)
             (string_descr ~tab:(tab + 2) x3)
             space
-      | Val4 (x1,x2,x3,x4,_) -> 
+      | Val4 (x1,x2,x3,x4,_) ->
           sprintf "[\n%s\n%s\n%s\n%s\n%s]"
             (string_descr ~tab:(tab + 2) x1)
             (string_descr ~tab:(tab + 2) x2)
             (string_descr ~tab:(tab + 2) x3)
             (string_descr ~tab:(tab + 2) x4)
             space
-      | Val5 (x1,x2,x3,x4,x5,_) -> 
+      | Val5 (x1,x2,x3,x4,x5,_) ->
           sprintf "[\n%s\n%s\n%s\n%s\n%s\n%s]"
             (string_descr ~tab:(tab + 2) x1)
             (string_descr ~tab:(tab + 2) x2)
@@ -328,7 +328,7 @@ let rec string_descr : type s. ?tab:int -> s pipeline -> string = fun ?(tab = 0)
             (string_descr ~tab:(tab + 2) x4)
             (string_descr ~tab:(tab + 2) x5)
             space
-      | Val6 (x1,x2,x3,x4,x5,x6,_) -> 
+      | Val6 (x1,x2,x3,x4,x5,x6,_) ->
           sprintf "[\n%s\n%s\n%s\n%s\n%s\n%s\n%s]"
             (string_descr ~tab:(tab + 2) x1)
             (string_descr ~tab:(tab + 2) x2)
@@ -337,7 +337,7 @@ let rec string_descr : type s. ?tab:int -> s pipeline -> string = fun ?(tab = 0)
             (string_descr ~tab:(tab + 2) x5)
             (string_descr ~tab:(tab + 2) x6)
             space
-      | Val7 (x1,x2,x3,x4,x5,x6,x7,_) -> 
+      | Val7 (x1,x2,x3,x4,x5,x6,x7,_) ->
           sprintf "[\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s]"
             (string_descr ~tab:(tab + 2) x1)
             (string_descr ~tab:(tab + 2) x2)
@@ -359,13 +359,13 @@ let rec string_descr : type s. ?tab:int -> s pipeline -> string = fun ?(tab = 0)
             (string_descr ~tab:(tab + 2) x1)
             (string_descr ~tab:(tab + 2) x2)
             space
-      | File3 (x1,x2,x3,_) -> 
+      | File3 (x1,x2,x3,_) ->
           sprintf "[\n%s\n%s\n%s\n%s]"
             (string_descr ~tab:(tab + 2) x1)
             (string_descr ~tab:(tab + 2) x2)
             (string_descr ~tab:(tab + 2) x3)
             space
-      | File5 (x1,x2,x3,x4,x5,_) -> 
+      | File5 (x1,x2,x3,x4,x5,_) ->
           sprintf "[\n%s\n%s\n%s\n%s\n%s\n%s]"
             (string_descr ~tab:(tab + 2) x1)
             (string_descr ~tab:(tab + 2) x2)
@@ -385,7 +385,7 @@ let rec string_descr : type s. ?tab:int -> s pipeline -> string = fun ?(tab = 0)
             (string_descr ~tab:(tab + 2) x1)
             (string_descr ~tab:(tab + 2) x2)
             space
-      | Dir3 (x1,x2,x3,_) -> 
+      | Dir3 (x1,x2,x3,_) ->
           sprintf "[\n%s\n%s\n%s\n%s]"
             (string_descr ~tab:(tab + 2) x1)
             (string_descr ~tab:(tab + 2) x2)
@@ -396,7 +396,7 @@ let rec string_descr : type s. ?tab:int -> s pipeline -> string = fun ?(tab = 0)
           sprintf "[\n%s\n%s]"
             (string_descr ~tab:(tab + 2) dir)
             space
-            
+
       | Merge xs ->
           sprintf "[\n%s\n%s]"
             (String.concat ",\n" (List.map (string_descr ~tab:(tab + 2)) xs))
@@ -406,7 +406,7 @@ let rec string_descr : type s. ?tab:int -> s pipeline -> string = fun ?(tab = 0)
           sprintf "[\n%s\n%s]"
             (string_descr ~tab:(tab + 2) x1)
             space
-          
+
       | Map (x1, f) ->
           let fake = v0 "guizmin.internal_fake" [] (fun _ -> assert false) in
           let fake_image = f fake in
@@ -460,15 +460,7 @@ let with_env ?(np = 1) ?(mem = 100) base x ~f =
   let stderr = open_out (sprintf "%s/%s" (stderr_dir base) x.hash) in
   let stdout = open_out (sprintf "%s/%s" (stdout_dir base) x.hash) in
   let log_chan = open_out (sprintf "%s/%s" (log_dir base) x.hash) in
-  let log (type s) label (fmt : (s, unit, string, unit) format4) =
-    let open Unix in
-    let f msg =
-      let t = localtime (time ()) in
-      fprintf
-        log_chan "[%s][%04d-%02d-%02d %02d:%02d] %s%!"
-        label (1900 + t.tm_year) (t.tm_mon + 1)t.tm_mday t.tm_hour t.tm_min msg
-    in
-    ksprintf f fmt in
+  let log (type s) fmt : s logger = logger log_chan fmt in
   let debug fmt = log "DEBUG" fmt in
   let info fmt = log "INFO" fmt in
   let error fmt = log "ERROR" fmt in
@@ -484,7 +476,7 @@ let with_env ?(np = 1) ?(mem = 100) base x ~f =
   List.iter close_out [ log_chan ; stderr ; stdout ] ;
   r
 
-type 's update = { 
+type 's update = {
   guard : 'x. 'x pipeline -> bool ;
   f : 'x. 's -> 'x pipeline -> 's ;
 }
@@ -519,7 +511,7 @@ let rec fold : type a. 's update -> 's -> a pipeline -> 's = fun up init x ->
     init
 
 let fold_deps : type a. 's update -> 's -> a pipeline -> 's = fun up init x ->
-  if up.guard x then 
+  if up.guard x then
     match x.kind with
     | Val0 _ -> init
     | Val1 (y,_) -> up.f init y
@@ -618,7 +610,7 @@ let rec unsafe_eval : type a. base:string -> a pipeline -> a = fun ~base x ->
       File p
   | Adapter (x,f) -> f (unsafe_eval ~base x)
 
-(* pipeline execution. only accepts pipelines for which there is  actual work to do. 
+(* pipeline execution. only accepts pipelines for which there is  actual work to do.
    Special pipelines raise Invalid_argument *)
 let exec : type a. a pipeline -> env -> unit = fun x env ->
   let val_wrap x f =
@@ -711,13 +703,13 @@ let list_nth l n =
 
 exception Error of string * exn
 
-let rec build_aux : type a. ?base:string -> ?np:int -> a pipeline -> unit = 
+let rec build_aux : type a. ?base:string -> ?np:int -> a pipeline -> unit =
   fun ?(base = Sys.getcwd ()) ?(np = 1) x ->
-    let update = { 
+    let update = {
       guard = (
         fun (type s) (x : s pipeline) ->
         (* if the pipeline is built, mark it as used *)
-          if not (built ~base x) 
+          if not (built ~base x)
           then true
           else (log_used  ~base x ; false)
       ) ;
@@ -760,7 +752,7 @@ let build : type a. ?base:string -> ?np:int -> a pipeline -> unit =
     log_requested ~base x ;
     build_aux ~base ~np x
 
-let eval : type a. ?base:string -> ?np:int -> a pipeline -> a = 
+let eval : type a. ?base:string -> ?np:int -> a pipeline -> a =
   fun ?(base = Sys.getcwd ()) ?(np = 1) x ->
     build ~base ~np x ;
     unsafe_eval ~base x

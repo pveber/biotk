@@ -1,7 +1,10 @@
 type cmd = string * string list
-type 'a logger = ('a,unit,string,unit) format4 -> 'a
-
 val string_of_cmd : cmd -> string
+
+
+type 'a logger = ('a,unit,string,unit) format4 -> 'a
+val null_logger : 'a logger
+val logger : out_channel -> string -> 'a logger
 
 val sp : ('a, unit, string) format -> 'a
 
@@ -22,8 +25,8 @@ val shout :
 val bash : ?debug:bool -> ?stdout:out_channel -> ?stderr:out_channel -> string list -> unit
 
 (** [pipefail cmd1 cmd2] does a special pipe of commands [cmd1] and [cmd2]
-    whose exit code is non null as soon as that of any of the two commands 
-    is. 
+    whose exit code is non null as soon as that of any of the two commands
+    is.
 *)
 val pipefail : string -> string -> string
 
