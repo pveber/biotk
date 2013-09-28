@@ -7,7 +7,7 @@ let assoc l ~f = List.map ~f:(fun x -> x, f x) l
 let rel_of_pairs l = Stream.of_list l |! Biocaml_accu.relation |! Stream.to_list
 let ( & ) l x = List.Assoc.find_exn l x
 
-type genome = MBSchema.ConfigFile.genome
+type genome = MBSchema.Config_file.genome
 
 let fastq_of_path s : [`fastq] Guizmin.file =
   if Filename.check_suffix s ".gz" then
@@ -16,11 +16,11 @@ let fastq_of_path s : [`fastq] Guizmin.file =
     Guizmin.file s
 
 module Make(P : sig
-                  val config_file : MBSchema.ConfigFile.t
+                  val config_file : MBSchema.Config_file.t
                 end) =
 struct
   open P
-  open MBSchema.ConfigFile
+  open MBSchema.Config_file
 
   let extract f = List.filter_map config_file ~f
   let extract' f = BatList.unique (extract f)

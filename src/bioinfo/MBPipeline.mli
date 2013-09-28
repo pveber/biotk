@@ -2,11 +2,11 @@ open Guizmin
 
 type ('a, 'b) assoc = ('a * 'b) list
 
-module Make(P : sig 
-                  val config_file : MBSchema.ConfigFile.t 
-                end) : 
+module Make(P : sig
+                  val config_file : MBSchema.Config_file.t
+                end) :
 sig
-  open MBSchema.ConfigFile
+  open MBSchema.Config_file
 
   val conditions : condition list
   val samples : sample list

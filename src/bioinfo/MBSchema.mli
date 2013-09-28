@@ -55,7 +55,7 @@ module Gene : sig
   val symbol : t -> string option
 end
 
-module ConfigFile : sig
+module Config_file : sig
   open Sexplib.Std
 
   type t = statement list

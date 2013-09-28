@@ -21,10 +21,10 @@ module Location = struct
   let ed (_,{Range.hi}) = hi
 
   let range_overlaps s s' = Range.(
-    let p s s' = (s.hi >= s'.lo) && (s.hi <= s'.hi) in 
+    let p s s' = (s.hi >= s'.lo) && (s.hi <= s'.hi) in
     p s s' || p s' s
   )
-  let overlaps (chr1,r1) (chr2,r2) = 
+  let overlaps (chr1,r1) (chr2,r2) =
     chr1 = chr2 && (range_overlaps r1 r2)
 
   let range_dist r r' = Range.(
@@ -33,7 +33,7 @@ module Location = struct
       let a, b = r.hi - r'.lo, r.lo - r'.hi in
       min (abs a) (abs b)
   )
-  let dist (chr1,r1) (chr2,r2) = 
+  let dist (chr1,r1) (chr2,r2) =
     if chr1 <> chr2 then raise (Invalid_argument "MBSchema.Location.dist") ;
     range_dist r1 r2
 
@@ -44,12 +44,12 @@ module Location = struct
       let a, b = r.hi - from.lo, r.lo - from.hi in
       if abs a < abs b then a else b
   )
-  let position ~from (chr2,r2) = 
+  let position ~from (chr2,r2) =
     let (chr1,r1) = from in
     if chr1 <> chr2 then raise (Invalid_argument "MBSchema.Location.position") ;
     range_pos ~from:r1 r2
 
-  let range_stranded_pos ~from ~strand r = 
+  let range_stranded_pos ~from ~strand r =
     let p = range_pos ~from r in
     if strand = `sense then p else (- p)
   let stranded_position ~from ~strand (chr,r) =
@@ -61,7 +61,7 @@ module Location = struct
     chr,
     Range.make c (if (lo + hi) mod 2 = 0 then c else c + 1)
 
-  let relmove a b (chr, { Range.lo ; hi }) = 
+  let relmove a b (chr, { Range.lo ; hi }) =
     (chr, Range.make (lo + a) (hi + b))
 
 
@@ -74,7 +74,7 @@ module Location = struct
 
 let size (_,r) = Range.size r
 
-let to_string (chr, { Range.lo ; hi }) = 
+let to_string (chr, { Range.lo ; hi }) =
   sprintf "%s:%d-%d" chr lo hi
 
 let of_string s =
@@ -93,14 +93,14 @@ module Transcript = struct
   } with sexp
 
   let tss transcript =
-    let open Location in 
+    let open Location in
     let exon1 = List.hd transcript.exons in
     let pos = match transcript.strand with
     | `sense -> st exon1
-    | `antisense -> ed exon1 in 
+    | `antisense -> ed exon1 in
     make (chr exon1) pos pos
 
-  let position2tss transcript loc = 
+  let position2tss transcript loc =
     Location.stranded_position
       ~from:(tss transcript)
       ~strand:transcript.strand
@@ -120,9 +120,9 @@ module Gene = struct
 end
 
 
-module ConfigFile = struct
+module Config_file = struct
   type t = statement list
-  and statement = 
+  and statement =
     | Condition of condition
     | Sample of sample
     | Model of model
