@@ -68,6 +68,12 @@ let () = Guizmin.(
     let sox2_first_fq_nb_reads = Fastq.nbreads (List.hd_exn sox2_fastq) in
     assert (eval sox2_first_fq_nb_reads = 5776141)
   in
+
+  let () =
+    let Dir d = eval (FastQC.report (List.hd_exn sox2_fastq)) in
+    print_endline d
+  in
+
   ()
 )
 
