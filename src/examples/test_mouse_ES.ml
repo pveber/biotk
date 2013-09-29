@@ -25,7 +25,7 @@ open Guizmin_bioinfo
 
 let sample x = Sra.(fastq_dump (sample x))
 
-let sox2_fastq = List.map [ "SRR002023" (* ; "SRR002024" ; "SRR002025" "SRR002025" *) ] sample
+let sox2_fastq = List.map [ "SRR002023" ; "SRR002024" ; "SRR002025" ; "SRR002025" ] sample
 let gfp_fastq = List.map [ "SRR001996" ; "SRR001997" ; "SRR001998" ; "SRR001999" ] sample
 
 let bowtie_index_mm9 = Bowtie.index ~packed:true (Ucsc.genome_sequence `mm9)
@@ -59,12 +59,17 @@ let wget_gzipped_bed url : Bed.Basic.file = Guizmin_unix.(
 let published_sox2_peaks =
   wget_gzipped_bed "http://www.ncbi.nlm.nih.gov/geosuppl/?acc=GSM288347&file=GSM288347%5FES%5FSox2%2Etxt%2Egz"
 
-(* let () = Guizmin.( *)
-(*   let base = default_base_directory () in *)
-(*   let eval x = eval ~base ~np:1 x in *)
-(*   let Dir p = eval sox2_motif in *)
-(*   print_endline p *)
-(* ) *)
+let () = Guizmin.(
+  let base = default_base_directory () in
+  let eval x = eval ~base ~np:1 x in
+
+  (* test counting reads in fastq *)
+  let () =
+    let sox2_first_fq_nb_reads = Fastq.nbreads (List.hd_exn sox2_fastq) in
+    assert (eval sox2_first_fq_nb_reads = 5776141)
+  in
+  ()
+)
 
 
 

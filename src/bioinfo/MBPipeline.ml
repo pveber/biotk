@@ -9,7 +9,7 @@ let ( & ) l x = List.Assoc.find_exn l x
 
 type genome = MBSchema.Config_file.genome
 
-let fastq_of_path s : [`fastq] Guizmin.file =
+let fastq_of_path s : [`sanger] Fastq.file =
   if Filename.check_suffix s ".gz" then
     Guizmin_unix.gunzip (Guizmin.file s)
   else
@@ -122,7 +122,7 @@ struct
       )
       |! rel_of_pairs
 
-    let fastq_files : (sample, [`fastq] Guizmin.file list) assoc =
+    let fastq_files : (sample, [`sanger] Fastq.file list) assoc =
       assoc samples (
         fun s -> List.map s.sample_files ~f:fastq_of_path
       )
@@ -191,7 +191,7 @@ struct
       )
       |! rel_of_pairs
 
-    let fastq_files : (sample, [`fastq] Guizmin.file list) assoc =
+    let fastq_files : (sample, [`sanger] Fastq.file list) assoc =
       assoc samples (
         fun s -> List.map s.sample_files ~f:fastq_of_path
       )

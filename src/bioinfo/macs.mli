@@ -55,22 +55,3 @@ val best_peaks : n:int -> 'a Wo_control.Peak.file' -> 'a Wo_control.Peak.file'
 (** [best_peaks ~n peaks] builds a peak file keeping only the [n]
     peaks with maximum - log10 pval in [peaks]. If [peaks] has less
     than [n] peaks, take them all. *)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

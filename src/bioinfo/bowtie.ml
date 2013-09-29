@@ -16,9 +16,12 @@ let index ?(packed = false) fasta =
 	sp "cd %s && cp `readlink -f %s` index.fa" path fa
       ])
 
-let qual_option = function
+type supported_quality_encoding = [ `solexa | `sanger | `phred64 ]
+type 'a quality_encoding = 'a Fastq.format constraint 'a = [< supported_quality_encoding ]
+
+let qual_option x = match (x : 'a quality_encoding :> supported_quality_encoding) with
   | `solexa  -> "--solexa-quals"
-  | `phred33 -> "--phred33-quals"
+  | `sanger -> "--phred33-quals"
   | `phred64 -> "--phred64-quals"
 
 let qual_param id v = Param.string id (qual_option v)
