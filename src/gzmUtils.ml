@@ -40,7 +40,7 @@ let logger (type s) oc label (fmt : (s, unit, string, unit) format4) =
   let f msg =
     let t = localtime (time ()) in
       fprintf
-        oc "[%s][%04d-%02d-%02d %02d:%02d] %s%!"
+        oc "[%s][%04d-%02d-%02d %02d:%02d] %s\n%!"
         label (1900 + t.tm_year) (t.tm_mon + 1)t.tm_mday t.tm_hour t.tm_min msg
   in
   ksprintf f fmt

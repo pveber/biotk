@@ -734,7 +734,7 @@ let rec build_aux : type a. ?base:string -> ?np:int -> a pipeline -> unit =
           | _ ->
             with_env ~np base x ~f:(fun env ->
               try
-                env.info "\n%s\n" (string_descr x) ;
+                env.info "%s" (string_descr x) ;
                 exec x env ;
                 log_built ~base x
               with e -> (
