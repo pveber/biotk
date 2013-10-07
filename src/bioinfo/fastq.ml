@@ -2,10 +2,14 @@ open Core.Std
 open CFStream
 open Guizmin
 
-type 'a format = 'a
-let sanger = `sanger
-let solexa = `solexa
-let phred64 = `phred64
+type _ format =
+| Sanger : [`sanger] format
+| Solexa : [`solexa] format
+| Phred64 : [`phred64] format
+
+let sanger = Sanger
+let solexa = Solexa
+let phred64 = Phred64
 
 
 type 'a file = 'a format Guizmin.file
