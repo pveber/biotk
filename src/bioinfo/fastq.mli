@@ -14,4 +14,7 @@ type 'a file = 'a format Guizmin.file
 type sanger = [`sanger] file
 
 val sanger_of_solexa : [`solexa] file -> [`sanger] file
+val sanger_of_solexa : [`phred64] file -> [`sanger] file
+val to_sanger : 'a format -> 'a file -> [`sanger] file
+
 val nbreads : 'a file -> int pipeline
