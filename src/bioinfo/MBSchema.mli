@@ -71,10 +71,18 @@ module Config_file : sig
     sample_model : string ;
     sample_condition : string ;
   }
-  and sample_type =
-    | ChIP_seq_input
-    | TF_ChIP_seq of string
-    | RNA_seq
+  and sample_type = [
+  | `short_reads of experiment * short_read_format
+  ]
+  and experiment = [
+  | `whole_cell_extract
+  | `TF_ChIP of string
+  | `mRNA
+  ]
+  and short_read_format = [
+  | `fastq of [ `sanger | `solexa | `phred64 ]
+  | `sra
+  ]
   and model = {
     model_id : string ;
     model_genome : genome ;

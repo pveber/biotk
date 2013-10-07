@@ -1,6 +1,7 @@
 open Guizmin
 
 type 'a format = private 'a
+
 val sanger : [`sanger] format
 val solexa : [`solexa] format
 val phred64 : [`phred64] format

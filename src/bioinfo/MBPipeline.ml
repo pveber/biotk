@@ -73,16 +73,16 @@ struct
   module TF_ChIP_seq = struct
     let factors = extract' (
       function
-      | Sample ({ sample_type = TF_ChIP_seq tf }) -> Some tf
+      | Sample ({ sample_type = `short_reads (`TF_ChIP tf,_) }) -> Some tf
       | _ -> None
     )
 
     let conditions = extract' (
       function
       | Sample ({ sample_condition = c ;
-                  sample_type = TF_ChIP_seq _ })
+                  sample_type = `short_reads (`TF_ChIP _,_) })
       | Sample ({ sample_condition = c ;
-                  sample_type = ChIP_seq_input }) ->
+                  sample_type = `short_reads (`whole_cell_extract,_) }) ->
           Some c
       | _ ->
           None
@@ -90,14 +90,14 @@ struct
 
     let chIP_samples = extract (
       function
-      | Sample ({ sample_type = TF_ChIP_seq _ } as sample) ->
+      | Sample ({ sample_type = `short_reads (`TF_ChIP _,_) } as sample) ->
           Some sample
       | _ -> None
     )
 
     let input_controls = extract (
       function
-      | Sample ({ sample_type = ChIP_seq_input } as sample) ->
+      | Sample ({ sample_type = `short_reads (`whole_cell_extract,_) } as sample) ->
           Some sample
       | _ -> None
     )
@@ -107,7 +107,7 @@ struct
     let chIP_samples_by_factor_and_condition =
       extract (
         function
-        | Sample ({ sample_type = TF_ChIP_seq tf ; sample_condition } as sample) ->
+        | Sample ({ sample_type = `short_reads (`TF_ChIP tf,_) ; sample_condition } as sample) ->
             Some ((tf, sample_condition), sample)
         | _ -> None
       )
@@ -116,7 +116,7 @@ struct
     let input_controls_by_condition =
       extract (
         function
-        | Sample ({ sample_type = ChIP_seq_input ; sample_condition } as sample) ->
+        | Sample ({ sample_type = `short_reads (`whole_cell_extract,_) ; sample_condition } as sample) ->
             Some (sample_condition, sample)
         | _ -> None
       )
@@ -169,7 +169,7 @@ struct
     let conditions = extract' (
       function
       | Sample ({ sample_condition = c ;
-                  sample_type = ChIP_seq_input }) ->
+                  sample_type = `short_reads (`mRNA,_) }) ->
           Some c
       | _ ->
           None
@@ -177,7 +177,7 @@ struct
 
     let samples = extract (
       function
-      | Sample ({ sample_type = RNA_seq } as sample) ->
+      | Sample ({ sample_type = `short_reads (`mRNA,_) } as sample) ->
           Some sample
       | _ -> None
     )
@@ -185,7 +185,7 @@ struct
     let samples_by_condition =
       extract (
         function
-        | Sample ({ sample_type = RNA_seq ; sample_condition } as sample) ->
+        | Sample ({ sample_type = `short_reads (`mRNA,_) ; sample_condition } as sample) ->
             Some (sample_condition, sample)
         | _ -> None
       )
