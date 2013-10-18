@@ -1,7 +1,6 @@
 open Core.Std
 open CFStream
 open Stream.Infix
-open Biocaml
 open Guizmin
 open MBSchema
 
@@ -99,6 +98,20 @@ module With_control = struct
 end
 
 let bed mo = select mo "macs_peaks.bed"
+
+let bed_of_peaks peaks =
+  f1
+    "guizmin.bioinfo.macs.bed_of_peaks[r1]" []
+    peaks
+    (fun env peaks path ->
+      let bed_item_of_peak i { Wo_control.Peak.chrom ; chromStart ; chromEnd } =
+	{ Bed.Named.chrom = chrom ; chromStart ; chromEnd ; name = sprintf "peak_%d" i }
+      in
+      Wo_control.Peak.with_rows peaks ~f:(fun xs ->
+	let items = Stream.map xs ~f:bed_item_of_peak in
+	Out_channel.with_file path ~f:(fun oc -> Bed.Named.Row.stream_to_channel oc items)
+      )
+    )
 
 (** parses a line of a peak file *)
 let parse_peak_line line = Wo_control.Peak.(

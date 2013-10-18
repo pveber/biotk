@@ -51,6 +51,8 @@ end
 
 val bed : 'a output dir -> Bed.Basic.file
 
+val bed_of_peaks : 'a Wo_control.Peak.file' -> Bed.Named.file
+
 val best_peaks : n:int -> 'a Wo_control.Peak.file' -> 'a Wo_control.Peak.file'
 (** [best_peaks ~n peaks] builds a peak file keeping only the [n]
     peaks with maximum - log10 pval in [peaks]. If [peaks] has less
