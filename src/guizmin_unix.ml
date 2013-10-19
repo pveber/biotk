@@ -1,5 +1,5 @@
 open Guizmin
-open GzmUtils
+open Guizmin_utils
 
 let wget url =
   f0

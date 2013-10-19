@@ -15,105 +15,37 @@ XStdFilesREADME: false
 XStdFilesAUTHORS: false
 
 Description:
-  This package provides a library and a syntax extension to build bioinformatics pipelines
+  A library to build interdependent computations whose result are stored in files
   . 
-  The library is built from a set of components that are both properly typed 
-  and dependency-aware. The library offers an access to a couple of standard 
-  tools and databases in bioinformatics.
-
+  This library provides some tools to describe and run a set of
+  interdependent computations whose results are stored in files, just
+  like GNU make does. The analoguous of a make target is called a
+  pipeline, and rules are specified as a function, instead of shell
+  commands. Pipelines can be composed in several ways, keep track of
+  the other pipelines they depend on and are typed to reflect the
+  value they build. Guizmin can hence be used to build chains of
+  computations that are both dependency-aware (to avoid useless
+  rebuild, like in make) and statically typechecked.
 
 Library guizmin
   Path:               src
-  Modules:            GzmUtils, GzmConsole, GzmCore, Guizmin
+  Modules:            Guizmin,
+                      Guizmin_console,
+                      Guizmin_repo,
+                      Guizmin_table,
+                      Guizmin_unix,
+                      Guizmin_utils
   BuildDepends:       batteries, calendar, core, shell, threads
-  
-# Library syntax
-#   Path:               src/syntax
-#   Modules:            Pa_guizmin
-#   FindlibParent:      guizmin
-#   FindlibName:        syntax
-#   BuildDepends:       camlp4.lib, camlp4.quotations.o, camlp4.extend
-#   CompiledObject:     byte
-#   XMETAType:          syntax
-# #  XMETARequires:      camlp4, guizmin
-#   XMETADescription:   Syntax extension for guizmin
+  XMETARequires:      batteries, core, shell
+  XMETADescription:   Library to build interdependent computations whose result are stored in files
 
-
-# Library guizmin_tools
-#   Path:			src/tools
-#   Modules:		Guizmin_repo, Guizmin_table,
-#                         Guizmin_unix
-#   FindlibParent:	guizmin
-#   FindlibName:		tools
-#   BuildDepends:		batteries, camlp4, core, guizmin, threads
-#   XMETARequires:	guizmin, tabular, tabular.syntax
-#   XMETADescription:	Pervasives components for guizmin
-
-# Library guizmin_bioinfo
-#   Path:			src/bioinfo
-#   Pack:			true
-#   Modules:		Bam, Bed, Bowtie, Ensembl,
-#                         FastQC, Fasta, 
-#                         Fastq, Gcf, Gtf,
-#                         Htseq, Jaspar, Macs, MBPipeline, 
-#                         MBSchema, Sam, Samtools,
-#                         Sra, Tophat, 
-#                         Ucsc
-#   FindlibParent:	guizmin
-#   FindlibName:		bioinfo
-#   BuildDepends:		batteries, biocaml, camlp4,
-#                         cfstream, core, core_extended,
-#                         format.syntax,
-#                         guizmin, guizmin.tools,
-#                         sexplib.syntax, tabular.syntax, threads
-#   XMETARequires:	guizmin, guizmin.tools, biocaml, core_extended
-#   XMETADescription:	Bioinformatics components for guizmin
-
-
-# Executable test_yeast
-#   Path:         src/examples
-#   BuildTools:   ocamlbuild
-#   MainIs:       test_yeast.ml
-#   BuildDepends: threads, tabular, guizmin.bioinfo, camlp4.quotations.o, 
-#                 biocaml
-#   Install:      false
-
-# Executable test
-#   Path:         src/examples
-#   BuildTools:   ocamlbuild
-#   MainIs:       test.ml
-#   BuildDepends: threads, tabular, guizmin, guizmin.bioinfo, camlp4.quotations.o, 
-#                 biocaml
-#   Install:      false
-
-# Executable test_ucsc_lift_over
-#   Path:         src/examples
-#   BuildTools:   ocamlbuild
-#   MainIs:       ucsc_lift_over.ml
-#   BuildDepends: guizmin.bioinfo,tabular.syntax,threads
-#   Install:      false
-
-# Executable test_mouse_ES
-#   Path:         src/examples
-#   BuildTools:   ocamlbuild
-#   MainIs:       test_mouse_ES.ml
-#   BuildDepends: guizmin.bioinfo,tabular.syntax,threads
-#   Install:      false
-
-# Executable guizmin_mb_pipeline
-#   Path:         src
-#   BuildTools:   ocamlbuild
-#   MainIs:       guizmin_mb_pipeline.ml
-#   BuildDepends: cmdliner, guizmin, guizmin.bioinfo
-#   Install:      false
-
-# Document API
-#   Title:           API reference for Guizmin
-#   Type:            OCamlbuild (0.3)
-#   InstallDir:      $docdir/api
-#   BuildTools:      ocamldoc, ocamlbuild
-#   XOCamlbuildPath: .
-#   XOCamlbuildLibraries: guizmin,guizmin.tools,guizmin.bioinfo
+Document API
+  Title:           API reference for Guizmin
+  Type:            OCamlbuild (0.3)
+  InstallDir:      $docdir/api
+  BuildTools:      ocamldoc, ocamlbuild
+  XOCamlbuildPath: .
+  XOCamlbuildLibraries: guizmin
 
 
 SourceRepository head

@@ -1,12 +1,12 @@
 open Core.Std
-open GzmCore
+open Guizmin
 
 let rec du path =
   let open Unix in
   let stats = stat path in
   match stats.st_kind with
   | S_REG -> stats.st_size
-  | S_DIR -> 
+  | S_DIR ->
       let contents = Sys.readdir path in
       let sizes = Array.map contents ~f:(fun x -> du (Filename.concat path x)) in
       Array.fold sizes ~init:stats.st_size ~f:Int64.( + )
@@ -24,7 +24,7 @@ let parse_history_line l =
   let stamp, tag = String.lsplit2_exn l ~on:':' in
   try
     tag_of_string (String.lstrip tag), CalendarLib.Printer.Date.from_string stamp
-  with 
+  with
   | Invalid_argument _ as e -> raise e
   | e -> raise e (*
     invalid_argf "gzmConsole.parse_history_line: %s" l ()
@@ -47,7 +47,7 @@ let less_tagged tag ~during:(period_start, period_end) ~than:limit x =
   let open CalendarLib in
   let now = Date.today () in
   let n_tags =
-    List.count x.history ~f:(fun (t,stamp) -> 
+    List.count x.history ~f:(fun (t,stamp) ->
       let stamp_date = Date.(Period.nb_days (sub stamp now)) in
       t = tag && period_start <= stamp_date && stamp_date <= period_end
     )
@@ -55,16 +55,16 @@ let less_tagged tag ~during:(period_start, period_end) ~than:limit x =
   n_tags <= limit
 
 let cache_selection
-    ?used_less_than ?req_less_than 
+    ?used_less_than ?req_less_than
     ?bigger_than
     base =
   let default _ = true in
-  let used_less_than = 
-    Option.value_map used_less_than ~default ~f:(fun (ntimes, period_start, period_end) -> 
+  let used_less_than =
+    Option.value_map used_less_than ~default ~f:(fun (ntimes, period_start, period_end) ->
       less_tagged `used ~than:ntimes ~during:(period_start, period_end)
     )
-  and req_less_than  = 
-    Option.value_map req_less_than ~default ~f:(fun (ntimes, period_start, period_end) -> 
+  and req_less_than  =
+    Option.value_map req_less_than ~default ~f:(fun (ntimes, period_start, period_end) ->
       less_tagged `requested ~than:ntimes ~during:(period_start, period_end)
     )
   and bigger_than =
@@ -75,16 +75,16 @@ let cache_selection
   in
   let files = Sys.readdir (cache_dir base)  in
   let cached_files = Array.map files ~f:(
-    fun f -> 
-      { 
+    fun f ->
+      {
         name = f ;
         history = load_history (Filename.concat (history_dir base) f) ;
         size = du (Filename.concat (cache_dir base) f)
       }
   )
   in
-  let files = 
-    Array.filter cached_files ~f:(fun x -> used_less_than x && req_less_than x && bigger_than x) 
+  let files =
+    Array.filter cached_files ~f:(fun x -> used_less_than x && req_less_than x && bigger_than x)
     |! Array.to_list
   in
   (base, files)
@@ -95,8 +95,8 @@ let size_of_selection (_,l) =
 
 
 let clear_selection (base, l) =
-  List.iter l ~f:(fun f -> 
-    GzmUtils.sh "rm -rf %s" (Filename.concat (cache_dir base) f.name)
+  List.iter l ~f:(fun f ->
+    Guizmin_utils.sh "rm -rf %s" (Filename.concat (cache_dir base) f.name)
   )
 
 

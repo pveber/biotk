@@ -72,27 +72,14 @@ val history_dir : base_directory -> string
 
 exception Error of string * exn
 
-val build : 
+val build :
   ?base:base_directory -> ?np:int ->
   'a pipeline -> unit
-val eval : 
+val eval :
   ?base:base_directory -> ?np:int ->
   'a pipeline -> 'a
 val path : base:base_directory -> 'a pipeline -> string
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+type 'a value
+val load_value : 'a value file_path -> 'a
+val ( |- ) : ('a -> 'b) -> ('b -> 'c) -> 'a -> 'c

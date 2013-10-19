@@ -1,6 +1,6 @@
 open Core.Std
 
-open GzmUtils
+open Guizmin_utils
 
 type path = string list
 type item =
@@ -23,8 +23,8 @@ let fail_on_duplicate_paths items = match find_duplicate_paths items with
 
 let create ?(np = 0) ?(wipeout = false) ?log ~base ~repo_base items =
   let log = match log with
-    | None -> GzmUtils.null_logger
-    | Some oc -> GzmUtils.logger stdout "INFO"
+    | None -> Guizmin_utils.null_logger
+    | Some oc -> Guizmin_utils.logger stdout "INFO"
   in
   fail_on_duplicate_paths items ;
   if Sys.file_exists repo_base <> `Yes then sh "mkdir -p %s" repo_base ;

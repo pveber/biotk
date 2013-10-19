@@ -1,10 +1,10 @@
-open GzmCore
+open Guizmin
 
 type cache_selection
 
-val cache_selection : 
-  ?used_less_than:(int * int * int) -> 
-  ?req_less_than:(int * int * int) -> 
+val cache_selection :
+  ?used_less_than:(int * int * int) ->
+  ?req_less_than:(int * int * int) ->
   ?bigger_than:float -> (** size in GB *)
   base_directory -> cache_selection
 (** [cache_selection ~used_less_than:(k,m,n) ~req_less_than:(k',m',n')
