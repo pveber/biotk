@@ -32,29 +32,29 @@ let create ?(np = 0) ?(wipeout = false) ?log ~base ~repo_base items =
   List.iter items ~f:(
     function Item (pipeline,_,rel_path)  ->
       let abs_path = repo_base ^ "/" ^ (String.concat ~sep:"/" rel_path) in
+      (* Ensure the pipeline's built if asked to be so *)
       if np > 0 then (
 	log "Building %s" abs_path ;
 	Guizmin.build ~base ~np pipeline
       ) ;
-      bash [
-        sp "mkdir -p %s" (Filename.dirname abs_path) ;
-        sp "ln -s `readlink -f %s` %s" (Guizmin.path ~base pipeline) abs_path
-      ]
+      let cache_path = Guizmin.path ~base pipeline in
+
+      (* Create link if needed *)
+      let create_link =
+	if Sys.file_exists abs_path = `No then Unix.(
+	  if (lstat abs_path).st_kind <> S_LNK || readlink abs_path <> cache_path
+	  then (
+	    unlink abs_path ;
+	    true
+	  )
+	  else false
+	)
+	else true
+      in
+      if create_link then (
+	bash [
+          sp "mkdir -p %s" (Filename.dirname abs_path) ;
+          sp "ln -s `readlink -f %s` %s" cache_path abs_path
+	]
+      )
   )
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
