@@ -41,7 +41,7 @@ let create ?(np = 0) ?(wipeout = false) ?log ~base ~repo_base items =
 
       (* Create link if needed *)
       let create_link =
-	if Sys.file_exists abs_path = `No then Unix.(
+	if Sys.file_exists abs_path = `Yes then Unix.(
 	  if (lstat abs_path).st_kind <> S_LNK || readlink abs_path <> cache_path
 	  then (
 	    unlink abs_path ;
