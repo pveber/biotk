@@ -57,8 +57,8 @@ sig
   val load : 'a file_path' -> Table.t
 end
 
-val remove_sharp_comments : ('a, [`sharp], 'b) format file -> ('a, [`none], 'b) format file
-val remove_sharp_comments_and_header : ('a, [`sharp], [`some]) format file -> ('a, [`none], [`none]) format file
+val remove_sharp_comments : ('a, [`sharp], 'b) format file -> ('a, [`sharp], 'b) format file
+val remove_sharp_comments_and_header : ('a, [`sharp], [`some]) format file -> ('a, [`sharp], [`none]) format file
 
 val red3 : ('a * ('b * ('c * 'd)), 'e, 'f) format file -> ('a * ('b * ('c * unit)), 'e, 'f) format file
 
