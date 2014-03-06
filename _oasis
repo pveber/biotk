@@ -1,0 +1,30 @@
+OASISFormat: 0.4
+Name:        guizmin
+Version:     2.0
+Synopsis:    Bioinformatics library
+Authors:     Philippe Veber
+License:     GPL-3.0
+Plugins:     META (0.4), DevFiles (0.4)
+BuildTools:   ocamlbuild
+Homepage:     https://github.com/pveber/guizmin
+
+Library guizmin_lib
+  Path:             src/lib
+  Modules:          Gene
+  BuildDepends:     core_kernel  
+  XMETARequires:    core_kernel
+  XMETADescription: FIXME
+
+Document API
+  Title:                API reference for Guizmin
+  Type:                 OCamlbuild (0.4)
+  InstallDir:           $docdir/api
+  BuildTools:	        ocamldoc, ocamlbuild
+  XOCamlbuildPath:      .
+  XOCamlbuildLibraries: guizmin_lib
+
+
+SourceRepository head
+  Type: git
+  Location: git://github.com/pveber/guizmin.git
+  Browser: https://github.com/pveber/guizmin
