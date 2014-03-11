@@ -8,12 +8,24 @@ Plugins:     META (0.4), DevFiles (0.4)
 BuildTools:   ocamlbuild
 Homepage:     https://github.com/pveber/guizmin
 
-Library guizmin_lib
+Library guizmin
   Path:             src/lib
-  Modules:          Gene
+  Pack:             true
+  Modules:          Gene, Jaspar
+  FindlibName:      guizmin
   BuildDepends:     core_kernel  
   XMETARequires:    core_kernel
   XMETADescription: FIXME
+
+Library guizmin_workflow
+  Path:             src/workflow
+  Pack:             true
+  Modules:          Jaspar
+  FindlibName:      workflow
+  FindlibParent:    guizmin
+  BuildDepends:     core_kernel
+  XMETARequires:    core_kernel
+
 
 Document API
   Title:                API reference for Guizmin
@@ -21,7 +33,7 @@ Document API
   InstallDir:           $docdir/api
   BuildTools:	        ocamldoc, ocamlbuild
   XOCamlbuildPath:      .
-  XOCamlbuildLibraries: guizmin_lib
+  XOCamlbuildLibraries: guizmin, guizmin.workflow
 
 
 SourceRepository head
