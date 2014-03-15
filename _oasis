@@ -26,6 +26,11 @@ Library guizmin_workflow
   BuildDepends:     bistro, bistro.syntax, core, threads
   XMETARequires:    bistro, core, threads
 
+Executable guizmin
+  Path:             src/app
+  MainIs:           guizmin_main.ml
+  BuildDepends:     guizmin, guizmin_workflow
+  CompiledObject:   native
 
 Document API
   Title:                API reference for Guizmin
