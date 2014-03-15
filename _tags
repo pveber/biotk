@@ -1,0 +1,3 @@
+# OASIS_START
+# OASIS_STOP
+<src/workflow/*.ml>: use_bistro_syntax

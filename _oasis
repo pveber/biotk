@@ -20,11 +20,11 @@ Library guizmin
 Library guizmin_workflow
   Path:             src/workflow
   Pack:             true
-  Modules:          Jaspar
+  Modules:          Bowtie, Fastq, Jaspar, Types
   FindlibName:      workflow
   FindlibParent:    guizmin
-  BuildDepends:     core_kernel
-  XMETARequires:    core_kernel
+  BuildDepends:     bistro, bistro.syntax, core, threads
+  XMETARequires:    bistro, core, threads
 
 
 Document API
