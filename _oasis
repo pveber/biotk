@@ -29,7 +29,7 @@ Library guizmin_workflow
 Executable guizmin
   Path:             src/app
   MainIs:           guizmin_main.ml
-  BuildDepends:     guizmin, guizmin_workflow
+  BuildDepends:     cmdliner, core, guizmin, guizmin_workflow, threads, sexplib.syntax
   CompiledObject:   native
 
 Document API

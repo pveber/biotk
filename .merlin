@@ -1,5 +1,7 @@
+B _build/src/app
 B _build/src/workflow
 B _build/src/lib
 PKG bistro
 PKG bistro.lwt
-
+PKG cmdliner
+PKG core
