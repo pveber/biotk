@@ -20,7 +20,7 @@ Library guizmin
 Library guizmin_workflow
   Path:             src/workflow
   Pack:             true
-  Modules:          Bowtie, Fastq, Jaspar, Types
+  Modules:          Bowtie, Fasta, Fastq, Jaspar, Types
   FindlibName:      workflow
   FindlibParent:    guizmin
   BuildDepends:     bistro, bistro.syntax, core, threads
