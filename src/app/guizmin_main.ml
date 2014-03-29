@@ -65,32 +65,13 @@ let help_cmd =
   Term.(ret (pure help $ copts_t $ Term.man_format $ Term.choice_names $ topic)),
   Term.info "help" ~doc ~man
 
-let run_pipeline_cmd =
-  let data_description_file =
-    let doc = "Path to a guizmin experiment description (.ged) file" in
-    let docv = "GED_FILE" in
-    Arg.(required & pos 0 (some string) None & info [] ~docv ~doc)
-  in
-  let output =
-    let doc = "Output directory for the pipeline, will be created if not existent. Stops if the path exists and is not an empty directory" in
-    let docv = "OUTPUT" in
-    Arg.(required & pos 1 (some string) None & info [] ~doc ~docv)
-  in
-  let doc = "runs a fully automated analysis of a dataset" in
-  let man = [
-    `S "DESCRIPTION";
-    `P "Given a .ged file (read `$(mname) help ged'), guizmin-run-pipeline will compute a suitable analysis pipeline and run it, producing its output in $(i,OUTPUT). The execution will also produce a _guizmin directory, which contains cached intermediate results." ;
-  ] @ help_secs in
-  Term.(pure Run_pipeline.main $ data_description_file $ output),
-  Term.info "run-pipeline" ~version:"0.1" ~doc ~sdocs:copts_sect ~man
-
 let default_cmd =
   let doc = "a bioinformatics toolbox" in
   let man = help_secs in
   Term.(ret (pure (fun _ -> `Help (`Pager, None)) $ copts_t)),
   Term.info "guizmin" ~version:"0.1" ~sdocs:copts_sect ~doc ~man
 
-let cmds = [ help_cmd ; run_pipeline_cmd ]
+let cmds = [ help_cmd ]
 
 let () =
   match Term.eval_choice default_cmd cmds with

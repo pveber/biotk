@@ -11,25 +11,16 @@ Homepage:     https://github.com/pveber/guizmin
 Library guizmin
   Path:             src/lib
   Pack:             true
-  Modules:          Gene, Jaspar
+  Modules:          Gene, Jaspar, Ucsc_gb
   FindlibName:      guizmin
-  BuildDepends:     core_kernel  
+  BuildDepends:     core_kernel
   XMETARequires:    core_kernel
   XMETADescription: FIXME
-
-Library guizmin_workflow
-  Path:             src/workflow
-  Pack:             true
-  Modules:          Bowtie, Fasta, Fastq, Jaspar, Types
-  FindlibName:      workflow
-  FindlibParent:    guizmin
-  BuildDepends:     bistro, bistro.syntax, core, threads
-  XMETARequires:    bistro, core, threads
 
 Executable guizmin
   Path:             src/app
   MainIs:           guizmin_main.ml
-  BuildDepends:     cmdliner, core, guizmin, guizmin_workflow, threads, sexplib.syntax
+  BuildDepends:     cmdliner, core, guizmin, threads, sexplib.syntax
   CompiledObject:   native
 
 Document API
@@ -38,7 +29,7 @@ Document API
   InstallDir:           $docdir/api
   BuildTools:	        ocamldoc, ocamlbuild
   XOCamlbuildPath:      .
-  XOCamlbuildLibraries: guizmin, guizmin.workflow
+  XOCamlbuildLibraries: guizmin
 
 
 SourceRepository head
