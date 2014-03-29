@@ -22,6 +22,7 @@ Executable guizmin
   MainIs:           guizmin_main.ml
   BuildDepends:     cmdliner, core, guizmin, threads, sexplib.syntax
   CompiledObject:   native
+  Install:          false
 
 Document API
   Title:                API reference for Guizmin
