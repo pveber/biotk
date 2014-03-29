@@ -13,8 +13,8 @@ Library guizmin
   Pack:             true
   Modules:          Gene, Jaspar, Ucsc_gb
   FindlibName:      guizmin
-  BuildDepends:     core_kernel
-  XMETARequires:    core_kernel
+  BuildDepends:     core_kernel, netstring
+  XMETARequires:    core_kernel, netstring
   XMETADescription: FIXME
 
 Executable guizmin
