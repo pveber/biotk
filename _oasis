@@ -1,38 +1,38 @@
 OASISFormat: 0.4
-Name:        guizmin
-Version:     2.0
-Synopsis:    Bioinformatics library
+Name:        gzt
+Version:     0.1
+Synopsis:    Bioinformatics library, companion to guizmin
 Authors:     Philippe Veber
 License:     GPL-3.0
 Plugins:     META (0.4), DevFiles (0.4)
 BuildTools:   ocamlbuild
-Homepage:     https://github.com/pveber/guizmin
+Homepage:     https://github.com/pveber/gzt
 
-Library guizmin
+Library gzt
   Path:             src/lib
   Pack:             true
   Modules:          Gene, Jaspar, Ucsc_gb
-  FindlibName:      guizmin
+  FindlibName:      gzt
   BuildDepends:     core_kernel, netstring
   XMETARequires:    core_kernel, netstring
   XMETADescription: FIXME
 
-Executable guizmin
+Executable gzt
   Path:             src/app
-  MainIs:           guizmin_main.ml
-  BuildDepends:     cmdliner, core, guizmin, threads, sexplib.syntax
+  MainIs:           gzt_main.ml
+  BuildDepends:     cmdliner, core, gzt, threads, sexplib.syntax
   CompiledObject:   native
 
 Document API
-  Title:                API reference for Guizmin
+  Title:                API reference for Gzt
   Type:                 OCamlbuild (0.4)
   InstallDir:           $docdir/api
   BuildTools:	        ocamldoc, ocamlbuild
   XOCamlbuildPath:      .
-  XOCamlbuildLibraries: guizmin
+  XOCamlbuildLibraries: gzt
 
 
 SourceRepository head
   Type: git
-  Location: git://github.com/pveber/guizmin.git
-  Browser: https://github.com/pveber/guizmin
+  Location: git://github.com/pveber/gzt.git
+  Browser: https://github.com/pveber/gzt

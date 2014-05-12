@@ -1,6 +1,0 @@
-* Fix documentation generation
-  seems like there's a bug in oasis for generating doc from packed modules:
-  <pre>
-  +/home/pveber/.opam/4.01.0/bin/ocamlfind ocamldoc -load src/lib/gene.odoc -load src/lib/jaspar.odoc -load src/workflow/bowtie.odoc -load src/workflow/fastq.odoc -load src/workflow/jaspar.odoc -load src/workflow/types.odoc -html -d API.docdir
-  Fatal error: exception Failure("There are two interfaces of module Jaspar.")
-  </pre>
