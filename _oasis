@@ -11,10 +11,11 @@ Homepage:     https://github.com/pveber/gzt
 Library gzt
   Path:             src/lib
   Pack:             true
-  Modules:          Gene, Jaspar, Ucsc_gb
+  Modules:          Fasta,
+                    Gene, Jaspar, Ucsc_gb
   FindlibName:      gzt
-  BuildDepends:     core_kernel, netstring
-  XMETARequires:    core_kernel, netstring
+  BuildDepends:     biocaml, netstring
+  XMETARequires:    biocaml, netstring
   XMETADescription: FIXME
 
 Executable gzt

@@ -5,3 +5,4 @@ PKG bistro
 PKG bistro.lwt
 PKG cmdliner
 PKG core
+PKG zip
