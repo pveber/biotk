@@ -42,7 +42,7 @@ let read_sequence op loc ic =
   | [], _ ->
     fail ("Missing sequence after header", loc)
   | (seqs, cursor) ->
-    return (op#concat seqs, cursor)
+    return (op#concat (List.rev seqs), cursor)
 
 
 let read_item op (loc, l) ic =

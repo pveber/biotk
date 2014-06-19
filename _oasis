@@ -24,6 +24,14 @@ Executable gzt
   BuildDepends:     cmdliner, core, gzt, threads, sexplib.syntax
   CompiledObject:   native
 
+Executable test
+  Path: src/tests
+  MainIs: test.ml
+  Install: false
+  CompiledObject: byte
+  Build$: flag(tests)
+  BuildDepends:     gzt, oUnit (>= 1.1.0)
+
 Document API
   Title:                API reference for Gzt
   Type:                 OCamlbuild (0.4)
