@@ -12,10 +12,11 @@ Library gzt
   Path:             src/lib
   Pack:             true
   Modules:          Fasta,
-                    Gene, Jaspar, Ucsc_gb
+                    Gene, Jaspar, Macs,
+                    Ucsc_gb
   FindlibName:      gzt
-  BuildDepends:     biocaml, netstring
-  XMETARequires:    biocaml, netstring
+  BuildDepends:     biocaml, netstring, tabular.syntax
+  XMETARequires:    biocaml, netstring, tabular
   XMETADescription: FIXME
 
 Executable gzt
