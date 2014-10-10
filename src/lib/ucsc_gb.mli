@@ -1,4 +1,4 @@
-type genome = [ `dm3 | `hg18 | `hg19 | `mm8 | `mm9 | `sacCer2 ]
+type genome = [ `dm3 | `hg18 | `hg19 | `mm8 | `mm9 | `mm10 | `sacCer2 ]
 val string_of_genome : [< genome] -> string
 
 module CustomTrack : sig
