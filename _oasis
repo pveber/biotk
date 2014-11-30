@@ -11,12 +11,13 @@ Homepage:     https://github.com/pveber/gzt
 Library gzt
   Path:             src/lib
   Pack:             true
-  Modules:          Fasta,
+  Modules:          Encode, Fasta,
                     Gene, Jaspar, Macs,
+                    Macs2,
                     Ucsc_gb
   FindlibName:      gzt
-  BuildDepends:     biocaml, netstring, tabular.syntax
-  XMETARequires:    biocaml, netstring, tabular
+  BuildDepends:     biocaml.ez, netstring, tabular.syntax
+  XMETARequires:    biocaml.ez, netstring, tabular
   XMETADescription: FIXME
 
 Executable gzt
