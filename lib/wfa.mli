@@ -8,9 +8,10 @@ module type Score = sig
   type t
   val zero : t
   val compare : t -> t -> int
-  val ( + ) : t -> t -> t
+  val ( < ) : t -> t -> bool
   val min : t -> t -> t
   val max : t -> t -> t
+  val ( + ) : t -> t -> t
 end
 
 module type Profile = sig
@@ -18,6 +19,7 @@ module type Profile = sig
   type t
   type score
   val score : t -> symbol -> score
+  val missing_score : t -> score
 end
 
 module type S = sig
@@ -25,6 +27,7 @@ module type S = sig
   type automaton
   type score
   type profile
+  type symbol
 
   val profile : profile -> expression
   val disjunction : expression list -> expression
@@ -39,6 +42,7 @@ module type S = sig
 
   (* val string_of_expression : expression -> string *)
   val automaton : expression -> automaton
+  val scan : (char -> symbol option) -> automaton -> string -> (int * score * int) Seq.t
 end
 
 module Make
@@ -48,8 +52,17 @@ module Make
                         and type symbol = Symbol.t)
   : S with type score := Score.t
        and type profile := Profile.t
+       and type symbol := Symbol.t
 
-module Nucleotide_profile : sig
+module Nucleotide : sig
+  include Symbol
+  val a : t
+  val c : t
+  val g : t
+  val t : t
+end
+
+module Nucleotide_frequency : sig
   include Profile with type t = float * float * float * float
   val complement : t -> t
 end
@@ -65,8 +78,9 @@ module Nucleotide_IUPAC : sig
 end
 
 module PSSM : sig
-  include S with type profile := Nucleotide_profile.t
+  include S with type profile := Nucleotide_frequency.t
              and type score := float
+             and type symbol := Nucleotide.t
 
   val of_counts : ?prior:float -> int array array -> expression
   val tandem : expression -> expression -> int -> int -> expression
