@@ -1,0 +1,6 @@
+(library
+ (name gzt)
+ (public_name gzt)
+ (c_names pwm_stub)
+ (flags :standard -short-paths -unsafe-string)
+ (libraries biocaml.unix core_kernel cfstream netstring))

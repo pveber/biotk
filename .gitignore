@@ -1,7 +1,4 @@
 *~
-setup.data
-setup.log
 _build
-*.ba[0123457890k]
-*.native
-*.byte
+*.install
+**/.merlin
