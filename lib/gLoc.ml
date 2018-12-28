@@ -53,3 +53,36 @@ let intersects x y =
 
 let%test "intersects_1" =
   intersects { chr = "a" ; lo = 0 ; hi = 4 } { chr = "a" ; lo = 2 ; hi = 30 }
+
+let inter s s' = 
+  if not (intersects s s') then None
+  else Some { chr = s.chr ; lo = max s.lo s'.lo ; hi = min s.hi s'.hi }
+  
+let dist s s' = 
+  if String.(s.chr <> s'.chr) then raise (Invalid_argument "Ucsc.Location.dist")
+  else (
+    if intersects s s' then 0
+    else min (abs (s'.lo - s.hi)) (abs (s.lo - s'.hi))
+  )
+
+let position ~from loc = 
+  if String.(loc.chr <> from.chr) then raise (Invalid_argument "Ucsc.Location.position")
+  else (
+    if intersects from loc then 0
+    else (
+      let a, b = loc.hi - from.lo, loc.lo - from.hi in
+      if abs a < abs b then a else b
+    )
+  )
+
+let relmove l lo hi = { l with lo = l.lo + lo ; hi = l.hi + hi }
+let relative l lo hi = { l with lo = l.lo + lo ; hi = l.lo + hi }
+let zoom l factor = 
+  let size = Float.to_int (Float.of_int (l.hi - l.lo + 1) *. factor) in 
+  let center = (l.lo + l.hi) / 2 in
+  { chr = l.chr ; lo = (center - size / 2) ; hi = (center + size / 2) }
+let size l = l.hi - l.lo + 1
+
+let included_in s s' =
+  if String.(s.chr <> s'.chr) then false 
+  else (s.lo >= s'.lo && s.hi <= s'.hi)
