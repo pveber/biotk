@@ -137,3 +137,13 @@ let bigData_custom_track_url ?(params = []) ~db ~position ~track () =
     (string_of_position position)
     escaped_custom_text
     (encode_url_params params)
+
+module Chrom_size = struct
+  type t = {
+    chrom : string ;
+    size : int ;
+  }
+  [@@deriving fields, csv]
+
+  let load fn = csv_load ~separator:'\t' fn
+end
