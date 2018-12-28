@@ -1,5 +1,6 @@
-
+open Core_kernel
 open Rresult
+open Biocaml_base
 
 let parse_field f field x =
   try R.ok (f x)
