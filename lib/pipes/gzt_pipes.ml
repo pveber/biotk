@@ -51,3 +51,12 @@ let macs_xls_parser =
 
 let macs_xls_unparser =
   map Macs.Xls.unparse
+
+let fasta_parser () =
+  loop
+    (fun state data ->
+       match Fasta.Parser.step state data with
+       | Ok (state, items) -> state, items
+       | Error (`Fasta_parser_error (lno, msg)) ->
+         Core.failwithf "Incorrect FASTA format (L%d): %s" lno msg ())
+    (Fasta.Parser.initial_state ())

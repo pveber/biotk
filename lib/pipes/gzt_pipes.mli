@@ -16,3 +16,5 @@ val table_unparser : unit -> (string list, string, unit) t
 
 val macs_xls_parser : (Line.t, Macs.Xls.item, unit) t
 val macs_xls_unparser : (Macs.Xls.item, string, unit) t
+
+val fasta_parser : unit -> (string, Fasta.item, unit) t
