@@ -1,34 +1,31 @@
-(* module No_control : sig
- *   module Peak : sig
- *     type tabular t = {
- *       chrom : string ;
- *       chromStart : int ;
- *       chromEnd : int ;
- *       len "length" : int ;
- *       summit : int ;
- *       tags : int ;
- *       pvalue : float ;
- *       fold : float ;
- *     }
- *   end
- * 
- *   val read_xls : in_channel -> Peak.t Stream.t
- * end
- * 
- * module With_control : sig
- *   module Peak : sig
- *     type tabular t = {
- *       chrom : string ;
- *       chromStart : int ;
- *       chromEnd : int ;
- *       len "length" : int ;
- *       summit : int ;
- *       tags : int ;
- *       pvalue : float ;
- *       fold : float ;
- *       fdr : float ;
- *     }
- *   end
- * 
- *   val read_xls : in_channel -> Peak.t Stream.t
- * end *)
+(**
+   https://github.com/taoliu/MACS/blob/macs_v1/README.rst
+*)
+
+open Biocaml_base
+
+module Xls : sig
+
+  type entry = {
+      seqid : string ;
+      pos_start : int ;
+      pos_end : int ;
+      length : int ;
+      summit : int ;
+      tags : int ;
+      pvalue : float ;
+      fold : float ;
+      fdr : float option ;
+  }
+
+  type item = [
+    | `Comment of string
+    | `Record of entry
+    | `Header
+  ]
+
+  val parse : Line.t -> item
+  val unparse : item -> string
+  (* val summits_to_bed5 : t item -> Bed.Bed5.t Bed.item
+   * val to_bed5 : t item -> Bed.Bed5.t Bed.item *)
+end
