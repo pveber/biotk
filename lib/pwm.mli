@@ -22,11 +22,15 @@ val background_of_sequence : string -> float -> background
       frequency in [seq] using [pc] as pseudo-counts. Typical
       value for [pc] is [0.1]. *)
 
+val random_background : unit -> background
+
 type t = private float array array
-  (** Representation of a PWM *)
+(** Representation of a PWM *)
 
 val make : count_matrix -> background -> t
-  (** Builds a PWM from a count_matrix and a background *)
+(** Builds a PWM from a count_matrix and a background *)
+
+val random : length:int -> background -> t
 
 val tandem :
   ?orientation:[`direct | `inverted | `everted] ->

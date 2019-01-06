@@ -12,7 +12,7 @@ let int_of_char = function
   | 't' | 'T' -> 3
   | _ -> 4
 
-let flat_background () = Caml.Array.make 4 0.25
+let flat_background () = Array.create ~len:4 0.25
 
 let background_of_sequence seq pc =
   let counts = Caml.Array.make 4 0
@@ -50,6 +50,19 @@ let make mat bg =
         Stream.Infix.(0 --^ (Array.length p))
         |> Stream.fold ~f:(fun accu i -> accu +. bg.(i) *. r.(i)) ~init:0. in
       append r [| n_case |])
+
+let random_profile () =
+  let v = Array.init 4 ~f:(fun _ -> Random.float 1.) in
+  let s = Array.fold v ~f:( +. ) ~init:0. in
+  Array.map v ~f:(fun x -> x /. s)
+
+let random_background = random_profile
+let random ~length background =
+  let counts = Array.init length ~f:(fun _ ->
+      Array.map (random_profile ()) ~f:(fun f -> Float.to_int (100. *. f))
+    )
+  in
+  make counts background
 
 let tandem ?(orientation = `direct) ~spacer mat1 mat2 bg =
   Array.concat [
