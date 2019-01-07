@@ -1,0 +1,3 @@
+(executable
+  (name pwm_bench)
+  (libraries core_bench gzt))

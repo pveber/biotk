@@ -30,7 +30,7 @@ type t = private float array array
 val make : count_matrix -> background -> t
 (** Builds a PWM from a count_matrix and a background *)
 
-val random : length:int -> background -> t
+val random : len:int -> background -> t
 
 val tandem :
   ?orientation:[`direct | `inverted | `everted] ->
@@ -45,12 +45,19 @@ val reverse_complement : t -> t
   (** Reverse complement of a PWM *)
 
 val scan : t -> string -> float -> (int * float) list
-  (** [scan mat seq tol] returns the list of positions (with
-      corresponding scores) such that the alignment score
-      of [mat] is superior to [tol] *)
+(** [scan mat seq tol] returns the list of positions (with
+    corresponding scores) such that the alignment score
+    of [mat] is superior to [tol] *)
+
+val opt_scan : t -> string -> float -> (int * float) list
+(** Identical to [scan] but implementing a small optimization (which
+   is actually worse in native code but a lot better in bytecode) *)
 
 val fast_scan : t -> string -> float -> (int * float) list
-  (** Identical to [scan] but directly implemented in C *)
+(** Identical to [scan] but directly implemented in C *)
+
+val opt_fast_scan : t -> string -> float -> (int * float) list
+(** improved version of [fast_scan] *)
 
 val best_hit : t -> string -> int * float
 (** [best_hit mat seq] returns the position and score of the best

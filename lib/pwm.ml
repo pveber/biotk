@@ -57,8 +57,8 @@ let random_profile () =
   Array.map v ~f:(fun x -> x /. s)
 
 let random_background = random_profile
-let random ~length background =
-  let counts = Array.init length ~f:(fun _ ->
+let random ~len background =
+  let counts = Array.init len ~f:(fun _ ->
       Array.map (random_profile ()) ~f:(fun f -> Float.to_int (100. *. f))
     )
   in
@@ -70,7 +70,6 @@ let tandem ?(orientation = `direct) ~spacer mat1 mat2 bg =
     Array.init spacer ~f:(fun _ -> Caml.Array.make 5 0.) ;
     (if orientation = `inverted then reverse_complement else ident) (make mat2 bg)
   ]
-
 
 let gen_scan f init mat seq tol =
   let r = ref init
@@ -87,7 +86,52 @@ let gen_scan f init mat seq tol =
   done ;
   !r
 
+let array_max (t : float array) =
+  let best = ref Float.neg_infinity in
+  for i = 0 to Array.length t - 1 do
+    let t_i = t.(i) in
+    if t_i > !best then best := t_i
+  done ;
+  !best
+
+let bs pwm =
+  let n = Array.length pwm in
+  let r = Array.create ~len:n (array_max pwm.(n - 1)) in
+  for i = n - 2 downto 0 do
+    r.(i) <- r.(i + 1) +. array_max pwm.(i)
+  done ;
+  r
+
+let matrix_permutation mat =
+  let max = Array.map mat ~f:array_max in
+  Array.mapi mat ~f:(fun i col -> i, col)
+  |> Array.sorted_copy ~compare:(fun (i,_) (j,_) -> Float.compare max.(j) max.(i))
+  |> Array.map ~f:fst
+
+exception Skip
+let opt_scan f init mat seq tol =
+  let r = ref init
+  and n = String.length seq
+  and m = Array.length mat in
+  let seq = Array.init n ~f:(fun i -> int_of_char seq.[i]) in
+  let sigma = matrix_permutation mat in
+  let perm_mat = Array.map sigma ~f:(fun i -> mat.(i)) in
+  let bs = bs perm_mat in
+  for i = n - m downto 0 do
+    try
+      let score = ref 0. in
+      for j = 0 to m - 1 do
+        if !score +. bs.(j) < tol then raise Skip ;
+        score := !score +. Array.(unsafe_get (unsafe_get perm_mat j) (unsafe_get seq (i + sigma.(j))))
+      done ;
+      if !score > tol
+      then r := f i !score !r
+    with Skip -> ()
+  done ;
+  !r
+
 let scan = gen_scan (fun pos score l -> (pos, score) :: l) []
+let opt_scan = opt_scan (fun pos score l -> (pos, score) :: l) []
 
 let best_hit mat seq =
   let (pos, _) as r =
@@ -96,10 +140,39 @@ let best_hit mat seq =
   if pos < 0 then raise (Invalid_argument "Pwm.best_hit: sequence shorter than the matrix")
   else r
 
-
-external stub_fast_scan : t -> int array -> float -> (int * float) list = "biocaml_pwm_scan"
+external stub_fast_scan : t -> int array -> float -> (int * float) list = "gzt_pwm_scan"
+external stub_opt_fast_scan : t -> int array -> float -> (int * float) list = "gzt_opt_pwm_scan"
 
 let fast_scan mat seq tol =
   let n = String.length seq in
   let seq = Array.init n ~f:(fun i -> int_of_char seq.[i]) in
   stub_fast_scan mat seq tol
+
+let opt_fast_scan mat seq tol =
+  let n = String.length seq in
+  let seq = Array.init n ~f:(fun i -> int_of_char seq.[i]) in
+  stub_opt_fast_scan mat seq tol
+
+let check x y =
+  List.zip_exn x y
+  |> List.for_all ~f:(fun ((i, x_i), (j, y_j)) ->
+      i = j && Float.(abs (x_i - y_j) < 1e-6)
+    )
+
+let test f g =
+  let s = "acgatcgatcgatgcatgctagctagctagctagctagctagcatcgatgcatgct" in
+  let bg = random_background () in
+  let pwm = random ~len:10 bg in
+  let theta = Random.float 10. in
+  check (f pwm s theta) (g pwm s theta)
+
+let repeat_test f g =
+  List.init 10 ~f:(fun _ -> test f g)
+  |> List.for_all ~f:Fn.id
+
+let%test "fast_scan = scan" =
+  repeat_test scan fast_scan
+
+let%test "opt_scan = scan" = repeat_test scan opt_scan
+
+let%test "opt_scan = opt_fast_scan" = repeat_test opt_scan opt_fast_scan
