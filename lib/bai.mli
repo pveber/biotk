@@ -1,9 +1,14 @@
-open Unsigned
+(**
+   BAI format: index for BAM file
+
+   @see https://samtools.github.io/hts-specs/SAMv1.pdf
+   @see https://academic.oup.com/bioinformatics/article/32/14/2202/1742831
+*)
 open Stdio
 
 type chunk = {
-  chunk_beg : UInt64.t ;
-  chunk_end : UInt64.t ;
+  chunk_beg : Int64.t ;
+  chunk_end : Int64.t ;
 }
 
 type bin = {
@@ -12,7 +17,7 @@ type bin = {
   chunks : chunk array ;
 }
 
-type interval = Ioffset of UInt64.t [@@unboxed]
+type interval = Ioffset of Int64.t [@@unboxed]
 
 type reference_sequence = {
   n_bin : int ;
@@ -24,7 +29,7 @@ type reference_sequence = {
 type t = {
   n_ref : int ;
   reference_sequences : reference_sequence array ;
-  n_no_coor : UInt64.t option ;
+  n_no_coor : Int64.t option ;
 }
 
 val read : In_channel.t -> (t, [> `Msg of string]) result

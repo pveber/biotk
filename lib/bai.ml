@@ -1,11 +1,9 @@
 open Base
 open Stdio
-open Unsigned
-open Signed
 
 type chunk = {
-  chunk_beg : UInt64.t ;
-  chunk_end : UInt64.t ;
+  chunk_beg : Int64.t ;
+  chunk_end : Int64.t ;
 }
 
 type bin = {
@@ -14,7 +12,7 @@ type bin = {
   chunks : chunk array ;
 }
 
-type interval = Ioffset of UInt64.t [@@unboxed]
+type interval = Ioffset of Int64.t [@@unboxed]
 
 type reference_sequence = {
   n_bin : int ;
@@ -26,7 +24,7 @@ type reference_sequence = {
 type t = {
   n_ref : int ;
   reference_sequences : reference_sequence array ;
-  n_no_coor : UInt64.t option ;
+  n_no_coor : Int64.t option ;
 }
 
 exception Parser_error of string
@@ -45,10 +43,10 @@ let input_s32 ic =
   let b3 = input_byte ic in
   let b4 = input_byte ic in
   let open Int32 in
-  logor (of_int b1)
-    (logor (shift_left (of_int b2) 8)
-       (logor (shift_left (of_int b3) 16)
-          (shift_left (of_int b4) 24)))
+  shift_left (of_int_exn b4) 24
+  |> bit_or (shift_left (of_int_exn b3) 16)
+  |> bit_or (shift_left (of_int_exn b2) 8)
+  |> bit_or (of_int_exn b1)
 
 let input_u64 ic =
   let b1 = input_byte ic in
@@ -59,15 +57,15 @@ let input_u64 ic =
   let b6 = input_byte ic in
   let b7 = input_byte ic in
   let b8 = input_byte ic in
-  let open UInt64 in
-  (shift_left (of_int b8) 56)
-  |> logor (shift_left (of_int b7) 48)
-  |> logor (shift_left (of_int b6) 40)
-  |> logor (shift_left (of_int b5) 32)
-  |> logor (shift_left (of_int b4) 24)
-  |> logor (shift_left (of_int b3) 16)
-  |> logor (shift_left (of_int b2)  8)
-  |> logor (of_int b1)
+  let open Int64 in
+  (shift_left (of_int_exn b8) 56)
+  |> bit_or (shift_left (of_int_exn b7) 48)
+  |> bit_or (shift_left (of_int_exn b6) 40)
+  |> bit_or (shift_left (of_int_exn b5) 32)
+  |> bit_or (shift_left (of_int_exn b4) 24)
+  |> bit_or (shift_left (of_int_exn b3) 16)
+  |> bit_or (shift_left (of_int_exn b2)  8)
+  |> bit_or (of_int_exn b1)
 
 let input_s32_as_int context ic =
   match Base.Int32.to_int (input_s32 ic) with
