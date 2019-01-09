@@ -3,6 +3,12 @@ open Biocaml_unix
 open Gzt
 open Rresult
 
+let time f =
+  let start = Unix.gettimeofday () in
+  let y = f () in
+  let stop = Unix.gettimeofday () in
+  (y, stop -. start)
+
 let ok_exn = function
   | Ok x -> x
   | Error (`Msg msg) -> failwith msg
@@ -13,10 +19,11 @@ let ok_exn' = function
   | Error e -> failwith (Error.to_string_hum e)
 
 let loc_of_al = function
-  | { Sam.rname = Some rname ; pos = Some pos ; tlen = Some tlen ; _ } ->
+  | { Sam.rname = Some chr ; pos = Some pos ; seq = Some seq ; _ } ->
     let lo = pos - 1 in
-    let hi = lo + Int.abs tlen in
-    Some GLoc.{ chr = rname ; lo ; hi }
+    let len = String.length seq in
+    let hi = lo + len in
+    Some GLoc.{ chr ; lo ; hi }
   | _ -> None
   
 let loc_of_al0 header al =
@@ -59,9 +66,9 @@ let full_traversal ~bam ~loc =
 
 let main ~bam ~bai ~loc () =
   let loc = ok_exn GLoc.(of_string loc) in
-  let intersecting, visited = indexed_traversal ~bam ~bai ~loc in
-  let intersecting', visited' = full_traversal ~bam ~loc in
-  printf "(/\\ %d, visited = %d) VS (/\\ %d, visited = %d)\n" intersecting visited intersecting' visited'
+  let (intersecting, visited), t = time (fun () -> indexed_traversal ~bam ~bai ~loc) in
+  let (intersecting', visited'), t' = time (fun () -> full_traversal ~bam ~loc) in
+  printf "(/\\ %d, visited = %d, %f) VS (/\\ %d, visited = %d, %f)\n" intersecting visited t intersecting' visited' t'
       
 let command =
   let open Command.Let_syntax in
