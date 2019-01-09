@@ -45,7 +45,7 @@ let create ~bam ~bai =
 
 exception Interrupt of string
 
-let process_chunk iterator f acc chunk =
+let process_chunk iterator f ~(loc : GLoc.t) acc chunk =
   let rec loop acc =
     let current = Bgzf.virtual_offset iterator.bam in
     if Int64.(current >= chunk.Bai.chunk_end) then acc
@@ -53,7 +53,17 @@ let process_chunk iterator f acc chunk =
       match Bam.read_alignment iterator.bam with
       | None -> raise (Interrupt "Expected more alignments, truncated file?")
       | Some (Error e) -> raise (Interrupt (Core.Error.to_string_hum e))
-      | Some (Ok al) -> loop (f acc iterator.bam_header al)
+      | Some (Ok al) ->
+        match Bam.Alignment0.(pos al, tlen al) with
+        | (Some pos, Some tlen) ->
+          let pos = pos - 1 in (* pos is 1-based *)
+          if pos + Int.abs tlen < loc.lo then loop acc
+          else if pos > loc.hi then acc
+          else (
+            (* printf "%d %d\n" pos (pos + Int.abs tlen) ; *)
+            loop (f acc iterator.bam_header al)
+          )
+        | _ -> loop (f acc iterator.bam_header al)
   in
   Bgzf.seek_in iterator.bam chunk.Bai.chunk_beg ;
   loop acc
@@ -69,6 +79,6 @@ let fold0 ~bam ~bai ~(loc : GLoc.t) ~init ~f =
         match Int.Table.find idx i with
         | None -> acc
         | Some bin ->
-          Array.fold bin.chunks ~init:acc ~f:(process_chunk iterator f)
+          Array.fold bin.chunks ~init:acc ~f:(process_chunk iterator ~loc f)
         )
     with Interrupt msg -> Error (`Msg msg)

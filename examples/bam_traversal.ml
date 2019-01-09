@@ -23,7 +23,6 @@ let loc_of_al0 header al =
   let open Result in
   Bam.Alignment0.decode al header >>| loc_of_al
 
-  
 let indexed_traversal ~bam ~bai ~loc =
   let visited = ref 0 in
   let count =
@@ -62,7 +61,7 @@ let main ~bam ~bai ~loc () =
   let loc = ok_exn GLoc.(of_string loc) in
   let intersecting, visited = indexed_traversal ~bam ~bai ~loc in
   let intersecting', visited' = full_traversal ~bam ~loc in
-  printf "(%d, %d) VS (%d, %d)\n" intersecting visited intersecting' visited'
+  printf "(/\\ %d, visited = %d) VS (/\\ %d, visited = %d)\n" intersecting visited intersecting' visited'
       
 let command =
   let open Command.Let_syntax in
