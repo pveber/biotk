@@ -28,3 +28,6 @@ type t = {
 }
 
 val read : In_channel.t -> (t, [> `Msg of string]) result
+
+val reg2bin : int -> int -> int
+val reg2bins : int -> int -> init:'a -> f:('a -> int -> 'a) -> 'a

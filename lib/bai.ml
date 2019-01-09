@@ -116,3 +116,39 @@ let%test "read" =
   | Ok r ->
     r.n_ref = 2
   | Error _ -> false
+
+let reg2bin lo hi =
+  let hi = hi - 1 in
+  let test i = lo lsr i = hi lsr i in
+  let calc i = ((1 lsl (29 - i)) - 1) / 7 + (lo lsr i) in
+  if test 14 then calc 14
+  else if test 17 then calc 17
+  else if test 20 then calc 20
+  else if test 23 then calc 23
+  else if test 26 then calc 26
+  else zero
+
+let%test _ = reg2bin 4000 7800 = 4681
+let%test _ = reg2bin 1400000 1420000 = 595
+
+let rec int_fold lo hi ~init ~f =
+  if lo > hi then init
+  else int_fold (lo + 1) hi ~init:(f init lo) ~f
+
+let reg2bins lo hi ~init ~f =
+  let hi = hi - 1 in
+  let init = f init 0 in
+  let f a b acc = int_fold (a + lo lsr b) (a + hi lsr b) ~init:acc ~f in
+  init
+  |> f 1 26
+  |> f 9 23
+  |> f 73 20
+  |> f 585 17
+  |> f 4681 14
+
+let reg2binlist lo hi =
+  reg2bins lo hi ~init:[] ~f:(fun acc i -> i :: acc)
+  |> List.rev
+
+let%test _ = Poly.(reg2binlist 1400000 1420000 = [0 ; 1 ; 9 ; 74 ; 595 ; 4766 ; 4767])
+let%test _ = Poly.(reg2binlist 94000000 94010000 = [0 ; 2 ; 20 ; 162 ; 1302 ; 10418])
