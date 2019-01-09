@@ -6,6 +6,8 @@
 *)
 open Stdio
 
+(** [chunk_beg] should be less than [chunk_end], except for chunks in
+   the infamous metadata bin (bin id 37450) *)
 type chunk = {
   chunk_beg : Int64.t ;
   chunk_end : Int64.t ;
