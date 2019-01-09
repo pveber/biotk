@@ -1,3 +1,5 @@
+(* TODO: get bins number 37450 to read metadata *)
+
 open Base
 open Stdio
 
