@@ -1,3 +1,4 @@
-(executable
-  (name pwm_bench)
-  (libraries core_bench gzt))
+(executables
+  (names pwm_bench bam_traversal)
+  (libraries core_bench gzt)
+  (preprocess (pps ppx_jane)))
