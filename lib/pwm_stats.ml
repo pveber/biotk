@@ -8,9 +8,11 @@ open Core_kernel
 
 let alphabet = [| 'a' ; 'c' ; 'g' ; 't' |]
 
+let rng = Gsl.Rng.(make (default ()))
+
 let random_sequence len bg =
   String.init len ~f:(fun _ ->
-      alphabet.(Owl.Stats.categorical_rvs (bg : Pwm.background :> float array))
+      alphabet.((Gsl.Randist.multinomial rng ~n:1 ~p:(bg : Pwm.background :> float array)).(1))
     )
 
 (* Naive computation of score distribution *)
