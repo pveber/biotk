@@ -5,5 +5,5 @@
  (c_flags (-O3))
  (inline_tests (deps ../data/ex1.bam.bai))
  (flags :standard -short-paths -unsafe-string)
- (libraries biocaml.unix core_kernel cfstream gsl netstring owl pipes.unix)
+ (libraries biocaml.unix core_kernel cfstream gsl netstring pipes.unix)
  (preprocess (pps ppx_compare ppx_csv_conv ppx_fields_conv ppx_inline_test ppx_let ppx_sexp_conv)))
