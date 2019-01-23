@@ -62,9 +62,9 @@ let process_chunk iterator f ~(loc : GLoc.t) acc chunk =
           else if pos > loc.hi then acc
           else (
             (* printf "%d %d\n" pos (pos + len) ; *)
-            loop (f acc iterator.bam_header al)
+            loop (f acc al)
           )
-        | _ -> loop (f acc iterator.bam_header al)
+        | _ -> loop (f acc al)
   in
   Bgzf.seek_in iterator.bam chunk.chunk_beg ;
   loop acc
@@ -81,9 +81,7 @@ let consider_chunk linear_bound (chunk : Bai.chunk) =
   | None -> true
   | Some l -> l <= chunk.chunk_end
 
-let fold0 ~bam ~bai ~(loc : GLoc.t) ~init ~f =
-  let open Result.Let_syntax in
-  let%bind iterator = create ~bam ~bai in
+let fold0_aux iterator ~(loc : GLoc.t) ~init ~f =
   match String.Table.find iterator.index loc.chr with
   | None -> R.error_msgf "Unknown reference sequence %s" loc.chr
   | Some (refseq, idx) ->
@@ -100,3 +98,37 @@ let fold0 ~bam ~bai ~(loc : GLoc.t) ~init ~f =
             )
         )
     with Interrupt msg -> Error (`Msg msg)
+
+let with_iterator ~bam ~bai ~f =
+  let open Result.Let_syntax in
+  let%bind iterator = create ~bam ~bai in
+  let y = match f iterator with
+    | res -> res
+    | exception _ -> R.error_msg "Bam_iterator: failure"
+  in
+  Biocaml_unix.Bgzf.close_in iterator.bam ;
+  y
+
+let fold0 ~bam ~bai ~loc ~init ~f =
+  with_iterator ~bam ~bai ~f:(fun it ->
+      let f = f it.bam_header in
+      fold0_aux it ~loc ~init ~f
+    )
+
+let list_fold_results xs ~init ~f =
+  List.fold xs ~init ~f:(fun acc x ->
+      match acc with
+      | Error _ -> acc
+      | Ok acc -> f acc x
+    )
+
+let fold ~bam ~bai ~(locs : GLoc.t list) ~init ~f =
+  let open Result.Let_syntax in
+  with_iterator ~bam ~bai ~f:(fun it ->
+      let f = f it.bam_header in
+      list_fold_results locs ~init:(Ok []) ~f:(fun acc loc ->
+          let%map r = fold0_aux it ~loc ~init ~f in
+          r :: acc
+        )
+      |> Result.map ~f:List.rev
+    )
