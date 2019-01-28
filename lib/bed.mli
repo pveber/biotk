@@ -20,6 +20,7 @@ module type S = sig
   val of_line : Line.t -> t item
   val to_line : t item -> string
   val load : string -> t item list
+  val load_records : string -> t list
   val load_as_lmap : string -> t GAnnot.LMap.t
 end
 

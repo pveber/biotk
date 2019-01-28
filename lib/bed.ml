@@ -57,6 +57,7 @@ module type S = sig
   val of_line : Line.t -> t item
   val to_line : t item -> string
   val load : string -> t item list
+  val load_records : string -> t list
   val load_as_lmap : string -> t GAnnot.LMap.t
 end
 
@@ -67,6 +68,13 @@ module Make(T : Base) = struct
   let load fn =
     In_channel.read_lines fn
     |> List.map ~f:(fun l -> of_line (Line.of_string_unsafe l))
+
+  let load_records fn =
+    load fn
+    |> List.filter_map ~f:(function
+        | `Comment _ -> None
+        | `Record r -> Some r
+      )
 
   let load_as_lmap fn = (* FIXME: could use stream to read bed file *)
     load fn
