@@ -11,3 +11,5 @@ val relative_position : t -> wrt:t -> [
   ]
 
 val make : lo:int -> hi:int -> t
+
+val convex_hull : t -> t -> t

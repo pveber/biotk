@@ -20,3 +20,8 @@ let relative_position x ~wrt:y =
 let make ~lo ~hi =
   if lo > hi then raise (Invalid_argument "Range.make: lo > hi")
   else make_unsafe lo hi
+
+let convex_hull p q =
+  make_unsafe
+    (min p.lo q.lo)
+    (max p.hi q.hi)
