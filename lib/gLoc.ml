@@ -59,15 +59,15 @@ let inter s s' =
   else Some { chr = s.chr ; lo = max s.lo s'.lo ; hi = min s.hi s'.hi }
 
 let dist s s' =
-  if String.(s.chr <> s'.chr) then raise (Invalid_argument "Ucsc.Location.dist")
-  else (
+  if String.(s.chr <> s'.chr) then None
+  else Some (
     if intersects s s' then 0
     else min (abs (s'.lo - s.hi)) (abs (s.lo - s'.hi))
   )
 
 let position ~from loc =
-  if String.(loc.chr <> from.chr) then raise (Invalid_argument "Ucsc.Location.position")
-  else (
+  if String.(loc.chr <> from.chr) then None
+  else Some (
     if intersects from loc then 0
     else (
       let a, b = loc.hi - from.lo, loc.lo - from.hi in

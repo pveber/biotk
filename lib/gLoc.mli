@@ -25,16 +25,12 @@ val inter : t -> t -> t option
 val relmove : t -> int -> int -> t
 
 val relative : t -> int -> int -> t
-(** [relative loc x a b] is the location obtained considering [a] and 
+(** [relative loc x a b] is the location obtained considering [a] and
     [b] as relative coordinates inside [loc] *)
 
 val zoom : t -> float -> t
 (** [zoom l z] is a location of width [z *. float (Location.width l)] *)
 
-val dist : t -> t -> int
-(** Both locations should be on the same chromosome, throws
-    [Invalid_argument] otherwise *)
+val dist : t -> t -> int option
 
-val position : from:t -> t -> int
-(** Both locations should be on the same chromosome, throws
-    [Invalid_argument] otherwise *)
+val position : from:t -> t -> int option
