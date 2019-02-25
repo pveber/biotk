@@ -87,6 +87,9 @@ module Make(T : Base) = struct
 
 end
 
+type fields = string list
+[@@deriving show]
+
 module Bed3 = struct
   module Base = struct
     type t = {
@@ -103,7 +106,7 @@ module Bed3 = struct
           chromStart = Int.of_string chromStart ;
           chromEnd = Int.of_string chromEnd ;
         }
-      | _ -> assert false
+      | l -> failwithf "Expected more fields, got %s" (show_fields l) ()
 
     let to_fields r = [
       r.chrom ; sprintf "%d" r.chromStart ; sprintf "%d" r.chromEnd
@@ -130,7 +133,7 @@ module Bed4 = struct
           chromStart = Int.of_string chromStart ;
           chromEnd = Int.of_string chromEnd ;
           name }
-      | _ -> assert false
+      | l -> failwithf "Expected more fields, got %s" (show_fields l) ()
 
     let to_fields r = [
       r.chrom ; sprintf "%d" r.chromStart ; sprintf "%d" r.chromEnd ; r.name
@@ -158,7 +161,7 @@ module Bed5 = struct
           chromStart = Int.of_string chromStart ;
           chromEnd = Int.of_string chromEnd ;
           name ; score = Float.of_string score }
-      | _ -> assert false
+      | l -> failwithf "Expected more fields, got %s" (show_fields l) ()
 
     let to_fields r = [
       r.chrom ; sprintf "%d" r.chromStart ; sprintf "%d" r.chromEnd ;
@@ -201,7 +204,7 @@ module Bed6 = struct
             | Error msg -> failwith msg
           ) ;
         }
-      | _ -> assert false
+      | l -> failwithf "Expected more fields, got %s" (show_fields l) ()
 
     let to_fields r = [
       r.chrom ; sprintf "%d" r.chromStart ; sprintf "%d" r.chromEnd ;
