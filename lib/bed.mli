@@ -31,6 +31,7 @@ module Bed3 : sig
     chromEnd : int ;
   }
   include S with type t := t
+  val of_loc : GLoc.t -> t
 end
 
 

@@ -111,6 +111,11 @@ module Bed3 = struct
     let to_fields r = [
       r.chrom ; sprintf "%d" r.chromStart ; sprintf "%d" r.chromEnd
     ]
+    let of_loc l = {
+      chrom = l.GLoc.chr ;
+      chromStart = l.lo ;
+      chromEnd = l.hi ;
+    }
   end
   include Base
   include Make(Base)
