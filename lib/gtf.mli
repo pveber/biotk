@@ -23,6 +23,6 @@ module Annotation : sig
     t
 
   val genes : t -> Gene.t String.Table.t Or_error.t
-  val utr3 : t -> Record.t String.Table.t
-  val utr5 : t -> Record.t String.Table.t
+  val utr3' : t -> Record.t String.Table.t
+  val utr5' : t -> Record.t String.Table.t
 end

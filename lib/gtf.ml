@@ -82,7 +82,7 @@ module Annotation = struct
       )
     with E msg -> Error msg
 
-  let utr5 annot =
+  let utr5' annot =
     String.Table.filter_map annot ~f:(fun items ->
         List.find_map items ~f:(fun r ->
             match r.Gff.feature with
@@ -91,7 +91,7 @@ module Annotation = struct
           )
       )
 
-  let utr3 annot =
+  let utr3' annot =
     String.Table.filter_map annot ~f:(fun items ->
         List.find_map items ~f:(fun r ->
             match r.Gff.feature with
