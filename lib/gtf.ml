@@ -73,13 +73,30 @@ module Annotation = struct
     let exception E of Error.t in
     try
       Ok (
-        String.Table.to_alist annot
-        |> List.filter_map ~f:(fun (id, items) ->
+        String.Table.filter_map annot ~f:(fun items ->
             match gene_of_entry items with
-            | Ok (Some g) -> Some (id, g)
+            | Ok (Some g) -> Some g
             | Ok None -> None
             | Error e -> raise (E e)
           )
       )
     with E msg -> Error msg
+
+  let utr5 annot =
+    String.Table.filter_map annot ~f:(fun items ->
+        List.find_map items ~f:(fun r ->
+            match r.Gff.feature with
+            | Some "5UTR" -> Some r
+            | _ -> None
+          )
+      )
+
+  let utr3 annot =
+    String.Table.filter_map annot ~f:(fun items ->
+        List.find_map items ~f:(fun r ->
+            match r.Gff.feature with
+            | Some "3UTR" -> Some r
+            | _ -> None
+          )
+      )
 end
