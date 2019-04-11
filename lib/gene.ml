@@ -50,3 +50,6 @@ let introns g =
       let lo, hi = space_between e1 e2 in
       { GLoc.chr = g.chr ; lo ; hi } :: acc
     )
+
+let exons g =
+  List.map g.exons ~f:(fun (lo, hi) -> GLoc.{ chr = g.chr ; lo ; hi })

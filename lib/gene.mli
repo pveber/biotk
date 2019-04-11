@@ -11,4 +11,5 @@ val make :
   exons:GLoc.t list ->
   t Or_error.t
 
+val exons : t -> GLoc.t list
 val introns : t -> GLoc.t list
