@@ -28,7 +28,7 @@ module Annotation = struct
   type t = Gff.record list String.Table.t
 
   let of_items ~id_label items =
-    Stream.of_list items
+    CFStream.Stream.of_list items
     |> CFStream.Stream.filter_map ~f:(function
         | `Comment _ -> None
         | `Record r ->
@@ -40,6 +40,11 @@ module Annotation = struct
     |> Biocaml_unix.Accu.relation
     |> CFStream.Stream.to_list
     |> String.Table.of_alist_exn
+
+  let%test_unit "Annotation.of_items tail rec" =
+    List.init 1_000_000 ~f:(fun _ -> `Comment "")
+    |> of_items ~id_label:"gene_id"
+    |> ignore
 
   let strand_of_entry items =
     let strands =
