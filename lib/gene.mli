@@ -1,14 +1,27 @@
 open Base
 
+module Transcript : sig
+  type t = private {
+    id : string ;
+    chr : string ;
+    strand : [ `Plus | `Minus ] ;
+    exons : (int * int) list ;
+  }
+  val exons : t -> GLoc.t list
+  val introns : t -> GLoc.t list
+end
+
 type t = private {
+  id : string ;
   chr : string ;
   strand : [ `Plus | `Minus ] ;
-  exons : (int * int) list ;
+  transcripts : Transcript.t list ;
 }
 
 val make :
+  id:string ->
   strand:[ `Plus | `Minus ] ->
-  exons:GLoc.t list ->
+  (string * GLoc.t list) list ->
   t Or_error.t
 
 val exons : t -> GLoc.t list

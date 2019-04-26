@@ -10,6 +10,7 @@ end
 module Record : sig
   type t = Gff.record
   val loc : t -> GLoc.t
+  val compare : t -> t -> int
 end
 
 include Line_oriented.S with type item = Item.t
@@ -18,11 +19,12 @@ module Annotation : sig
   type t
 
   val of_items :
-    id_label:string ->
+    ?gene_id_label:string ->
+    ?transcript_id_label:string ->
     Item.t list ->
     t
 
-  val genes : t -> Gene.t String.Table.t Or_error.t
+  val genes : t -> Gene.t String.Table.t * (string * Error.t) list
   val utr3' : t -> Record.t String.Table.t
   val utr5' : t -> Record.t String.Table.t
 end

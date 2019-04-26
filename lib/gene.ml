@@ -1,55 +1,79 @@
 open Base
 
-type t = {
-  chr : string ;
-  strand : [ `Plus | `Minus ] ;
-  exons : (int * int) list ;
-}
-
-let for_all_same_chr = function
-  | [] -> Or_error.error_string "empty gene"
-  | { GLoc.chr ; _ } :: t ->
-    if List.for_all t ~f:(fun l -> String.(l.chr = chr))
-    then Ok chr
-    else Or_error.error_string "Not all exons are from the same chromosome"
-
 let comparison_of_strand = function
-  | `Plus -> GLoc.strictly_before
-  | `Minus -> Fn.flip GLoc.strictly_before
+  | `Plus -> GLoc.compare
+  | `Minus -> Fn.flip GLoc.compare
 
 let rec list_fold_consecutive_pairs xs ~init ~f = match xs with
   | [] | [ _ ] -> init
   | e1 :: (e2 :: _ as t) ->
     f (list_fold_consecutive_pairs t ~f ~init) e1 e2
 
-let exon_strict_order compare xs =
-  let ordered =
-    list_fold_consecutive_pairs xs ~init:true ~f:(fun b e1 e2 ->
-        b && compare e1 e2
+let non_overlapping_exons ~strand exons =
+  let sorted_exons = List.sort exons ~compare:(comparison_of_strand strand) in
+  let overlaps =
+    list_fold_consecutive_pairs sorted_exons ~init:[] ~f:(fun acc e1 e2 ->
+        if GLoc.intersects e1 e2 then (e1, e2) :: acc else acc
       )
   in
-  if ordered then Ok ()
-  else Or_error.error_string "Exons not ordered or overlaping"
+  if List.is_empty overlaps then Ok sorted_exons
+  else Or_error.error "Exons overlaping" overlaps [%sexp_of: (GLoc.t * GLoc.t) list]
 
-let make ~strand ~exons =
-  let open Or_error.Monad_infix in
-  for_all_same_chr exons >>= fun chr ->
-  exon_strict_order (comparison_of_strand strand) exons >>= fun () ->
-  Ok {
-    chr ;
-    strand ;
-    exons = List.map exons ~f:(fun r -> r.lo, r.hi)
+module Transcript = struct
+  type t = {
+    id : string ;
+    chr : string ;
+    strand : [ `Plus | `Minus ] ;
+    exons : (int * int) list ;
   }
 
-let space_between (s1, e1) (s2, e2) =
-  if e1 <= s2 then (e1, s2)
-  else e2, s1
+  let unique_chr locs =
+    Utils.unique_string locs ~f:(fun loc -> loc.GLoc.chr)
+    |> Or_error.tag ~tag:"finding chromosome for transcript"
 
-let introns g =
-  list_fold_consecutive_pairs g.exons ~init:[] ~f:(fun acc e1 e2 ->
-      let lo, hi = space_between e1 e2 in
-      { GLoc.chr = g.chr ; lo ; hi } :: acc
+  let make ~id ~strand exons =
+    let open Or_error.Monad_infix in
+    unique_chr exons >>= fun chr ->
+    non_overlapping_exons ~strand exons >>= fun sorted_exons ->
+    Ok { id ; chr ; strand ;
+         exons = List.map sorted_exons ~f:(fun r -> r.GLoc.lo, r.hi) }
+
+  let space_between (s1, e1) (s2, e2) =
+    if e1 <= s2 then (e1, s2)
+    else e2, s1
+
+  let introns g =
+    list_fold_consecutive_pairs g.exons ~init:[] ~f:(fun acc e1 e2 ->
+        let lo, hi = space_between e1 e2 in
+        { GLoc.chr = g.chr ; lo ; hi } :: acc
+      )
+
+  let exons g =
+    List.map g.exons ~f:(fun (lo, hi) -> GLoc.{ chr = g.chr ; lo ; hi })
+
+end
+
+type t = {
+  id : string ;
+  chr : string ;
+  strand : [ `Plus | `Minus ] ;
+  transcripts : Transcript.t list ;
+}
+
+let make ~id ~strand transcripts =
+  let open Or_error.Monad_infix in
+  List.map transcripts ~f:(fun (id, exons) ->
+      Transcript.make ~id ~strand exons
     )
+  |> Or_error.all >>= fun transcripts ->
+  Utils.unique_string transcripts ~f:(fun t -> t.Transcript.chr)
+  |> Or_error.tag ~tag:"finding gene chromosome" >>= fun chr ->
+  Ok { id ; chr ; strand ; transcripts }
 
 let exons g =
-  List.map g.exons ~f:(fun (lo, hi) -> GLoc.{ chr = g.chr ; lo ; hi })
+  List.concat_map g.transcripts ~f:Transcript.exons
+  |> List.dedup_and_sort ~compare:GLoc.compare
+
+let introns g =
+  List.concat_map g.transcripts ~f:Transcript.introns
+  |> List.dedup_and_sort ~compare:GLoc.compare
