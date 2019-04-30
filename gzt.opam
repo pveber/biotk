@@ -24,4 +24,5 @@ depends: [
   "ocamlnet"
   "owl"
   "pipes"
+  "ppx_csv_conv"
 ]
