@@ -55,8 +55,8 @@ let macs_xls_unparser =
 let fasta_parser () =
   loop
     (fun state data ->
-       match Fasta.Parser.step state data with
+       match Biocaml_base.Fasta.Parser.step state data with
        | Ok (state, items) -> state, items
        | Error (`Fasta_parser_error (lno, msg)) ->
          Core.failwithf "Incorrect FASTA format (L%d): %s" lno msg ())
-    (Fasta.Parser.initial_state ())
+    (Biocaml_base.Fasta.Parser.initial_state ())
