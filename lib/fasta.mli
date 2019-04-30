@@ -6,6 +6,11 @@ type item = {
 }
 [@@ deriving sexp]
 
+
+val from_string :
+  string ->
+  (header * item list, string) result
+
 val from_file :
   string ->
   (header * item list, string) result
