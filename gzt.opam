@@ -1,0 +1,27 @@
+opam-version: "2.0"
+name: "gzt"
+version: "dev"
+synopsis: "Another Bioinformatics Library"
+description: """
+gzt is a small library offering a few additional functionalities to biocaml
+"""
+maintainer: "philippe.veber@gmail.com"
+homepage: "https://github.com/pveber/gzt/"
+bug-reports: "https://github.com/pveber/gzt//issues"
+license: "GPL3"
+dev-repo: "git+zhttps://github.com/pveber/gzt/"
+authors: [
+  "Philippe Veber"
+]
+
+build: ["dune" "build" "-p" name "-j" jobs]
+
+depends: [
+  "angstrom-unix"
+  "biocaml"
+  "core"
+  "gsl"
+  "ocamlnet"
+  "owl"
+  "pipes"
+]
