@@ -39,10 +39,8 @@ let parse_item f line =
       `Record (f fields)
 
 let unparse_item f = function
-  | `Comment c -> sprintf "#%s\n" c
-  | `Record r ->
-      sprintf "%s\n"
-        (String.concat ~sep:"\t" (f r))
+  | `Comment c -> sprintf "#%s" c
+  | `Record r -> String.concat ~sep:"\t" (f r)
 
 module type Base = sig
   type t
