@@ -7,19 +7,25 @@
 #include<caml/alloc.h>
 #include<caml/misc.h>
 
+
 value gzt_pwm_scan(value mat, value seq, value caml_tol) {
   CAMLparam3(mat, seq, caml_tol);
   CAMLlocal3(r,tmp,hit);
-  int n = Wosize_val(seq);
+  int char_tab[255];
+  int n = caml_string_length(seq);
   int m = Wosize_val(mat);
   double tol = Double_val(caml_tol);
   int i,j;
 
+  char_tab['a'] = 0;
+  char_tab['c'] = 1;
+  char_tab['g'] = 2;
+  char_tab['t'] = 3;
   r = Val_int(0); // empty list
   for(i = n - m; i >= 0; i--) {
     double score = 0.;
     for(j = 0; j < m; j++) {
-      score += Double_field(Field(mat, j), Int_val(Field(seq,i+j)));
+      score += Double_field(Field(mat, j), char_tab[Byte(seq, i + j)]);
     }
     if(score > tol) {
       tmp = r;
@@ -47,10 +53,16 @@ double array_max(value arr, int n) {
 value gzt_opt_pwm_scan(value mat, value seq, value caml_tol) {
   CAMLparam3(mat, seq, caml_tol);
   CAMLlocal3(r,tmp,hit);
-  int n = Wosize_val(seq);
+  int n = caml_string_length(seq);
   int m = Wosize_val(mat);
   double tol = Double_val(caml_tol);
   int i,j;
+
+  int char_tab[255];
+  char_tab['a'] = 0;
+  char_tab['c'] = 1;
+  char_tab['g'] = 2;
+  char_tab['t'] = 3;
 
   double bs[m];
   bs[m - 1] = array_max(Field(mat, m - 1), 4);
@@ -63,7 +75,7 @@ value gzt_opt_pwm_scan(value mat, value seq, value caml_tol) {
     double score = 0.;
     for(j = 0; j < m; j++) {
       if(score + bs[j] < tol) break;
-      score += Double_field(Field(mat, j), Int_val(Field(seq,i+j)));
+      score += Double_field(Field(mat, j), char_tab[Byte(seq, i + j)]);
     }
     if(score > tol) {
       tmp = r;

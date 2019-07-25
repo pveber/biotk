@@ -140,20 +140,18 @@ let best_hit mat seq =
   if pos < 0 then raise (Invalid_argument "Pwm.best_hit: sequence shorter than the matrix")
   else r
 
-external stub_fast_scan : t -> int array -> float -> (int * float) list = "gzt_pwm_scan"
-external stub_opt_fast_scan : t -> int array -> float -> (int * float) list = "gzt_opt_pwm_scan"
+external stub_fast_scan : t -> string -> float -> (int * float) list = "gzt_pwm_scan"
+external stub_opt_fast_scan : t -> string -> float -> (int * float) list = "gzt_opt_pwm_scan"
 
 let fast_scan mat seq tol =
-  let n = String.length seq in
-  let seq = Array.init n ~f:(fun i -> int_of_char seq.[i]) in
   stub_fast_scan mat seq tol
 
 let opt_fast_scan mat seq tol =
-  let n = String.length seq in
-  let seq = Array.init n ~f:(fun i -> int_of_char seq.[i]) in
   stub_opt_fast_scan mat seq tol
 
 let check x y =
+  List.(length x = length y)
+  &&
   List.zip_exn x y
   |> List.for_all ~f:(fun ((i, x_i), (j, y_j)) ->
       i = j && Float.(abs (x_i - y_j) < 1e-6)
