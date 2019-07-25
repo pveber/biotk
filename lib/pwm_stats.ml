@@ -196,7 +196,6 @@ module TFM_pvalue = struct
     !sum
 
   let score_of_pvalue pwm bg pvalue =
-    let module T = Float.Table in
     let pwm = matrix_permutation (pwm : Pwm.t :> float array array)in
     let bg = (bg : Pwm.background :> float array) in
     let eps = 0.1 in
@@ -204,7 +203,9 @@ module TFM_pvalue = struct
     let alpha = threshold pwm_eps bg pvalue in
     let rec loop pwm_eps eps alpha =
       let err = maximal_error pwm ~eps in
-      if fast_pvalue pwm_eps bg (alpha -. err) <> fast_pvalue pwm_eps bg alpha
+      let p1 = fast_pvalue pwm_eps bg (alpha -. err) in
+      let p2 = fast_pvalue pwm_eps bg alpha in
+      if Float.robustly_compare p1 p2 <> 0
       then
         let eps = eps /. 10. in
         let pwm_eps = approx pwm ~eps in
