@@ -14,51 +14,65 @@ type strand = [
 val parse_strand : string -> (strand, string) result
 val unparse_strand : strand -> string
 
-module type S = sig
+module type Record = sig
   type t
   val loc : t -> GLoc.t
   val of_line : Line.t -> t item
   val to_line : t item -> string
-  val load : string -> t item list
-  val load_records : string -> t list
-  val load_as_lmap : string -> t GAnnot.LMap.t
 end
 
+module type S = sig
+  type record
+  val load : string -> record item list
+  val load_records : string -> record list
+  val load_as_lmap : string -> record GAnnot.LMap.t
+end
+
+module Record : Record
+include S with type record := Record.t
+
 module Bed3 : sig
-  type t = {
+  type record = {
     chrom : string ;
     chromStart : int ;
     chromEnd : int ;
   }
-  include S with type t := t
-  val of_loc : GLoc.t -> t
+  module Record : sig
+    include Record with type t = record
+    val of_loc : GLoc.t -> t
+  end
+  include S with type record := Record.t
 end
 
 
 module Bed4 : sig
-  type t = {
+  type record = {
     chrom : string ;
     chromStart : int ;
     chromEnd : int ;
     name : string ;
   }
-  include S with type t := t
+  module Record : Record with type t = record
+  include S with type record := Record.t
 end
 
 module Bed5 : sig
-  type t = {
+  type record = {
     chrom : string ;
     chromStart : int ;
     chromEnd : int ;
     name : string ;
     score : float ;
   }
-  include S with type t := t
-  val to_bed4 : t item -> Bed4.t item
+  module Record : sig
+    include Record with type t = record
+    val to_bed4 : t item -> Bed4.record item
+  end
+  include S with type record := Record.t
 end
 
 module Bed6 : sig
-  type t = {
+  type record = {
     chrom : string ;
     chromStart : int ;
     chromEnd : int ;
@@ -66,5 +80,6 @@ module Bed6 : sig
     score : float ;
     strand : strand ;
   }
-  include S with type t := t
+  module Record : Record with type t = record
+  include S with type record := Record.t
 end

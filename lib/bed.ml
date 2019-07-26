@@ -49,23 +49,33 @@ module type Base = sig
   val to_fields : t -> string list
 end
 
-module type S = sig
+module type Record = sig
   type t
   val loc : t -> GLoc.t
   val of_line : Line.t -> t item
   val to_line : t item -> string
-  val load : string -> t item list
-  val load_records : string -> t list
-  val load_as_lmap : string -> t GAnnot.LMap.t
 end
 
-module Make(T : Base) = struct
-  let of_line = parse_item T.from_fields
-  let to_line = unparse_item T.to_fields
+module type S = sig
+  type record
+  val load : string -> record item list
+  val load_records : string -> record list
+  val load_as_lmap : string -> record GAnnot.LMap.t
+end
+
+(* this trick is necessary because otherwise Record cannot be
+   extended (it should be possible in 4.08) *)
+module Make'(T : Base) = struct
+  module InternalRecord = struct
+    type t = T.t
+    let loc = T.loc
+    let of_line = parse_item T.from_fields
+    let to_line = unparse_item T.to_fields
+  end
 
   let load fn =
     In_channel.read_lines fn
-    |> List.map ~f:(fun l -> of_line (Line.of_string_unsafe l))
+    |> List.map ~f:(fun l -> InternalRecord.of_line (Line.of_string_unsafe l))
 
   let load_records fn =
     load fn
@@ -85,16 +95,22 @@ module Make(T : Base) = struct
 
 end
 
+module Make(T : Base) = struct
+  include Make'(T)
+  module Record = InternalRecord
+end
+
 type fields = string list
 [@@deriving show]
 
 module Bed3 = struct
+  type record = {
+    chrom : string ;
+    chromStart : int ;
+    chromEnd : int ;
+  }
   module Base = struct
-    type t = {
-      chrom : string ;
-      chromStart : int ;
-      chromEnd : int ;
-    }
+    type t = record
 
     let loc r = GLoc.{ chr = r.chrom ; lo = r.chromStart ; hi = r.chromEnd }
 
@@ -109,25 +125,28 @@ module Bed3 = struct
     let to_fields r = [
       r.chrom ; sprintf "%d" r.chromStart ; sprintf "%d" r.chromEnd
     ]
+  end
+  include Make'(Base)
+  module Record = struct
+    include InternalRecord
     let of_loc l = {
       chrom = l.GLoc.chr ;
       chromStart = l.lo ;
       chromEnd = l.hi ;
     }
   end
-  include Base
-  include Make(Base)
+
 end
 
 module Bed4 = struct
+  type record = {
+    chrom : string ;
+    chromStart : int ;
+    chromEnd : int ;
+    name : string ;
+  }
   module Base = struct
-    type t = {
-      chrom : string ;
-      chromStart : int ;
-      chromEnd : int ;
-      name : string ;
-    }
-
+    type t = record
     let loc r = GLoc.{ chr = r.chrom ; lo = r.chromStart ; hi = r.chromEnd }
 
     let from_fields = function
@@ -142,20 +161,19 @@ module Bed4 = struct
       r.chrom ; sprintf "%d" r.chromStart ; sprintf "%d" r.chromEnd ; r.name
     ]
   end
-  include Base
   include Make(Base)
 end
 
 module Bed5 = struct
+  type record = {
+    chrom : string ;
+    chromStart : int ;
+    chromEnd : int ;
+    name : string ;
+    score : float ;
+  }
   module Base = struct
-    type t = {
-      chrom : string ;
-      chromStart : int ;
-      chromEnd : int ;
-      name : string ;
-      score : float ;
-    }
-
+    type t = record
     let loc r = GLoc.{ chr = r.chrom ; lo = r.chromStart ; hi = r.chromEnd }
 
     let from_fields = function
@@ -171,27 +189,29 @@ module Bed5 = struct
       r.name ; sprintf "%g" r.score
     ]
   end
-  include Base
-  include Make(Base)
+  include Make'(Base)
 
-  let to_bed4 = function
-    | `Comment c -> `Comment c
-    | `Record r ->
-      `Record { Bed4.chrom = r.chrom ; chromStart = r.chromStart ;
-                chromEnd = r.chromEnd ; name = r.name }
+  module Record = struct
+    include InternalRecord
+    let to_bed4 = function
+      | `Comment c -> `Comment c
+      | `Record r ->
+        `Record { Bed4.chrom = r.chrom ; chromStart = r.chromStart ;
+                  chromEnd = r.chromEnd ; name = r.name }
+  end
 end
 
 module Bed6 = struct
+  type record = {
+    chrom : string ;
+    chromStart : int ;
+    chromEnd : int ;
+    name : string ;
+    score : float ;
+    strand : strand ;
+  }
   module Base = struct
-    type t = {
-      chrom : string ;
-      chromStart : int ;
-      chromEnd : int ;
-      name : string ;
-      score : float ;
-      strand : strand ;
-    }
-
+    type t = record
     let loc r = GLoc.{ chr = r.chrom ; lo = r.chromStart ; hi = r.chromEnd }
 
     let from_fields = function
@@ -219,6 +239,16 @@ module Bed6 = struct
        | `Minus -> "-" )
     ]
   end
-  include Base
   include Make(Base)
 end
+
+type record = GLoc.t * fields
+module Base = struct
+  type t = record
+
+  let loc = fst
+  let from_fields xs = Bed3.Base.(from_fields xs |> loc), xs
+  let to_fields = snd
+end
+include Base
+include Make(Base)
