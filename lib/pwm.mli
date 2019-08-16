@@ -27,6 +27,8 @@ val random_background : unit -> background
 type t = private float array array
 (** Representation of a PWM *)
 
+val length : t -> int
+
 val make : count_matrix -> background -> t
 (** Builds a PWM from a count_matrix and a background *)
 

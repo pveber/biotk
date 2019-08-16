@@ -36,6 +36,7 @@ let reverse_complement a =
       r
     )
 
+let length = Array.length
 
 let make mat bg =
   let open Array in
