@@ -4,6 +4,9 @@ val local_gc : int -> string -> float Seq.t
 (** [random length gc_content] *)
 val random : int -> float -> string
 
+val random_base : float array -> char
+val markov0 : int -> float array -> string
+
 module type Parser = sig
   type t
   type score

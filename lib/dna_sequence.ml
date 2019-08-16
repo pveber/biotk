@@ -1,8 +1,8 @@
 open Core_kernel
 
-let gc s = 
+let gc s =
   let c = ref 0 and n = ref 0 in
-  let count = function 
+  let count = function
     'c' | 'g' | 'C' | 'G' -> incr c
         | 'n' |'N' -> incr n
         | _ -> ()
@@ -10,7 +10,7 @@ let gc s =
   String.iter ~f:count s ;
   float !c /. float (String.length s - !n)
 
-let incr delta gc n w = 
+let incr delta gc n w =
   w := !w + delta ;
   function
   'c' | 'C' | 'g' | 'G' -> gc := !gc + delta
@@ -21,12 +21,12 @@ let local_gc k s =
   let n = String.length s in
   if k > n then raise (Invalid_argument "Dna_sequence.local_gc") ;
   let gc = ref 0 and unk = ref 0 and w = ref 0 and i = ref 0 in
-  for i = 0 to k / 2 do incr 1 gc unk w s.[i] done ; 
-  let rec stream () = 
+  for i = 0 to k / 2 do incr 1 gc unk w s.[i] done ;
+  let rec stream () =
     if !i >= n then Seq.Nil
     else
       let w = (Pervasives.min (n - 1) (!i + k / 2)) - (Pervasives.max 0 (!i - k / 2)) + 1 in
-      let r = 
+      let r =
         if w = !unk then 0.5
         else (float !gc) /. (float (w - !unk)) in
       if !i + k / 2 + 1 < n then incr 1 gc unk (ref 0) s.[!i + k / 2 + 1] ;
@@ -36,7 +36,7 @@ let local_gc k s =
   in
   stream
 
-let random_base gc = 
+let random_base gc =
   match (Random.float 1. > gc, Random.float 1. > 0.5) with
     false, false -> 'c'
   | false, true  -> 'g'
@@ -44,6 +44,19 @@ let random_base gc =
   | true,  true  -> 't'
 
 let random n gc = String.init n ~f:(fun _ -> random_base gc)
+
+let random_base comp =
+  if Array.length comp <> 4 then invalid_arg "random_base: expected array of size 4" ;
+  match Owl.Stats.categorical_rvs comp with
+  | 0 -> 'A'
+  | 1 -> 'C'
+  | 2 -> 'G'
+  | 3 -> 'T'
+  | _ -> assert false
+
+let markov0 n comp = String.init n ~f:(fun _ ->
+    random_base comp
+  )
 
 module type Parser = sig
   type t
@@ -126,7 +139,7 @@ module Parser_of_char(P : Wfa.Profile with type symbol = Wfa.Nucleotide.t
 
   let seq_size = 1000000
 
-  let statistics nb_levels aut = 
+  let statistics nb_levels aut =
     let seqz = Array.map ~f:(random seq_size) (gc_levels nb_levels) in
     {
       nb_gc_levels = nb_levels ;
@@ -135,26 +148,26 @@ module Parser_of_char(P : Wfa.Profile with type symbol = Wfa.Nucleotide.t
           |> Seq.map (fun (_, s, _) -> s)
           |> Caml.Array.of_seq
           |> arrange_score_values
-        ) ; 
+        ) ;
     }
 
-  let rec rank_aux t x a b = 
+  let rec rank_aux t x a b =
     if a > b then raise Caml.Not_found
     else if a = b then a
     else (
-      let i = (a + b) / 2 + 1 in 
+      let i = (a + b) / 2 + 1 in
       if t.(i) <= x then rank_aux t x i b
       else rank_aux t x a (i - 1)
     )
   let rank t x = rank_aux t x 0 (Array.length t - 1)
-  
-  let cdf a x = 
+
+  let cdf a x =
     float (rank a x + 1) /. (float (Array.length a))
 
   let cdf_of_statistics stats gc score =
     cdf stats.values.(gc_level stats.nb_gc_levels gc) score
 
-  let average_cdf_of_statistics stats = 
+  let average_cdf_of_statistics stats =
     let cdfz = Array.init stats.nb_gc_levels ~f:(fun i -> cdf stats.values.(i)) in
     let n = float stats.nb_gc_levels in
     fun score ->
@@ -162,20 +175,20 @@ module Parser_of_char(P : Wfa.Profile with type symbol = Wfa.Nucleotide.t
 
   let bound_of_fpr stats fpr =
     let k = int_of_float (float seq_size *. (1. -. fpr)) in
-    Array.fold ~f:(fun accu values -> min accu values.(k)) ~init:Float.max_value stats.values 
+    Array.fold ~f:(fun accu values -> min accu values.(k)) ~init:Float.max_value stats.values
 
-  let bound_for_gc_and_fpr stats ~gc ~fpr = 
+  let bound_for_gc_and_fpr stats ~gc ~fpr =
     let k = int_of_float (float seq_size *. (1. -. fpr)) in
     stats.values.(gc_level stats.nb_gc_levels gc).(k)
 
-  (* let gen_fpr_filter localize stats fpr = 
-   *   let bound = bound_of_fpr stats fpr 
-   *   and cdf = cdf_of_statistics stats 
+  (* let gen_fpr_filter localize stats fpr =
+   *   let bound = bound_of_fpr stats fpr
+   *   and cdf = cdf_of_statistics stats
    *   and tpr_bound = 1. -. fpr in
    *   fun ed gc score st ->
    *     if score < bound then None
    *     else (
-   *       let nscore = cdf gc score in 
+   *       let nscore = cdf gc score in
    *       if nscore < tpr_bound then None
    *       else Some (
    *           localize st ed,
@@ -187,13 +200,13 @@ module Parser_of_char(P : Wfa.Profile with type symbol = Wfa.Nucleotide.t
    *   gen_fpr_filter
    *     (fun st ed -> GLoc.{ chr = loc.chr ; lo = loc.lo + st ; hi = loc.hi + ed })
    *     stats fpr
-   * 
+   *
    * let fpr_filter = gen_fpr_filter (fun i j -> i,j) *)
 
 (*
-  let normalize stats dna score = 
+  let normalize stats dna score =
     let cdf = cdf_of_statistics stats in
-    let gc = local_gc (min 30 (String.length dna)) dna in 
+    let gc = local_gc (min 30 (String.length dna)) dna in
     Array.mapi (fun i x -> cdf gc.(i) x) score
 
   let ( += ) l e = l := e :: !l
@@ -204,13 +217,13 @@ module Parser_of_char(P : Wfa.Profile with type symbol = Wfa.Nucleotide.t
     let score = normalize stats dna score
     and r = ref [] in
     for i = Array.length score - 1 downto 0 do
-      if score.(i) >= fdr 
+      if score.(i) >= fdr
       then r += (position.(i), i - position.(i) + 1, score.(i))
     done ;
     List.sort ~cmp:compare !r
 
   open Location
-  let use_location loc hits = 
+  let use_location loc hits =
     List.map (fun (s,l,f) -> move loc (loc.st + s) (loc.st + s + l - 1), f) hits
 *)
 end
@@ -224,7 +237,7 @@ end
  *       `base (-3.17,1.09,-0.85,-1.38) ;
  *       `base (1.35,-3.34,-1.36,-2.07) ;
  *     ]
- * 
+ *
  *   let balmer_dr125 = `sequence [
  *       balmer_hexamer ;
  *       `disjunction [ `gap (5,5) ; `gap (2,2) ; `gap (1,1) ] ;
