@@ -25,13 +25,13 @@ let local_gc k s =
   let rec stream () =
     if !i >= n then Seq.Nil
     else
-      let w = (Pervasives.min (n - 1) (!i + k / 2)) - (Pervasives.max 0 (!i - k / 2)) + 1 in
+      let w = (Stdlib.min (n - 1) (!i + k / 2)) - (Stdlib.max 0 (!i - k / 2)) + 1 in
       let r =
         if w = !unk then 0.5
         else (float !gc) /. (float (w - !unk)) in
       if !i + k / 2 + 1 < n then incr 1 gc unk (ref 0) s.[!i + k / 2 + 1] ;
       if !i - k / 2 >= 0 then incr (- 1) gc unk (ref 0) s.[!i - k / 2] ;
-      Pervasives.incr i ;
+      Stdlib.incr i ;
       Seq.Cons (r, stream)
   in
   stream
