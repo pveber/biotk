@@ -1,35 +1,6 @@
 open Core_kernel
 
-let sum n ~f =
-  let rec loop acc i =
-    if i = n then acc
-    else loop (acc +. f i) (i + 1)
-  in
-  loop 0. 0
-
-module Profile_matrix = struct
-  type t = float array array
-
-  let length = Array.length
-
-  let random ?(alpha = 0.5) motif_length =
-    let alpha = Array.create ~len:4 alpha in
-    Array.init motif_length ~f:(fun _ ->
-        Owl.Stats.dirichlet_rvs ~alpha
-      )
-
-  let simulate_sequence eps =
-    String.init (Array.length eps) ~f:(fun i ->
-        Dna_sequence.random_base eps.(i)
-      )
-
-  let composition profile =
-    let weights = Array.init 4 ~f:(fun j ->
-        sum (Array.length profile) ~f:(fun i -> profile.(i).(j))
-      ) in
-    let total = Owl.Stats.sum weights in
-    Array.map weights ~f:(fun w -> w /. total)
-end
+module Profile_matrix = Profile_matrix.DNA
 
 module Naive_MEME = struct
   module Simulation = struct

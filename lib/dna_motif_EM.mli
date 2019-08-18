@@ -1,11 +1,3 @@
-module Profile_matrix : sig
-  type t = private float array array
-  val length : t -> int
-  val random : ?alpha:float -> int -> t
-  val simulate_sequence : t -> string
-  val composition : t -> float array
-end
-
 module Naive_MEME : sig
   module Simulation : sig
     type t = {
@@ -14,7 +6,7 @@ module Naive_MEME : sig
       pi : float ;
     }
     val make :
-      Profile_matrix.t ->
+      Profile_matrix.DNA.t ->
       motif_probability:float ->
       n_sequences:int ->
       t
