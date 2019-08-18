@@ -12,6 +12,7 @@ end
 
 module type Alphabet = sig
   type t
+  val all : t list
   val card : int
   val to_char : t -> char
   val of_char : char -> t option
@@ -25,7 +26,7 @@ module Make(A : Alphabet) = struct
   let length = Array.length
 
   let random ?(alpha = 1.) motif_length =
-    let alpha = Array.init 4 ~f:(fun _ -> Random.float alpha) in
+    let alpha = Array.init A.card ~f:(fun _ -> Random.float alpha) in
     Array.init motif_length ~f:(fun _ ->
         Owl.Stats.dirichlet_rvs ~alpha
       )
@@ -36,7 +37,7 @@ module Make(A : Alphabet) = struct
       )
 
   let composition profile =
-    let weights = Array.init 4 ~f:(fun j ->
+    let weights = Array.init A.card ~f:(fun j ->
         sum (Array.length profile) ~f:(fun i -> profile.(i).(j))
       ) in
     let total = Owl.Stats.sum weights in
@@ -55,8 +56,18 @@ module Make(A : Alphabet) = struct
     let size = 10. in
     let font = Font.free_sans_bold in
     let delta = 0.86 *. size *. (Font.ascender font) in
-    let letter = [|"A";"C";"G";"T"|] in
-    let color = Color.[| red ; blue ; v_srgbi 0xFF 0xB3 0 ; v_srgbi 0 0x80 0 |] in
+    let letter =
+      List.map A.all ~f:(fun c ->
+          sprintf "%c" (Char.uppercase (A.to_char c))
+        )
+      |> Array.of_list
+    in
+    let color =
+      if A.card = 4 then
+        Color.[| red ; blue ; v_srgbi 0xFF 0xB3 0 ; v_srgbi 0 0x80 0 |]
+      else
+        Array.init A.card ~f:(fun i -> Color.gray (float i *. 127. /. float A.card))
+    in
     let left = 3.5 and right = 3.4 in
     let draw_letter ~x ~y ~col ~sy l =
       if sy < 1e-6 then None
@@ -72,7 +83,7 @@ module Make(A : Alphabet) = struct
         )
     in
     let draw_col p_i =
-      List.init 4 ~f:(fun j ->
+      List.init A.card ~f:(fun j ->
           draw_letter letter.(j) ~col:color.(j) ~x:0. ~y:0. ~sy:p_i.(j)
         )
       |> List.filter_opt

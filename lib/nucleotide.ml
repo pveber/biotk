@@ -2,6 +2,8 @@ type t = char
 
 let card = 4
 
+let all = ['a';'c';'g';'t']
+
 let to_char x = x
 
 let of_char = function
