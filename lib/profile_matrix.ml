@@ -3,6 +3,7 @@ open Misc
 
 module type S = sig
   type t = private float array array
+  val of_array : float array array -> t option
   val length : t -> int
   val random : ?alpha:float -> int -> t
   val simulate_sequence : t -> string
@@ -24,6 +25,13 @@ module Make(A : Alphabet) = struct
   type t = float array array
 
   let length = Array.length
+
+  let of_array = function
+    | [||] -> None
+    | xs ->
+      if Array.for_all xs ~f:(fun x -> Array.length x = A.card)
+      then Some xs
+      else None
 
   let random ?(alpha = 1.) motif_length =
     let alpha = Array.init A.card ~f:(fun _ -> Random.float alpha) in
