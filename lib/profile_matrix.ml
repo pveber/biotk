@@ -55,7 +55,7 @@ module Make(A : Alphabet) = struct
     if x = 0. then 0. else x *. Float.log x /. Float.log 2.
 
   let column_entropy p =
-    sum (Array.length p) ~f:(fun j -> -. xlnx p.(j))
+    -. sum (Array.length p) ~f:(fun j -> xlnx p.(j))
 
   let draw_y_scale () =
     let open Croquis.Picture in
@@ -114,15 +114,15 @@ module Make(A : Alphabet) = struct
       |> vstack ~align:`centered
     in
     let entropy = Array.map ~f:column_entropy t in
-    let max_entropy = Owl.Stats.max entropy in
+    let min_entropy = Owl.Stats.min entropy in
     let logo =
       Array.map t ~f:draw_col
       |> Array.to_list
       |> List.mapi ~f:(fun i pic ->
-          scale ~sy:(2. -. entropy.(i)) pic
+          reshape ~bbox:(Box2.v (V2.v 0. 0.) (V2.v 1. (2. -. entropy.(i)))) pic
         )
       |> hstack ~align:`bottom
-      |> reshape ~bbox:(Box2.(v V2.zero V2.(v (float (Array.length t)) max_entropy)))
+      |> reshape ~bbox:(Box2.(v V2.zero V2.(v (float (Array.length t)) (2. -. min_entropy))))
     in
     blend2 (draw_y_scale ()) logo
 end
