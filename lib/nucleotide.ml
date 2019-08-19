@@ -2,7 +2,12 @@ type t = char
 
 let card = 4
 
-let all = ['a';'c';'g';'t']
+let a = 'a'
+let c = 'c'
+let g = 'g'
+let t = 't'
+
+let all = [a;c;g;t]
 
 let to_char x = x
 
@@ -23,4 +28,11 @@ let to_int = function
   | 'c' -> 1
   | 'g' -> 2
   | 't' -> 3
+  | _ -> assert false
+
+let complement = function
+  | 'a' -> 't'
+  | 'c' -> 'g'
+  | 'g' -> 'c'
+  | 't' -> 'a'
   | _ -> assert false
