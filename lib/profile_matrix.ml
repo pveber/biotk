@@ -4,6 +4,7 @@ open Misc
 module type S = sig
   type t = private float array array
   val of_array : float array array -> t option
+  val flat : int -> t
   val length : t -> int
   val random : ?alpha:float -> int -> t
   val simulate_sequence : t -> string
@@ -25,6 +26,12 @@ module Make(A : Alphabet) = struct
   type t = float array array
 
   let length = Array.length
+
+  let flat n =
+    let eps = 1. /. float A.card in
+    Array.init n ~f:(fun _ ->
+        Array.create ~len:A.card eps
+      )
 
   let of_array = function
     | [||] -> None
