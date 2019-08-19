@@ -41,7 +41,7 @@ module Make(A : Alphabet) = struct
       else None
 
   let random ?(alpha = 1.) motif_length =
-    let alpha = Array.init A.card ~f:(fun _ -> Random.float alpha) in
+    let alpha = Array.init A.card ~f:(fun _ -> Owl.Stats.uniform_rvs ~a:0. ~b:alpha) in
     Array.init motif_length ~f:(fun _ ->
         Owl.Stats.dirichlet_rvs ~alpha
       )
