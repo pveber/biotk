@@ -14,3 +14,7 @@ val from_string :
 val from_file :
   string ->
   (header * item list, string) result
+
+val sequences_from_file_exn :
+  string ->
+  string list

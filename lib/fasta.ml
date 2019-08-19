@@ -59,3 +59,8 @@ let from_file fn =
         let msg = sprintf "Failed to parse: %s" snippet in
         Error msg
     )
+
+let sequences_from_file_exn fn =
+  match from_file fn with
+  | Ok (_, items) -> List.map items ~f:(fun i -> i.sequence)
+  | Error msg -> failwith msg
