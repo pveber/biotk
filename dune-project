@@ -1,6 +1,7 @@
 (lang dune 1.11)
 (generate_opam_files true)
 
+(name gzt)
 (source (github pveber/gzt))
 (license CeCILL-B)
 (authors "Philippe Veber")
