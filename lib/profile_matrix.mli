@@ -21,4 +21,7 @@ end
 
 module Make(A : Alphabet) : S
 
-module DNA : S
+module DNA : sig
+  include S
+  val reverse_complement : t -> t
+end

@@ -134,4 +134,14 @@ module Make(A : Alphabet) = struct
     blend2 (draw_y_scale ()) logo
 end
 
-module DNA = Make(Nucleotide)
+module DNA = struct
+  include Make(Nucleotide)
+
+  let reverse_complement mat =
+    let open Nucleotide in
+    let n = Array.length mat in
+    let f i c = mat.(i).(to_int c) in
+    Array.init n ~f:(fun i ->
+        Nucleotide.[| f i t ; f i g ; f i c ; f i a |]
+      )
+end
