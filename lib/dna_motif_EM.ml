@@ -2,6 +2,12 @@ open Core_kernel
 open Misc
 
 module Profile_matrix = Profile_matrix.DNA
+let int_of_char_exn x =
+  Nucleotide.(to_int (of_char_exn x))
+
+let int_of_comp_char_exn x =
+  Nucleotide.(to_int (complement (of_char_exn x)))
+
 
 module Naive_MEME = struct
   module Simulation = struct
@@ -42,9 +48,6 @@ module Naive_MEME = struct
         ) ;
     bg = Array.create ~len:4 0.25 ;
   }
-
-  let int_of_char_exn x =
-    Nucleotide.(to_int (of_char_exn x))
 
   let background_probability bg sequence =
     prod (String.length sequence) ~f:(fun j ->
@@ -152,7 +155,7 @@ module Naive_MEME_revcomp = struct
       let n_motif_sequences = Float.(to_int (float n_sequences * motif_probability)) in
       let revcomp_profile = Profile_matrix.reverse_complement profile in
       let motif_sequences = Array.init n_motif_sequences ~f:(fun _ ->
-          Profile_matrix.simulate_sequence (if Owl.Stats.uniform_rvs ~a:0. ~b:1. > 0. then profile else revcomp_profile)
+          Profile_matrix.simulate_sequence (if Owl.Stats.uniform_rvs ~a:0. ~b:1. > 0.5 then profile else revcomp_profile)
         )
       in
       let background_composition = Profile_matrix.composition profile in
@@ -181,12 +184,6 @@ module Naive_MEME_revcomp = struct
       revcomp_motif = (revcomp_motif :> float array array) ;
       bg = Array.create ~len:4 0.25 ;
     }
-
-  let int_of_char_exn x =
-    Nucleotide.(to_int (of_char_exn x))
-
-  let int_of_comp_char_exn x =
-    Nucleotide.(to_int (complement (of_char_exn x)))
 
   let background_probability bg sequence =
     prod (String.length sequence) ~f:(fun j ->
@@ -274,7 +271,7 @@ module Naive_MEME_revcomp = struct
     let inference_trace = infer ?niter ~motif_length (Array.append sim.motif_sequences sim.background_sequences) in
     let picture =
       let open Croquis.Picture in
-      vstack ~align:`centered (
+      vstack ~align:`right (
         Profile_matrix.draw motif ::
         List.filter_map inference_trace ~f:(fun (_, p) ->
             Option.map (Profile_matrix.of_array p.motif) ~f:(fun motif ->
