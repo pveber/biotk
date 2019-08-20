@@ -1,27 +1,26 @@
 module type S = sig
-  type t = private float array array
+  type composition
+  type sequence
+  type t = private composition array
   val of_array : float array array -> t option
   val flat : int -> t
   val length : t -> int
   val random : ?alpha:float -> int -> t
-  val simulate_sequence : t -> string
-  val composition : t -> float array
+  val simulate_sequence : t -> sequence
+  val composition : t -> composition
   val draw : t -> Croquis.Picture.t
 end
 
 module type Alphabet = sig
-  type t
-  val all : t list
-  val card : int
-  val to_char : t -> char
-  val of_char : char -> t option
-  val of_char_exn : char -> t
-  val to_int : t -> int
+  include Alphabet.S
+  module Vector : Alphabet.Vector
+  module Sequence : Alphabet.Sequence
+  val random : float Vector.t -> t    
 end
 
-module Make(A : Alphabet) : S
-
+module Make(A : Alphabet) : S with type composition := float A.Vector.t
+                               and type sequence := A.Sequence.t
 module DNA : sig
-  include S
+  include (module type of Make(Nucleotide))
   val reverse_complement : t -> t
 end

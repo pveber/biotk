@@ -1,5 +1,7 @@
 open Core_kernel
 
+type t = string
+
 let gc s =
   let c = ref 0 and n = ref 0 in
   let count = function
@@ -17,7 +19,7 @@ let incr delta gc n w =
       | 'n' | 'N' -> n := !n + delta
       | _ -> ()
 
-let local_gc k s =
+let local_gc s ~window:k =
   let n = String.length s in
   if k > n then raise (Invalid_argument "Dna_sequence.local_gc") ;
   let gc = ref 0 and unk = ref 0 and w = ref 0 and i = ref 0 in
@@ -36,27 +38,17 @@ let local_gc k s =
   in
   stream
 
-let random_base gc =
-  match (Random.float 1. > gc, Random.float 1. > 0.5) with
-    false, false -> 'c'
-  | false, true  -> 'g'
-  | true,  false -> 'a'
-  | true,  true  -> 't'
-
-let random n gc = String.init n ~f:(fun _ -> random_base gc)
-
-let random_base comp =
-  if Array.length comp <> 4 then invalid_arg "random_base: expected array of size 4" ;
-  match Owl.Stats.categorical_rvs comp with
-  | 0 -> 'A'
-  | 1 -> 'C'
-  | 2 -> 'G'
-  | 3 -> 'T'
-  | _ -> assert false
-
 let markov0 n comp = String.init n ~f:(fun _ ->
-    random_base comp
+    Nucleotide.(random comp |> to_char)
   )
+
+let random n gc =
+  Nucleotide.Vector.init (fun n ->
+      match (n :> char) with
+      | 'c' | 'g' -> gc
+      | _ -> 1. -. gc
+    )
+  |> markov0 n
 
 module type Parser = sig
   type t

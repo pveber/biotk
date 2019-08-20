@@ -1,11 +1,12 @@
-val gc : string -> float
-val local_gc : int -> string -> float Seq.t
+type t = private string
+
+val gc : t -> float
+val local_gc : t -> window:int -> float Seq.t
 
 (** [random length gc_content] *)
-val random : int -> float -> string
+val random : int -> float -> t
 
-val random_base : float array -> char
-val markov0 : int -> float array -> string
+val markov0 : int -> float Nucleotide.Vector.t -> t
 
 module type Parser = sig
   type t

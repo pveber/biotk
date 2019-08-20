@@ -2,13 +2,14 @@ open Core_kernel
 open Misc
 
 module type S = sig
-  type t = private float array array
+  type composition
+  type t = private composition array
   val of_array : float array array -> t option
   val flat : int -> t
   val length : t -> int
   val random : ?alpha:float -> int -> t
   val simulate_sequence : t -> string
-  val composition : t -> float array
+  val composition : t -> composition
   val draw : t -> Croquis.Picture.t
 end
 
@@ -20,25 +21,36 @@ module type Alphabet = sig
   val of_char : char -> t option
   val of_char_exn : char -> t
   val to_int : t -> int
+  module Vector : sig
+    type index = t
+    type 'a t = private 'a array
+    val init : (index -> 'a) -> 'a t
+    val upcast : 'a array -> 'a t option
+    val array_upcast : 'a array array -> 'a t array option
+  end
+  module Sequence : sig
+    type letter = t
+    type t
+    val init : int -> f:(int -> letter) -> t
+  end
+  val random : float Vector.t -> t    
 end
 
 module Make(A : Alphabet) = struct
-  type t = float array array
+  type t = float A.Vector.t array
 
   let length = Array.length
 
   let flat n =
     let eps = 1. /. float A.card in
     Array.init n ~f:(fun _ ->
-        Array.create ~len:A.card eps
+        A.Vector.init (fun _ -> eps)
       )
 
   let of_array = function
     | [||] -> None
     | xs ->
-      if Array.for_all xs ~f:(fun x -> Array.length x = A.card)
-      then Some xs
-      else None
+      A.Vector.array_upcast xs
 
   let random ?(alpha = 1.) motif_length =
     let alpha = Array.init A.card ~f:(fun _ -> Owl.Stats.uniform_rvs ~a:0. ~b:alpha) in
@@ -48,7 +60,7 @@ module Make(A : Alphabet) = struct
 
   let simulate_sequence eps =
     String.init (Array.length eps) ~f:(fun i ->
-        Dna_sequence.random_base eps.(i)
+        A.random eps.(i) |> A.to_char
       )
 
   let composition profile =

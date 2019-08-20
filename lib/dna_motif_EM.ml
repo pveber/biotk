@@ -12,8 +12,8 @@ let int_of_comp_char_exn x =
 module Naive_MEME = struct
   module Simulation = struct
     type t = {
-      motif_sequences : string array ;
-      background_sequences : string array ;
+      motif_sequences : Dna_sequence.t array ;
+      background_sequences : Dna_sequence.t array ;
       pi : float ;
     }
 
