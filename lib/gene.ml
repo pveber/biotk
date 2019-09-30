@@ -95,3 +95,19 @@ let exons g =
 let introns g =
   List.concat_map g.transcripts ~f:Transcript.introns
   |> List.dedup_and_sort ~compare:GLoc.compare
+
+let upstream g len =
+  let g_lo, g_hi = range g in
+  let lo, hi = match g.strand with
+    | `Plus -> Int.max 0 (g_lo - len), 0
+    | `Minus -> g_hi, g_hi + len
+  in
+  GLoc.{ chr = g.chr ; lo ; hi }
+
+let downstream g len =
+  let g_lo, g_hi = range g in
+  let lo, hi = match g.strand with
+    | `Minus -> Int.max 0 (g_lo - len), 0
+    | `Plus -> g_hi, g_hi + len
+  in
+  GLoc.{ chr = g.chr ; lo ; hi }

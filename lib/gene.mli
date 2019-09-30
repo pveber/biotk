@@ -31,3 +31,9 @@ val loc : t -> GLoc.t
 
 val exons : t -> GLoc.t list
 val introns : t -> GLoc.t list
+
+val upstream : t -> int -> GLoc.t
+(** Warning: not right-clipped (unknown chromosome length) *)
+
+val downstream : t -> int -> GLoc.t
+(** Warning: not right-clipped (unknown chromosome length) *)
