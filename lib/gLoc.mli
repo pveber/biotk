@@ -34,3 +34,5 @@ val zoom : t -> float -> t
 val dist : t -> t -> int option
 
 val position : from:t -> t -> int option
+
+val union : t -> t -> t option

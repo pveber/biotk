@@ -86,3 +86,13 @@ let size l = l.hi - l.lo + 1
 let included_in s s' =
   if String.(s.chr <> s'.chr) then false
   else (s.lo >= s'.lo && s.hi <= s'.hi)
+
+let union s s' =
+  if String.(s.chr = s.chr) then
+    Some {
+      chr = s.chr ;
+      lo = Int.min s.lo s'.lo ;
+      hi = Int.max s.hi s'.hi ;
+    }
+  else
+    None
