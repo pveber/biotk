@@ -7,6 +7,8 @@ module Transcript : sig
     strand : [ `Plus | `Minus ] ;
     exons : (int * int) list ;
   }
+  val range : t -> int * int
+  val loc : t -> GLoc.t
   val exons : t -> GLoc.t list
   val introns : t -> GLoc.t list
 end
@@ -23,6 +25,9 @@ val make :
   strand:[ `Plus | `Minus ] ->
   (string * GLoc.t list) list ->
   t Or_error.t
+
+val range : t -> int * int
+val loc : t -> GLoc.t
 
 val exons : t -> GLoc.t list
 val introns : t -> GLoc.t list

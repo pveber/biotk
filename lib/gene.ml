@@ -51,6 +51,14 @@ module Transcript = struct
   let exons g =
     List.map g.exons ~f:(fun (lo, hi) -> GLoc.{ chr = g.chr ; lo ; hi })
 
+  let range t =
+    List.fold t.exons ~init:Int.(max_value, min_value) ~f:(fun (acc_lo, acc_hi) (lo, hi) ->
+        Int.min acc_lo lo, Int.max acc_hi hi
+      )
+
+  let loc t =
+    let lo, hi = range t in
+    GLoc.{ chr = t.chr ; lo ; hi }
 end
 
 type t = {
@@ -69,6 +77,16 @@ let make ~id ~strand transcripts =
   Utils.unique_string transcripts ~f:(fun t -> t.Transcript.chr)
   |> Or_error.tag ~tag:"finding gene chromosome" >>= fun chr ->
   Ok { id ; chr ; strand ; transcripts }
+
+let range g =
+  List.fold g.transcripts ~init:Int.(max_value, min_value) ~f:(fun (acc_lo, acc_hi) t ->
+      let t_lo, t_hi = Transcript.range t in
+      Int.min acc_lo t_lo, Int.max acc_hi t_hi
+    )
+
+let loc g =
+  let lo, hi = range g in
+  GLoc.{ chr = g.chr ; lo ; hi }
 
 let exons g =
   List.concat_map g.transcripts ~f:Transcript.exons
