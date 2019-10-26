@@ -2,6 +2,229 @@ open Core
 open CFStream
 open Biocaml_base
 
+(* https://github.com/The-Sequence-Ontology/Specifications/blob/master/gff3.md *)
+
+type record = Biocaml_base.Gff.record = {
+  seqname    : string ;
+  source     : string option ;
+  feature    : string option ;
+  start_pos  : int ;
+  stop_pos   : int ;
+  score      : float option ;
+  strand     : [`Plus | `Minus | `Not_stranded | `Unknown ] ;
+  phase      : int option ;
+  attributes : (string * string list) list ;
+}
+[@@ deriving sexp]
+
+(* http://gmod.org/wiki/GFF2 *)
+module Parser = struct
+  open Angstrom
+
+  let field name =
+    take_while1 (function
+        | '\t' | '\n' -> false
+        | _ -> true
+      )
+    <?> ("field:" ^ name)
+
+  let to_int fieldnum s =
+    match Int.of_string s with
+    | n -> return n
+    | exception _ ->
+      fail (sprintf "failed to convert %s to integer at field %d" s fieldnum)
+
+  let to_float fieldnum s =
+    match Float.of_string s with
+    | x -> return x
+    | exception _ ->
+      fail (sprintf "failed to convert %s to float at field %d" s fieldnum)
+
+  let option = function
+    | "." -> None
+    | s -> Some s
+
+  let maybe_convert f = function
+    | "." -> return None
+    | s -> f s >>| Option.some
+
+  let strand fieldnum = function
+    | "." -> return `Not_stranded
+    | "?" -> return `Unknown
+    | "+" -> return `Plus
+    | "-" -> return `Minus
+    | _ -> fail (sprintf "Incorrect strand character at field %d" fieldnum)
+
+  let attribute_id = take_while1 (function
+      | 'a'..'z' | 'A'..'Z'
+      | '_' -> true
+      | _ -> false
+    )
+
+  let quoted_attribute_value =
+    char '"' *> take_while (function
+        | '"' | '\n' -> false
+        | _ -> true
+      ) <*
+    char '"'
+
+  let unquoted_attribute_value =
+    take_while (function
+        | ' ' | ';' | '\n' -> false
+        | _ -> true
+      )
+
+  let one_gtf_attributes =
+    attribute_id >>= fun id ->
+    skip_many1 (char ' ') >>= fun () ->
+    (quoted_attribute_value <|> unquoted_attribute_value) >>= fun s ->
+    return (id, [ s ])
+
+  let attribute_separator =
+    skip_many (char ' ') >>= fun () ->
+    char ';' >>= fun _ ->
+    skip_many (char ' ')
+
+  let gtf_attributes =
+    sep_by1 attribute_separator one_gtf_attributes <?> "gtf_attributes"
+
+  let tab = char '\t'
+
+  let record =
+    field "seqname" >>= fun seqname ->
+    tab *>
+    field "source" >>| option >>= fun source ->
+    tab *>
+    field "feature" >>| option >>= fun feature ->
+    tab *>
+    field "start_pos" >>= to_int 4 >>= fun start_pos ->
+    tab *>
+    field "stop_pos" >>= to_int 5 >>= fun stop_pos ->
+    tab *>
+    field "score" >>= maybe_convert (to_float 6) >>= fun score ->
+    tab *>
+    field "strand" >>= strand 7 >>= fun strand ->
+    tab *>
+    field "phase" >>= maybe_convert (to_int 8) >>= fun phase ->
+    tab *>
+    gtf_attributes >>| fun attributes ->
+    `Record Gff.{
+      seqname ;
+      source ;
+      feature ;
+      start_pos ;
+      stop_pos ;
+      score ;
+      strand ;
+      phase ;
+      attributes ;
+    }
+  let record = record <?> "record"
+
+  let comment =
+    char '#' >>= fun _ ->
+    take_while (( <> ) '\n') >>| fun s ->
+    `Comment s
+
+  let space =
+    skip_while (function
+        | ' ' | '\t' -> true
+        | _ -> false
+      )
+
+  let file =
+    let rec loop acc last_seen =
+      (end_of_input *> return acc)
+      <|>
+      (match last_seen with
+       | `Start | `EOL ->
+         (comment >>= fun c -> loop (c :: acc) `Comment)
+         <|>
+         (record >>= fun r -> loop (r :: acc) `Record)
+       | `Comment ->
+         end_of_line *> loop acc `EOL
+       | `Record ->
+         space *>
+         (
+           (comment >>= fun c -> loop (c :: acc) `Comment)
+           <|>
+           (end_of_line *> loop acc `EOL)
+         ))
+    in
+    loop [] `Start
+    >>| List.rev
+
+  let test p s v =
+    match parse_string p s with
+    | Ok x -> Poly.(x = v)
+    | Error msg ->
+      print_endline msg ;
+      false
+
+  let%test "Gtf.gtf_attributes1" =
+    test
+      gtf_attributes
+      {|gene_id "FBgn0031081"|}
+      [ ("gene_id", ["FBgn0031081"]) ]
+
+  let%test "Gtf.gtf_attributes2" =
+    test
+      gtf_attributes
+      {|gene_id "FBgn0031081"; gene_symbol "Nep3"; transcript_id "FBtr0070000"; transcript_symbol "Nep3-RA";|}
+      [ ("gene_id", ["FBgn0031081"]) ; ("gene_symbol", ["Nep3"]) ;
+        ("transcript_id", ["FBtr0070000"]) ; ("transcript_symbol", ["Nep3-RA"]) ]
+
+  let%test "Gtf.gtf_attributes3" =
+    test
+      gtf_attributes
+      {|Transcript B0273.1; Note "Zn-Finger"|}
+      [ "Transcript", ["B0273.1"] ; "Note", ["Zn-Finger"]]
+
+  let%test "Gtf.comment" =
+    test comment "#comment" (`Comment "comment")
+
+  type item = [ `Comment of string | `Record of record ]
+  [@@ deriving sexp]
+
+  let expect_record s =
+    parse_string record s
+    |> [%sexp_of: ([`Record of record], string) Result.t]
+    |> Sexp.output_hum Stdio.stdout
+
+  let expect s =
+    parse_string file s
+    |> [%sexp_of: (item list, string) Result.t]
+    |> Sexp.output_hum Stdio.stdout
+
+  let ex1 = {|IV	curated	mRNA	5506800	5508917	.	+	.	Transcript B0273.1; Note "Zn-Finger"|}
+
+  let%expect_test "parse GTF file" =
+    expect_record ex1;
+    [%expect {|
+      (Ok
+       (Record
+        ((seqname IV) (source (curated)) (feature (mRNA)) (start_pos 5506800)
+         (stop_pos 5508917) (score ()) (strand Plus) (phase ())
+         (attributes ((Transcript (B0273.1)) (Note (Zn-Finger))))))) |}]
+
+  let ex2 = {|IV	curated	mRNA	5506800	5508917	.	+	.	Transcript B0273.1; Note "Zn-Finger" # some comment
+IV	curated	mRNA	5506800	5508917	.	+	.	Transcript B0273.1; Note "Zn-Finger"|}
+
+  let%expect_test "parse GTF file" =
+    expect ex2;
+    [%expect {|
+      (Ok
+       ((Record
+         ((seqname IV) (source (curated)) (feature (mRNA)) (start_pos 5506800)
+          (stop_pos 5508917) (score ()) (strand Plus) (phase ())
+          (attributes ((Transcript (B0273.1)) (Note (Zn-Finger))))))
+        (Comment " some comment")
+        (Record
+         ((seqname IV) (source (curated)) (feature (mRNA)) (start_pos 5506800)
+          (stop_pos 5508917) (score ()) (strand Plus) (phase ())
+          (attributes ((Transcript (B0273.1)) (Note (Zn-Finger)))))))) |}]
+end
+
 module Item = struct
   type t = Gff.item
 
@@ -19,6 +242,18 @@ module Item = struct
 end
 
 include Line_oriented.Make(Item)
+
+(* Introduced a new load function because it so happens that comment
+   items may follow records in gtf files, which is incompatible with
+   the assumptions in Line_oriented. *)
+let load fn =
+  In_channel.with_file fn ~f:(fun ic ->
+      Angstrom_unix.parse Parser.file ic
+    )
+  |> snd
+  |> function
+  | Ok xs -> xs
+  | Error msg -> failwith msg
 
 module Record = struct
   type t = Gff.record
