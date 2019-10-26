@@ -86,7 +86,9 @@ module Parser = struct
     skip_many (char ' ')
 
   let gtf_attributes =
-    sep_by1 attribute_separator one_gtf_attributes <?> "gtf_attributes"
+    sep_by1 attribute_separator one_gtf_attributes
+    <* Angstrom.option ';' (char ';')
+    <?> "gtf_attributes"
 
   let tab = char '\t'
 
@@ -133,25 +135,19 @@ module Parser = struct
       )
 
   let file =
-    let rec loop acc last_seen =
+    let rec line_start acc lno =
       (end_of_input *> return acc)
-      <|>
-      (match last_seen with
-       | `Start | `EOL ->
-         (comment >>= fun c -> loop (c :: acc) `Comment)
-         <|>
-         (record >>= fun r -> loop (r :: acc) `Record)
-       | `Comment ->
-         end_of_line *> loop acc `EOL
-       | `Record ->
-         space *>
-         (
-           (comment >>= fun c -> loop (c :: acc) `Comment)
-           <|>
-           (end_of_line *> loop acc `EOL)
-         ))
+      <|> (comment >>= fun c -> after_comment (c :: acc) lno )
+      <|> (record >>= fun r -> after_record (r :: acc) lno)
+    and after_comment acc lno =
+      (end_of_line >>= fun () -> line_start acc (lno + 1))
+      <|> (end_of_input *> return acc)
+    and after_record acc lno =
+      (end_of_input *> return acc)
+      <|> (space *> end_of_line >>= fun () -> line_start acc (lno + 1))
+      <|> (space *> comment >>= fun c -> after_comment (c :: acc) lno)
     in
-    loop [] `Start
+    line_start [] 1
     >>| List.rev
 
   let test p s v =
@@ -196,9 +192,8 @@ module Parser = struct
     |> [%sexp_of: (item list, string) Result.t]
     |> Sexp.output_hum Stdio.stdout
 
-  let ex1 = {|IV	curated	mRNA	5506800	5508917	.	+	.	Transcript B0273.1; Note "Zn-Finger"|}
-
-  let%expect_test "parse GTF file" =
+  let ex1 = {|IV	curated	mRNA	5506800	5508917	.	+	.	Transcript B0273.1; Note "Zn-Finger";|}
+  let%expect_test "parse GTF record" =
     expect_record ex1;
     [%expect {|
       (Ok
@@ -207,8 +202,19 @@ module Parser = struct
          (stop_pos 5508917) (score ()) (strand Plus) (phase ())
          (attributes ((Transcript (B0273.1)) (Note (Zn-Finger))))))) |}]
 
+  let ex2 = {|X	FlyBase	gene	19961297	19969323	.	+	.	gene_id "FBgn0031081"; gene_symbol "Nep3";|}
+  let%expect_test "parse GTF record 2" =
+    expect_record ex2;
+    [%expect {|
+      (Ok
+       (Record
+        ((seqname X) (source (FlyBase)) (feature (gene)) (start_pos 19961297)
+         (stop_pos 19969323) (score ()) (strand Plus) (phase ())
+         (attributes ((gene_id (FBgn0031081)) (gene_symbol (Nep3))))))) |}]
+
   let ex2 = {|IV	curated	mRNA	5506800	5508917	.	+	.	Transcript B0273.1; Note "Zn-Finger" # some comment
-IV	curated	mRNA	5506800	5508917	.	+	.	Transcript B0273.1; Note "Zn-Finger"|}
+IV	curated	mRNA	5506800	5508917	.	+	.	Transcript B0273.1; Note "Zn-Finger"
+X	FlyBase	gene	19961297	19969323	.	+	.	gene_id "FBgn0031081"; gene_symbol "Nep3";|}
 
   let%expect_test "parse GTF file" =
     expect ex2;
@@ -222,7 +228,11 @@ IV	curated	mRNA	5506800	5508917	.	+	.	Transcript B0273.1; Note "Zn-Finger"|}
         (Record
          ((seqname IV) (source (curated)) (feature (mRNA)) (start_pos 5506800)
           (stop_pos 5508917) (score ()) (strand Plus) (phase ())
-          (attributes ((Transcript (B0273.1)) (Note (Zn-Finger)))))))) |}]
+          (attributes ((Transcript (B0273.1)) (Note (Zn-Finger))))))
+        (Record
+         ((seqname X) (source (FlyBase)) (feature (gene)) (start_pos 19961297)
+          (stop_pos 19969323) (score ()) (strand Plus) (phase ())
+          (attributes ((gene_id (FBgn0031081)) (gene_symbol (Nep3)))))))) |}]
 end
 
 module Item = struct
@@ -247,11 +257,12 @@ include Line_oriented.Make(Item)
    items may follow records in gtf files, which is incompatible with
    the assumptions in Line_oriented. *)
 let load fn =
-  In_channel.with_file fn ~f:(fun ic ->
-      Angstrom_unix.parse Parser.file ic
-    )
-  |> snd
-  |> function
+  let _unconsumed, result =
+    In_channel.with_file fn ~f:(fun ic ->
+        Angstrom_unix.parse Parser.file ic
+      )
+  in
+  match result with
   | Ok xs -> xs
   | Error msg -> failwith msg
 
