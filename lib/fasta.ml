@@ -64,3 +64,10 @@ let sequences_from_file_exn fn =
   match from_file fn with
   | Ok (_, items) -> List.map items ~f:(fun i -> i.sequence)
   | Error msg -> failwith msg
+
+let to_file fn items =
+  Out_channel.with_file fn ~f:(fun oc ->
+      List.iter items ~f:(fun it ->
+          fprintf oc ">%s\n%s\n" it.description it.sequence
+        )
+    )

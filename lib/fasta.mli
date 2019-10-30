@@ -18,3 +18,8 @@ val from_file :
 val sequences_from_file_exn :
   string ->
   string list
+
+val to_file :
+  string ->
+  item list ->
+  unit
