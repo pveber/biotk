@@ -17,3 +17,13 @@ let fold_file fn ~init ~f =
         |> Or_error.return
       with Abort e -> Error e
     )
+
+module Stats = struct
+  type t = {
+    nb_reads : int ;
+  }
+  let of_file fq =
+    let open Or_error.Let_syntax in
+    let%map nb_reads = fold_file fq ~init:0 ~f:(fun n _ -> n + 1) in
+    { nb_reads }
+end
