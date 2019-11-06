@@ -59,6 +59,22 @@ module Transcript = struct
   let loc t =
     let lo, hi = range t in
     GLoc.{ chr = t.chr ; lo ; hi }
+
+  let upstream t len =
+    let t_lo, t_hi = range t in
+    let lo, hi = match t.strand with
+      | `Plus -> Int.max 0 (t_lo - len), 0
+      | `Minus -> t_hi, t_hi + len
+    in
+    GLoc.{ chr = t.chr ; lo ; hi }
+
+  let downstream t len =
+    let t_lo, t_hi = range t in
+    let lo, hi = match t.strand with
+      | `Minus -> Int.max 0 (t_lo - len), 0
+      | `Plus -> t_hi, t_hi + len
+    in
+    GLoc.{ chr = t.chr ; lo ; hi }
 end
 
 type t = {
