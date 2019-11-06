@@ -17,8 +17,8 @@ val unparse_strand : strand -> string
 module type Record = sig
   type t
   val loc : t -> GLoc.t
-  val of_line : Line.t -> t item
-  val to_line : t item -> string
+  val of_line : Line.t -> t
+  val to_line : t -> string
 end
 
 module type S = sig
@@ -26,6 +26,8 @@ module type S = sig
   val load : string -> record item list
   val load_records : string -> record list
   val load_as_lmap : string -> record GAnnot.LMap.t
+  val save : record item list -> string -> unit
+  val save_records : record list -> string -> unit
 end
 
 module Record : Record
