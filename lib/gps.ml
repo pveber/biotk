@@ -53,14 +53,14 @@ type simulation = {
 
 let simulator ~region_length ~nreads ~fragment_mean ~fragment_sd ~prop_background ~npeaks =
   assert (npeaks > 0) ;
-  assert (0. < prop_background && prop_background < 1.) ;
+  assert Float.(0. < prop_background && prop_background < 1.) ;
   let peak_pos = Array.init npeaks ~f:(fun _ -> Random.int region_length) in
   let peak_prop =
     Owl.Stats.dirichlet_rvs ~alpha:(Array.create ~len:npeaks 0.5)
   in
   let reads =
     List.init nreads ~f:(fun _ ->
-        if Random.float 1. < prop_background then
+        if Float.(Random.float 1. < prop_background) then
           let pos = Random.int region_length in
           (pos, random_strand (), `Background)
         else
@@ -88,7 +88,7 @@ let eps = 1e-30
 let peak_read_prob ~binding_pos ~read_pos ~strand =
   let binding_pos = Float.of_int binding_pos in
   let read_pos = Float.of_int read_pos in
-  match strand, read_pos < binding_pos with
+  match strand, Float.(read_pos < binding_pos) with
   | `Plus, false
   | `Minus, true -> Float.log eps
   | _ ->

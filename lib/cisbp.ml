@@ -107,7 +107,7 @@ module TF_information = struct
     In_channel.read_all fn
     |> String.split ~on:'\n'
     |> Fn.flip List.drop 1
-    |> List.filter ~f:(( <> ) "")
+    |> List.filter ~f:(String.( <> ) "")
     |> List.map ~f:(String.split ~on:'\t')
     |> List.map ~f:parse_fields
 end

@@ -92,7 +92,7 @@ module Nucleotide_IUPAC = struct
   type score = int
 
   let score (p : t) (b : symbol) = match p with
-    | #Nucleotide.t as b' -> if b = b' then 0 else -1
+    | #Nucleotide.t as b' -> if Poly.(b = b') then 0 else -1
     | `Disj l -> if List.mem ~equal:Poly.( = ) l b then 0 else -1
 
   let missing_score _ = 0
@@ -178,8 +178,8 @@ module Make
         )
     | Gap _ -> Score.zero
 
-  let min_score = opt_score min
-  let max_score = opt_score max
+  let min_score = opt_score Poly.min
+  let max_score = opt_score Poly.max
 
   module ScoreSet = Set.Make(struct
       include Score
@@ -272,7 +272,7 @@ module Make
 
   let rec enleve_epsilon arcs =
     try
-      let (i,_,f), l = find_and_remove (fun (_,a,_) -> a = `epsilon) arcs in
+      let (i,_,f), l = find_and_remove (function (_,`epsilon,_) -> true | _ -> false) arcs in
       enleve_epsilon (epsilon i f l)
     with
       Caml.Not_found -> check_no_epsilon arcs
@@ -295,7 +295,7 @@ module Make
   let epsilon_successors g v =
     List.map
       ~f:(fun (_,_,v) -> v)
-      (List.filter ~f:(fun (i, e, _) -> v = i && e = `epsilon) g)
+      (List.filter ~f:(fun (i, e, _) -> v = i && Poly.(e = `epsilon)) g)
 
   let rec union l = function
       [] -> l
@@ -343,7 +343,7 @@ module Make
     in
     let transitions =
       List.sort
-        ~compare:(fun (x,_,y) (x',_,y') -> compare (x,y) (x',y'))
+        ~compare:(fun (x,_,y) (x',_,y') -> Poly.compare (x,y) (x',y'))
         epsilon_free
     in
     object

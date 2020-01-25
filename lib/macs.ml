@@ -34,7 +34,7 @@ module Xls = struct
     | line when String.is_prefix line ~prefix:header_prefix ->
       `Header
     | line ->
-      if line.[0] = '#' then `Comment (String.slice line 1 0)
+      if Char.equal line.[0] '#' then `Comment (String.slice line 1 0)
       else (
         match String.split ~on:'\t' line with
         | seqid :: pos_start :: pos_end :: length ::

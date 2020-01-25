@@ -59,7 +59,7 @@ module Make(A : Alphabet) = struct
     Array.map weights ~f:(fun w -> w /. total)
 
   let xlnx x =
-    if x = 0. then 0. else x *. Float.log x /. Float.log 2.
+    if Float.(x = 0.) then 0. else x *. Float.log x /. Float.log 2.
 
   let column_entropy p =
     -. sum (Array.length p) ~f:(fun j -> xlnx p.(j))
@@ -99,7 +99,7 @@ module Make(A : Alphabet) = struct
     in
     let left = 3.5 and right = 3.5 in
     let draw_letter ~x ~y ~col ~sy l =
-      if sy < 1e-6 then None
+      if Core_kernel.Float.(sy < 1e-6) then None
       else
         let xmin = x -. left in
         let ymin = y -. Font.(ymax font +. ymin font) *. size /. 2. *. 1.1 in

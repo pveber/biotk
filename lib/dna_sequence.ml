@@ -37,7 +37,7 @@ let local_gc k s =
   stream
 
 let random_base gc =
-  match (Random.float 1. > gc, Random.float 1. > 0.5) with
+  match Float.(Random.float 1. > gc, Random.float 1. > 0.5) with
     false, false -> 'c'
   | false, true  -> 'g'
   | true,  false -> 'a'
@@ -156,7 +156,7 @@ module Parser_of_char(P : Wfa.Profile with type symbol = Wfa.Nucleotide.t
     else if a = b then a
     else (
       let i = (a + b) / 2 + 1 in
-      if t.(i) <= x then rank_aux t x i b
+      if Float.(t.(i) <= x) then rank_aux t x i b
       else rank_aux t x a (i - 1)
     )
   let rank t x = rank_aux t x 0 (Array.length t - 1)
@@ -175,7 +175,7 @@ module Parser_of_char(P : Wfa.Profile with type symbol = Wfa.Nucleotide.t
 
   let bound_of_fpr stats fpr =
     let k = int_of_float (float seq_size *. (1. -. fpr)) in
-    Array.fold ~f:(fun accu values -> min accu values.(k)) ~init:Float.max_value stats.values
+    Array.fold ~f:(fun accu values -> Float.min accu values.(k)) ~init:Float.max_value stats.values
 
   let bound_for_gc_and_fpr stats ~gc ~fpr =
     let k = int_of_float (float seq_size *. (1. -. fpr)) in

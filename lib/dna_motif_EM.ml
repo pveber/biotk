@@ -98,7 +98,7 @@ module Naive_MEME = struct
       ) ;
     let totals = Array.map ~f:Owl.Stats.sum counts in
     Array.map2_exn counts totals ~f:(fun t total ->
-        if total = 0. then assert false ;
+        if Float.(total = 0.) then assert false ;
         Array.map t ~f:(fun x -> x /. total))
 
   let update_pi gamma =
@@ -155,7 +155,7 @@ module Naive_MEME_revcomp = struct
       let n_motif_sequences = Float.(to_int (float n_sequences * motif_probability)) in
       let revcomp_profile = Profile_matrix.reverse_complement profile in
       let motif_sequences = Array.init n_motif_sequences ~f:(fun _ ->
-          Profile_matrix.simulate_sequence (if Owl.Stats.uniform_rvs ~a:0. ~b:1. > 0.5 then profile else revcomp_profile)
+          Profile_matrix.simulate_sequence (if Float.(Owl.Stats.uniform_rvs ~a:0. ~b:1. > 0.5) then profile else revcomp_profile)
         )
       in
       let background_composition = Profile_matrix.composition profile in
@@ -233,7 +233,7 @@ module Naive_MEME_revcomp = struct
       ) ;
     let totals = Array.map ~f:Owl.Stats.sum counts in
     Array.map2_exn counts totals ~f:(fun t total ->
-        if total = 0. then assert false ;
+        if Float.(total = 0.) then assert false ;
         Array.map t ~f:(fun x -> x /. total))
 
   let update_pi gamma =

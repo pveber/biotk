@@ -12,7 +12,7 @@ let parse_header s =
   with Scanf.Scan_failure _ -> Error "Incorrect header"
 
 let%test "Jaspar header" =
-  parse_header ">MA0597.1       THAP1" = Ok ("MA0597.1", "THAP1")
+  Poly.(parse_header ">MA0597.1       THAP1" = Ok ("MA0597.1", "THAP1"))
 
 let space_re =
   Re.(rep1 (alt [ char ' ' ; char '\t' ]))

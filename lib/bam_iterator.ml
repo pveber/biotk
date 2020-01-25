@@ -79,7 +79,7 @@ let linear_bound idx start =
 let consider_chunk linear_bound (chunk : Bai.chunk) =
   match linear_bound with
   | None -> true
-  | Some l -> l <= chunk.chunk_end
+  | Some l -> Int64.(l <= chunk.chunk_end)
 
 let fold0_aux iterator ~(loc : GLoc.t) ~init ~f =
   match String.Table.find iterator.index loc.chr with

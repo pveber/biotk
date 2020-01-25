@@ -125,7 +125,7 @@ module Parser = struct
 
   let comment =
     char '#' >>= fun _ ->
-    take_while (( <> ) '\n') >>| fun s ->
+    take_while (Char.( <> ) '\n') >>| fun s ->
     `Comment s
 
   let space =

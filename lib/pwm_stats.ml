@@ -42,7 +42,7 @@ module TFM_pvalue = struct
     let best = ref Float.neg_infinity in
     for i = 0 to Array.length t - 1 do
       let t_i = t.(i) in
-      if t_i > !best then best := t_i
+      if Float.(t_i > !best) then best := t_i
     done ;
     !best
 
@@ -50,7 +50,7 @@ module TFM_pvalue = struct
     let best = ref Float.infinity in
     for i = 0 to Array.length t - 1 do
       let t_i = t.(i) in
-      if t_i < !best then best := t_i
+      if Float.(t_i < !best) then best := t_i
     done ;
     !best
 
@@ -101,10 +101,10 @@ module TFM_pvalue = struct
         T.iteri t ~f:(fun ~key:score ~data:prob ->
             for j = 0 to m - 1 do
               let score' = score +. pwm.(i).(j) in
-              if alpha -. ws.(i) <= score' then (
+              if Float.(alpha -. ws.(i) <= score') then (
                 pval := !pval +. prob *. bg.(j)
               )
-              else if alpha -. bs.(i) <= score' then (
+              else if Float.(alpha -. bs.(i) <= score') then (
                 let prob = prob *. bg.(j) in
                 T.update t' score' ~f:(function
                     | None -> prob
@@ -138,7 +138,7 @@ module TFM_pvalue = struct
         T.iteri t ~f:(fun ~key:score ~data:prob ->
             for j = 0 to m - 1 do
               let score' = score +. pwm.(i).(j) in
-              if alpha -. bs.(i + 1) <= score' && score' <= beta -. ws.(i + 1) then (
+              if Float.(alpha -. bs.(succ i) <= score' && score' <= beta -. ws.(succ i)) then (
                 let prob = prob *. bg.(j) in
                 T.update t' score' ~f:(function
                     | None -> prob
@@ -158,10 +158,10 @@ module TFM_pvalue = struct
   let threshold pwm bg pvalue =
     try
       score_distribution pwm bg
-      |> List.sort ~compare:(Fn.flip compare)
+      |> List.sort ~compare:(Fn.flip Poly.compare)
       |> List.fold ~init:0. ~f:(fun sum (s, p) ->
           let sum = sum +. p in
-          if sum >= pvalue then raise (Found_threshold s)
+          if Float.(sum >= pvalue) then raise (Found_threshold s)
           else sum
         )
       |> ignore ;
@@ -172,10 +172,10 @@ module TFM_pvalue = struct
     try
       let pval_alpha = fast_pvalue pwm bg (alpha +. err) in
       score_distribution pwm bg ~alpha:(alpha -. err) ~beta:(alpha +. err)
-      |> List.sort ~compare:(Fn.flip compare)
+      |> List.sort ~compare:(Fn.flip Poly.compare)
       |> List.fold ~init:pval_alpha ~f:(fun sum (s, p) ->
           let sum = sum +. p in
-          if sum >= pvalue then raise (Found_threshold s)
+          if Float.(sum >= pvalue) then raise (Found_threshold s)
           else sum
         )
       |> ignore ;
@@ -189,7 +189,7 @@ module TFM_pvalue = struct
       for j = 0 to Array.length pwm.(i) - 1 do
         let m_i_j = pwm.(i).(j) in
         let delta = m_i_j -. truncate m_i_j ~eps in
-        if delta > !max_i then (max_i := delta)
+        if Float.(delta > !max_i) then (max_i := delta)
       done ;
       sum := !sum +. !max_i
     done ;

@@ -67,9 +67,13 @@ let random ~len background =
 
 let tandem ?(orientation = `direct) ~spacer mat1 mat2 bg =
   Array.concat [
-    (if orientation = `everted then reverse_complement else ident) (make mat1 bg) ;
+    (match orientation with
+     | `everted -> reverse_complement
+     | `inverted | `direct -> ident) (make mat1 bg) ;
     Array.init spacer ~f:(fun _ -> Caml.Array.make 5 0.) ;
-    (if orientation = `inverted then reverse_complement else ident) (make mat2 bg)
+    (match orientation with
+     | `inverted -> reverse_complement
+     | `everted | `direct -> ident) (make mat2 bg)
   ]
 
 let gen_scan f init mat seq tol =
@@ -82,7 +86,7 @@ let gen_scan f init mat seq tol =
     for j = 0 to m - 1 do
       score := !score +. Array.(unsafe_get (unsafe_get mat j) (unsafe_get seq (i + j)))
     done ;
-    if !score > tol
+    if Float.(!score > tol)
     then r := f i !score !r
   done ;
   !r
@@ -91,7 +95,7 @@ let array_max (t : float array) =
   let best = ref Float.neg_infinity in
   for i = 0 to Array.length t - 1 do
     let t_i = t.(i) in
-    if t_i > !best then best := t_i
+    if Float.(t_i > !best) then best := t_i
   done ;
   !best
 
@@ -122,10 +126,10 @@ let opt_scan f init mat seq tol =
     try
       let score = ref 0. in
       for j = 0 to m - 1 do
-        if !score +. bs.(j) < tol then raise Skip ;
+        if Float.(!score +. bs.(j) < tol) then raise Skip ;
         score := !score +. Array.(unsafe_get (unsafe_get perm_mat j) (unsafe_get seq (i + sigma.(j))))
       done ;
-      if !score > tol
+      if Float.(!score > tol)
       then r := f i !score !r
     with Skip -> ()
   done ;
@@ -136,7 +140,7 @@ let opt_scan = opt_scan (fun pos score l -> (pos, score) :: l) []
 
 let best_hit mat seq =
   let (pos, _) as r =
-    gen_scan (fun p1 s1 ((_, s2) as r2) -> if s1 > s2 then (p1, s1) else r2) (-1, Float.neg_infinity) mat seq Float.neg_infinity
+    gen_scan (fun p1 s1 ((_, s2) as r2) -> if Float.(s1 > s2) then (p1, s1) else r2) (-1, Float.neg_infinity) mat seq Float.neg_infinity
   in
   if pos < 0 then raise (Invalid_argument "Pwm.best_hit: sequence shorter than the matrix")
   else r
