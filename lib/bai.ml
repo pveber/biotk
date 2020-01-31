@@ -77,7 +77,7 @@ let input_s32_as_int context ic =
 let read_magic_string ic =
   let buf = Bytes.create 4 in
   In_channel.really_input_exn ic ~buf ~pos:0 ~len:4 ;
-  if String.(buf <> "BAI\001") then fail "Incorrect magic string"
+  if Bytes.(buf <> of_string "BAI\001") then fail "Incorrect magic string"
 
 let read_chunk ic =
   let chunk_beg = input_u64 ic in

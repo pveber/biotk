@@ -4,7 +4,7 @@
  (c_names pwm_stub)
  (c_flags (-O3))
  (inline_tests (deps ../data/ex1.bam.bai))
- (flags :standard -short-paths -unsafe-string)
+ (flags :standard -short-paths)
  (libraries
 	angstrom.unix
 	biocaml.unix
