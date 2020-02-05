@@ -27,6 +27,5 @@
     "gsl"
     "ocamlnet"
     "owl"
-    "pipes"
     "ppx_csv_conv"
     "ppx_deriving"))

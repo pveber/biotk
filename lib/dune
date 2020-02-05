@@ -8,6 +8,7 @@
  (libraries
 	angstrom.unix
 	biocaml.unix
+	biotk.pipes.unix
 	cfstream
 	core_kernel
 	croquis

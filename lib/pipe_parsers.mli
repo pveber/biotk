@@ -1,9 +1,5 @@
 open Biocaml_base
-open Gzt
-include module type of Pipes_unix.Pipe
-(* open Pipes_parser *)
-
-(* val lines_to_table_rows : (Line.t, string array) Pipe.t *)
+include module type of Biotk_pipes_unix.Pipe
 
 val lines : unit -> (string, Line.t, unit) t
 val lines_to_strings : unit -> (Line.t, string, unit) t

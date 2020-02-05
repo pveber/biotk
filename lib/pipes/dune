@@ -1,4 +1,3 @@
 (library
- (name gzt_pipes)
- (public_name gzt.pipes)
- (libraries biocaml.base gzt pipes.parsers pipes.unix))
+ (name biotk_pipes)
+ (public_name biotk.pipes))

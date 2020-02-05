@@ -1,7 +1,8 @@
 open Base
-open Biocaml_base
-open Gzt
-include Pipes_unix.Pipe
+include Biotk_pipes_unix.Pipe
+
+module Line = Biocaml_base.Line
+module Lines = Biocaml_base.Lines
 
 let ( %% ) f g = Fn.(flip compose) f g
 let ( >>= ) = bind
