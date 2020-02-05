@@ -3,7 +3,7 @@ open Biocaml_base
 
 let lines () =
   let open Lines.Parser in
-  Pipes_unix.Pipe.loop step initial_state
+  Biotk_pipes_unix.Pipe.loop step initial_state
 
 module type Item = sig
   type t
@@ -29,7 +29,7 @@ module Make(Item : Item) = struct
       )
 
   let fold fn ~init ~f =
-    let open Pipes_unix.Pipe in
+    let open Biotk_pipes_unix.Pipe in
     run (
       from_file fn
       $$ lines ()
