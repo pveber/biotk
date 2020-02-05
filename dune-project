@@ -1,18 +1,23 @@
 (lang dune 1.11)
 (generate_opam_files true)
 
-(name gzt)
-(source (github pveber/gzt))
+(name biotk)
+(source (github pveber/biotk))
 (license CeCILL-B)
 (authors "Philippe Veber")
 (maintainers "philippe.veber@gmail.com")
-(homepage "https://github.com/pveber/gzt/")
-(bug_reports "https://github.com/pveber/gzt/issues")
+(homepage "https://github.com/pveber/biotk/")
+(bug_reports "https://github.com/pveber/biotk/issues")
 
 (package
-  (name gzt)
-  (synopsis "Another Bioinformatics Library")
-  (description "gzt is a small library offering a few additional functionalities to biocaml")
+  (name biotk)
+  (synopsis "Biotope toolkit")
+  (description "biotk implements various functionalities in
+                computational biology, like parsers/unparsers for some
+                file formats, a few basic data structures and sequence
+                algorithms, as well as access to some databases. The
+                purpose of this library is to support the development
+                of computational pipelines with the biotope library.")
   (depends
     "angstrom-unix"
     "biocaml"
