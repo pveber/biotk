@@ -25,3 +25,11 @@ let filter_map (Cons (h, t)) ~f =
   | None, [] -> None
   | None, h :: t -> Some (Cons (h, t))
   | Some h, l -> Some (Cons (h, l))
+
+let for_all (Cons (h, t)) ~f =
+  f h && List.for_all t ~f
+
+let exists (Cons (h, t)) ~f =
+  f h || List.exists t ~f
+
+let hd (Cons (h, _)) = h
