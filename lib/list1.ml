@@ -33,3 +33,5 @@ let exists (Cons (h, t)) ~f =
   f h || List.exists t ~f
 
 let hd (Cons (h, _)) = h
+
+let singleton x = Cons (x, [])
