@@ -1,0 +1,15 @@
+(library
+ (name biotk_croquis)
+ (public_name biotk.croquis)
+ (libraries core_kernel otfm vg vg.pdf)
+ (private_modules Free_sans Free_sans_bold Vg_text))
+
+(rule
+  (target free_sans.ml)
+  (deps (file ocamlify_font.sh) (:font FreeSans.otf))
+  (action (run bash ocamlify_font.sh %{font} %{target})))
+
+(rule
+  (target free_sans_bold.ml)
+  (deps (file ocamlify_font.sh) (:font FreeSansBold.otf))
+  (action (run bash ocamlify_font.sh %{font} %{target})))
