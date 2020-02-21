@@ -1,4 +1,5 @@
 open Core_kernel
+open Biotk_croquis
 open Misc
 
 module Profile_matrix = Profile_matrix.DNA

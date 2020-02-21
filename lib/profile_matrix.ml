@@ -1,5 +1,6 @@
 open Core_kernel
 open Misc
+open Biotk_croquis
 
 module type S = sig
   type t = private float array array

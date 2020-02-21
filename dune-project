@@ -22,7 +22,6 @@
     "angstrom-unix"
     "biocaml"
     "core"
-    "croquis"
     "fmt"
     "gsl"
     "ocamlnet"

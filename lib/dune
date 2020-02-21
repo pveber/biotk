@@ -11,7 +11,7 @@
 	biotk.pipes.unix
 	cfstream
 	core_kernel
-	croquis
+	biotk.croquis
 	fmt
 	gsl
 	netstring
