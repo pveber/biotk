@@ -26,6 +26,8 @@
     "gsl"
     "ocamlify"
     "ocamlnet"
+    "otfm"
     "owl"
     "ppx_csv_conv"
-    "ppx_deriving"))
+    "ppx_deriving"
+    "vg"))
