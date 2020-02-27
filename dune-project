@@ -24,6 +24,7 @@
     "core"
     "fmt"
     "gsl"
+    "ocamlify"
     "ocamlnet"
     "owl"
     "ppx_csv_conv"
