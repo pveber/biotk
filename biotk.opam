@@ -20,10 +20,13 @@ depends: [
   "core"
   "fmt"
   "gsl"
+  "ocamlify"
   "ocamlnet"
+  "otfm"
   "owl"
   "ppx_csv_conv"
   "ppx_deriving"
+  "vg"
 ]
 build: [
   ["dune" "subst"] {pinned}
