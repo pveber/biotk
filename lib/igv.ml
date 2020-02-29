@@ -45,9 +45,8 @@ let send_command ic oc c =
 class proxy ?(addr = "127.0.0.1") ?(port = 60151) () =
   let ic, oc = Unix.open_connection (Unix.ADDR_INET (Unix.inet_addr_of_string addr, port)) in
   let send = send_command ic oc in
-  let open Statement in
   object
     method _new_ = send New
     method genome g = send (Genome g)
-    method load ?format ?index ?name path_or_url = send (load ?format ?index ?name path_or_url)
+    method load ?format ?index ?name path_or_url = send (Statement.load ?format ?index ?name path_or_url)
   end
