@@ -18,8 +18,7 @@ let ( >>= ) x f = match x with
 
 (* Font information *)
 
-module Int = struct type t = Vg.glyph let compare = compare end
-module Gmap = Map.Make (Int) (* glyph maps *)
+module Gmap = Map.Make (Caml.Int) (* glyph maps *)
 module Cmap = Gmap           (* uchar maps *)
 
 module Font = struct
