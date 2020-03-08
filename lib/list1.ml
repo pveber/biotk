@@ -35,3 +35,7 @@ let exists (Cons (h, t)) ~f =
 let hd (Cons (h, _)) = h
 
 let singleton x = Cons (x, [])
+
+let of_list_exn = function
+  | [] -> failwith "empty list"
+  | h :: t -> Cons (h, t)
