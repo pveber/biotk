@@ -76,7 +76,13 @@ module Font = struct
     Lazy.from_fun (fun () -> 
         match Vg_text.Font.load_from_string s with
         | Ok f -> f
-        | _ -> assert false
+        | Error (#Otfm.error as e) ->
+          let buf = Buffer.create 253 in
+          let fmt = Format.formatter_of_buffer buf in
+          Otfm.pp_error fmt e ;
+          failwith (Buffer.contents buf)
+        | Error (`Read_error msg) ->
+          failwithf "Read_error: %s" msg ()
       )
 
   let free_sans = embedded_load Free_sans.contents
