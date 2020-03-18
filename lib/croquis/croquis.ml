@@ -80,6 +80,7 @@ module Font = struct
           let buf = Buffer.create 253 in
           let fmt = Format.formatter_of_buffer buf in
           Otfm.pp_error fmt e ;
+          Format.pp_print_flush fmt () ;
           failwith (Buffer.contents buf)
         | Error (`Read_error msg) ->
           failwithf "Read_error: %s" msg ()
