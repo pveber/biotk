@@ -122,4 +122,12 @@ module LAssoc : sig
     init:(GLoc.t -> 'a -> 'c) ->
     f:(GLoc.t -> 'b -> 'c -> 'c) ->
     'c t
+
+  val matching :
+    mode:[`Interval | `Point] ->
+    max_dist:int ->
+    'a t -> 'b t ->
+    [> `Match of (GLoc.t * 'a) * (GLoc.t * 'b)
+    |  `Left of (GLoc.t * 'a)
+    |  `Right of (GLoc.t * 'b)] list
 end

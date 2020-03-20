@@ -223,4 +223,163 @@ module LAssoc = struct
       |> List.sum (module Int) ~f:(fun (_, d) -> d)
          = 11
     )
+
+  module type Topology = sig
+    type t = GLoc.t
+    val dist : t -> t -> int option
+    val compare : t -> t -> int
+  end
+
+  module Interval_topology = struct
+    type t = GLoc.t
+    let dist = GLoc.dist
+    let compare = GLoc.compare
+  end
+
+  module Point_topology = struct
+    type t = GLoc.t
+    let midpoint u = GLoc.(u.hi + u.lo) / 2
+
+    let dist (u : GLoc.t) (v : GLoc.t) =
+      if String.(u.chr = v.chr) then
+        Some (Int.abs (midpoint u - midpoint v))
+      else None
+
+    let midloc u = u.GLoc.chr, midpoint u
+
+    let compare (u : GLoc.t) (v : GLoc.t) =
+      Caml.compare (midloc u) (midloc v)
+  end
+
+  module Score = struct
+    type t = {
+      value : int ;
+      weight : int ;
+    }
+
+    let compare x y =
+      Caml.compare (x.value, y.weight) (y.value, x.weight)
+
+    let%test "matching_score_compare" =
+      compare { value = 3 ; weight = 6 } { value = 2 ; weight = 3 } > 0
+
+    let gt x y = compare x y > 0
+    let zero = { value = 0 ; weight = 0 }
+
+    let add_match s d = { value = s.value + 1 ; weight = s.weight + d }
+  end
+
+  module Matching(T : Topology) = struct
+    type choice = Left | Match | Right
+
+    type trace = {
+      score : Score.t ;
+      choice : choice ;
+    }
+
+    let dist (u, _) (v, _) = T.dist u v
+
+    let is_before (u, _) (v, _) =
+      T.compare u v <= 0
+
+    let score_step max_dist xs ys score_rec i j =
+      if i < 0 then      { score = Score.zero ; choice = Right }
+      else if j < 0 then { score = Score.zero ; choice = Left }
+      else
+        let score_rec i j = (score_rec i j).score in
+        let edge_case () =
+          if is_before xs.(i) ys.(j) then
+            { score = score_rec i (j - 1) ; choice = Right }
+          else
+            { score = score_rec (i - 1) j ; choice = Left }
+        in
+        match dist xs.(i) ys.(j) with
+        | None -> edge_case ()
+        | Some d when d > max_dist -> edge_case ()
+        | Some d ->
+          let left_score = score_rec (i - 1) j in
+          let right_score = score_rec i (j - 1) in
+          let match_score = Score.add_match (score_rec (i - 1) (j - 1)) d in
+          match Score.(gt left_score match_score, gt left_score right_score, gt match_score right_score) with
+          | true, true, _ -> { score = left_score ; choice = Left }
+          | false, _, true -> { score = match_score ; choice = Match }
+          | _, false, false -> { score = right_score ; choice = Right }
+          | false, true, false
+          | true, false, true -> assert false
+
+    let memo_rec ff =
+      let open Caml in
+      let h = Hashtbl.create 0 in
+      let rec f x y  =
+        try Hashtbl.find h (x,y)
+        with Not_found ->
+          let v = ff f x y in
+          Hashtbl.add h (x,y) v;
+          v
+      in f
+
+    let matching ~max_dist xs ys =
+      let f = memo_rec (score_step max_dist xs ys) in
+      let rec loop i j acc =
+        if i < 0 && j < 0 then acc
+        else
+          let trace = f i j in
+          match trace.choice with
+          | Left  -> loop (i - 1) j (`Left xs.(i) :: acc)
+          | Right -> loop i (j - 1) (`Right ys.(j) :: acc)
+          | Match -> loop (i - 1) (j - 1) (`Match (xs.(i), ys.(j)) :: acc)
+      in
+      loop (Array.length xs - 1) (Array.length ys - 1) []
+  end
+
+  let matching ~mode ~max_dist xs ys =
+    let module T = (val (
+        match mode with
+        | `Interval -> (module Interval_topology)
+        | `Point -> (module Point_topology)
+      ) : Topology)
+    in
+    let module M = Matching(T) in
+    M.matching ~max_dist (Array.of_list xs) (Array.of_list ys)
+
+  type matching =
+    [ `Match of (GLoc.t * unit) * (GLoc.t * unit)
+    |  `Left of (GLoc.t * unit)
+    |  `Right of (GLoc.t * unit)] list
+  [@@deriving sexp]
+
+  let%test_module "MATCHING" = (module struct
+    let loc lo hi = GLoc.{ chr = "chr" ; lo ; hi }, ()
+    let ( = ) = Caml.( = )
+
+    let%test "matching_1" = matching ~mode:`Point ~max_dist:10 [] [] = []
+
+    let i1 = loc 1 3
+
+    let%test "matching_2" =
+      matching ~mode:`Point ~max_dist:10 [i1] [] = [`Left i1]
+
+    let i2 = loc 2 3
+
+    let i3 = loc 7 8
+
+    let%test "matching_3" =
+      matching ~mode:`Point ~max_dist:10 [i1] [i2] = [`Match (i1, i2)]
+
+    let _print_match m =
+      print_endline (Sexp.to_string_hum (sexp_of_matching m))
+
+    let%test "matching_4" =
+      matching ~mode:`Interval ~max_dist:10 [i1;i3] [i2] = [`Match (i1, i2) ; `Left i3]
+
+    let%test "matching_5" =
+      matching ~mode:`Point ~max_dist:10 [i1;i3] [i2] = [`Match (i1, i2) ; `Left i3]
+
+    let i4 = loc 3 4
+
+    let i5 = loc 12 15
+
+    let%test "matching_6" =
+      matching ~mode:`Interval ~max_dist:10 [i1;i4;i5] [i2;i3] = [`Match (i1, i2) ; `Match (i4, i3) ; `Left i5]
+  end)
 end
