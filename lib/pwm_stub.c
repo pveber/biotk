@@ -7,7 +7,6 @@
 #include<caml/alloc.h>
 #include<caml/misc.h>
 
-
 value gzt_pwm_scan(value mat, value seq, value caml_tol) {
   CAMLparam3(mat, seq, caml_tol);
   CAMLlocal3(r,tmp,hit);
@@ -17,6 +16,7 @@ value gzt_pwm_scan(value mat, value seq, value caml_tol) {
   double tol = Double_val(caml_tol);
   int i,j;
 
+  for(int i = 0; i < 255; i++) char_tab[i] = 4;
   char_tab['a'] = 0;
   char_tab['c'] = 1;
   char_tab['g'] = 2;
@@ -63,6 +63,7 @@ value gzt_opt_pwm_scan(value mat, value seq, value caml_tol) {
   int i,j;
 
   int char_tab[255];
+  for(int i = 0; i < 255; i++) char_tab[i] = 4;
   char_tab['a'] = 0;
   char_tab['c'] = 1;
   char_tab['g'] = 2;
