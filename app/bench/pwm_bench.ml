@@ -1,6 +1,6 @@
-open Core_bench.Std
+open Core_bench
 open Core
-open Gzt
+open Biotk
 
 let scan pwm seq theta f =
   f pwm seq theta
