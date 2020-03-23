@@ -7,7 +7,7 @@
 #include<caml/alloc.h>
 #include<caml/misc.h>
 
-value gzt_pwm_scan(value mat, value seq, value caml_tol) {
+value biotk_pwm_scan(value mat, value seq, value caml_tol) {
   CAMLparam3(mat, seq, caml_tol);
   CAMLlocal3(r,tmp,hit);
   int char_tab[255];
@@ -54,7 +54,7 @@ double array_max(value arr, int n) {
   return best;
 }
 
-value gzt_opt_pwm_scan(value mat, value seq, value caml_tol) {
+value biotk_opt_pwm_scan(value mat, value seq, value caml_tol) {
   CAMLparam3(mat, seq, caml_tol);
   CAMLlocal3(r,tmp,hit);
   int n = caml_string_length(seq);

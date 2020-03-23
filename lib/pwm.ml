@@ -145,8 +145,8 @@ let best_hit mat seq =
   if pos < 0 then raise (Invalid_argument "Pwm.best_hit: sequence shorter than the matrix")
   else r
 
-external stub_fast_scan : t -> string -> float -> (int * float) list = "gzt_pwm_scan"
-external stub_opt_fast_scan : t -> string -> float -> (int * float) list = "gzt_opt_pwm_scan"
+external stub_fast_scan : t -> string -> float -> (int * float) list = "biotk_pwm_scan"
+external stub_opt_fast_scan : t -> string -> float -> (int * float) list = "biotk_opt_pwm_scan"
 
 let fast_scan mat seq tol =
   stub_fast_scan mat seq tol
