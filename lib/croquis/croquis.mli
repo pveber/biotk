@@ -64,7 +64,6 @@ module Picture : sig
   val void : t
 
   val points :
-    ?vp:Viewport.t ->
     ?col:Color.t ->
     ?shape:point_shape ->
     x:float array ->
@@ -73,7 +72,6 @@ module Picture : sig
     t
 
   val rect :
-    ?vp:Viewport.t ->
     ?draw:Color.t ->
     ?fill:Color.t ->
     ?thickness:thickness ->
@@ -85,7 +83,6 @@ module Picture : sig
     t
 
   val path :
-    ?vp:Viewport.t ->
     ?col:Color.t ->
     ?thickness:thickness ->
     ?arrow_head:bool ->
@@ -125,7 +122,6 @@ module Picture : sig
     t
   
   val text :
-    ?vp:Viewport.t ->
     ?col:Color.t ->
     ?size:float ->
     ?font:Font.t ->

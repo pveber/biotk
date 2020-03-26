@@ -43,8 +43,6 @@ module Viewport = struct
 
   let scale vp (x, y) =
     (vp.scale_x x, vp.scale_y y)
-
-  let v2scale vp x y = V2.v (scale_x vp x) (scale_y vp y)
 end
 
 type thickness = [
@@ -98,11 +96,11 @@ module Picture = struct
     method bbox : Box2.t
   end
 
-  let points ?(vp = Viewport.id) ?(col = Color.black) ?(shape = `bullet) ~x ~y () =
-    let xmin = Viewport.scale_x vp (Float_array.min x) in
-    let xmax = Viewport.scale_x vp (Float_array.max x) in
-    let ymin = Viewport.scale_y vp (Float_array.min y) in
-    let ymax = Viewport.scale_y vp (Float_array.max y) in
+  let points ?(col = Color.black) ?(shape = `bullet) ~x ~y () =
+    let xmin = Float_array.min x in
+    let xmax = Float_array.max x in
+    let ymin = Float_array.min y in
+    let ymax = Float_array.max y in
     object
       method render =
         let area = match shape with
@@ -114,7 +112,7 @@ module Picture = struct
           I.cut ~area (P.empty |> P.circle V2.zero 0.1) (I.const col)
         in
         Array.map2_exn x y ~f:(fun x y ->
-            I.move (Viewport.v2scale vp x y) mark
+            I.move (V2.v x y) mark
           )
         |> Array.fold ~init:I.void ~f:I.blend
 
@@ -122,11 +120,7 @@ module Picture = struct
         Box2.v (V2.v xmin ymin) (V2.v (xmax -. xmin) (ymax -. ymin))
     end
     
-  let rect ?(vp = Viewport.id) ?draw ?fill ?(thickness = `normal) ~xmin ~xmax ~ymin ~ymax () =
-    let xmin = Viewport.scale_x vp xmin in
-    let xmax = Viewport.scale_x vp xmax in
-    let ymin = Viewport.scale_y vp ymin in
-    let ymax = Viewport.scale_y vp ymax in
+  let rect ?draw ?fill ?(thickness = `normal) ~xmin ~xmax ~ymin ~ymax () =
     object
       method render =
         let sw = V2.v xmin ymin in
@@ -197,8 +191,7 @@ module Picture = struct
         end
       )
 
-  let path ?(vp = Viewport.id) ?(col = Color.black) ?(thickness = `normal) ?(arrow_head = false) points =
-    let points = List.map points ~f:(fun (x, y) -> Viewport.scale_x vp x, Viewport.scale_y vp y) in
+  let path ?(col = Color.black) ?(thickness = `normal) ?(arrow_head = false) points =
     let arrow_head = if arrow_head then arrow_head_geometry points else None in
     object
       method render =
@@ -242,10 +235,8 @@ module Picture = struct
           List.fold [ head#tip ; head#wing_up ; head#wing_down ] ~init ~f:Box2.add_pt
     end
 
-  let text ?(vp = Viewport.id) ?(col = Color.black) ?(size = 12.) ?(font = Font.default) ~x ~y text =
+  let text ?(col = Color.black) ?(size = 12.) ?(font = Font.default) ~x ~y text =
     let font = Lazy.force font in
-    let x = Viewport.scale_x vp x in
-    let y = Viewport.scale_y vp y in
     let delta bb =
       Box2.w bb /. 2., Vg_text.Font.(ymax font +. ymin font) *. size /. 2.
     in
@@ -491,7 +482,9 @@ module Plot = struct
       in
       List.map plots ~f:(function
           | Points { x ; y ; col ; shape ; _ } ->
-            Picture.points ~vp ~col ~x ~y ~shape ()
+            let x = Array.map x ~f:(Viewport.scale_x vp) in
+            let y = Array.map y ~f:(Viewport.scale_y vp) in
+            Picture.points ~col ~x ~y ~shape ()
         )
       |> Picture.blend
 end
