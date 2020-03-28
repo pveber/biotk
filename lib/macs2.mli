@@ -22,7 +22,9 @@ module Xls : sig
     name : string ;
   }
 
-  val parse : Line.t -> (item,  [> `Msg of string]) result
+  val parse_line : Line.t -> (item,  [> `Msg of string]) result
+  val read : string -> (item list, [> `Msg of string]) result
+  val loc_of_record : record -> GLoc.t
 end
 
 module Broad_peaks : sig

@@ -28,10 +28,12 @@ module Xls = struct
     name : string ;
   }
 
+  let loc_of_record r = { GLoc.chr = r.chr ; lo = r.start ; hi = r.end_ }
+
   let header =
     "chr\tstart\tend\tlength\tabs_summit\tpileup\t-log10(pvalue)\tfold_enrichment\t-log10(qvalue)\tname"
 
-  let parse line =
+  let parse_line line =
     match (line : Line.t :> string) with
     | "" -> R.ok (`Comment "")
     | line when String.(line = header) -> R.ok `Header
@@ -56,6 +58,14 @@ module Xls = struct
             log10qvalue ; name ;
           }
         | _ -> R.error_msg "Wrong number of fields"
+
+  let read fn =
+    Biocaml_unix.Lines.with_file fn ~f:(fun lines ->
+        CFStream.Stream.map lines ~f:parse_line
+        |> CFStream.Stream.Result.fold' ~init:[] ~f:(fun acc l ->
+            l :: acc
+          )
+      )
 end
 
 
