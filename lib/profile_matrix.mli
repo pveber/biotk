@@ -5,8 +5,6 @@ module type S = sig
   val of_array : float array array -> t option
   val flat : int -> t
   val length : t -> int
-  val random : ?alpha:float -> int -> t
-  val simulate_sequence : t -> string
   val composition : t -> float array
   val draw : t -> Croquis.Picture.t
 end

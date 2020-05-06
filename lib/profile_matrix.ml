@@ -7,8 +7,6 @@ module type S = sig
   val of_array : float array array -> t option
   val flat : int -> t
   val length : t -> int
-  val random : ?alpha:float -> int -> t
-  val simulate_sequence : t -> string
   val composition : t -> float array
   val draw : t -> Croquis.Picture.t
 end
@@ -41,22 +39,11 @@ module Make(A : Alphabet) = struct
       then Some xs
       else None
 
-  let random ?(alpha = 1.) motif_length =
-    let alpha = Array.init A.card ~f:(fun _ -> Owl.Stats.uniform_rvs ~a:0. ~b:alpha) in
-    Array.init motif_length ~f:(fun _ ->
-        Owl.Stats.dirichlet_rvs ~alpha
-      )
-
-  let simulate_sequence eps =
-    String.init (Array.length eps) ~f:(fun i ->
-        Dna_sequence.random_base eps.(i)
-      )
-
   let composition profile =
     let weights = Array.init A.card ~f:(fun j ->
         sum (Array.length profile) ~f:(fun i -> profile.(i).(j))
       ) in
-    let total = Owl.Stats.sum weights in
+    let total = Array.fold weights ~init:0. ~f:( +. ) in
     Array.map weights ~f:(fun w -> w /. total)
 
   let xlnx x =
@@ -122,7 +109,7 @@ module Make(A : Alphabet) = struct
       |> vstack ~align:`centered
     in
     let entropy = Array.map ~f:column_entropy t in
-    let min_entropy = Owl.Stats.min entropy in
+    let min_entropy = Array.reduce_exn entropy ~f:Core_kernel.Float.min in
     let logo =
       Array.map t ~f:draw_col
       |> Array.to_list

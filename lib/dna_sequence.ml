@@ -36,28 +36,6 @@ let local_gc k s =
   in
   stream
 
-let random_base gc =
-  match Float.(Random.float 1. > gc, Random.float 1. > 0.5) with
-    false, false -> 'c'
-  | false, true  -> 'g'
-  | true,  false -> 'a'
-  | true,  true  -> 't'
-
-let random n gc = String.init n ~f:(fun _ -> random_base gc)
-
-let random_base comp =
-  if Array.length comp <> 4 then invalid_arg "random_base: expected array of size 4" ;
-  match Owl.Stats.categorical_rvs comp with
-  | 0 -> 'A'
-  | 1 -> 'C'
-  | 2 -> 'G'
-  | 3 -> 'T'
-  | _ -> assert false
-
-let markov0 n comp = String.init n ~f:(fun _ ->
-    random_base comp
-  )
-
 module type Parser = sig
   type t
   type score
@@ -75,7 +53,7 @@ module type Parser = sig
   }
 
   (** [statistics nbl parser] computes statistics for [nbl] number of GC levels *)
-  val statistics : int -> t -> statistics
+  val statistics : generator:(int -> float -> string) -> int -> t -> statistics
   val cdf_of_statistics : statistics -> float -> float -> float
   val average_cdf_of_statistics : statistics -> float -> float
   val bound_of_fpr : statistics -> float -> float
@@ -139,8 +117,8 @@ module Parser_of_char(P : Wfa.Profile with type symbol = Wfa.Nucleotide.t
 
   let seq_size = 1000000
 
-  let statistics nb_levels aut =
-    let seqz = Array.map ~f:(random seq_size) (gc_levels nb_levels) in
+  let statistics ~generator nb_levels aut =
+    let seqz = Array.map ~f:(generator seq_size) (gc_levels nb_levels) in
     {
       nb_gc_levels = nb_levels ;
       values = Array.map seqz ~f:(fun s ->

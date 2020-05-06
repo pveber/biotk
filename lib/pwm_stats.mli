@@ -1,7 +1,5 @@
 (** Implementation of {https://www.ncbi.nlm.nih.gov/pmc/articles/PMC2238751/}*)
 
-val random_sequence : int -> Pwm.background -> string
-
 module TFM_pvalue : sig
   val score_distribution :
     ?alpha:float ->

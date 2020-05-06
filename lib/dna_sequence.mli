@@ -1,12 +1,6 @@
 val gc : string -> float
 val local_gc : int -> string -> float Seq.t
 
-(** [random length gc_content] *)
-val random : int -> float -> string
-
-val random_base : float array -> char
-val markov0 : int -> float array -> string
-
 module type Parser = sig
   type t
   type score
@@ -24,7 +18,7 @@ module type Parser = sig
   }
 
   (** [statistics nbl parser] computes statistics for [nbl] number of GC levels *)
-  val statistics : int -> t -> statistics
+  val statistics : generator:(int -> float -> string) -> int -> t -> statistics
   val cdf_of_statistics : statistics -> float -> float -> float
   val average_cdf_of_statistics : statistics -> float -> float
   val bound_of_fpr : statistics -> float -> float
