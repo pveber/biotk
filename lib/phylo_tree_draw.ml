@@ -88,15 +88,15 @@ let rec draw_tree ~inter_leaf_space ~branch_factor ~x ~y ~height = function
     | Some col -> Picture.(blend2 (circle ~x ~y ~draw:col ~fill:col ~radius:0.2 ()) node)
 
 and draw_branch ~inter_leaf_space ~height ~branch_factor ~x ~y (Branch b) =
-  let x' = x +. b.length /. branch_factor in
+  let x' = x +. b.length *. branch_factor in
   Picture.blend2
     (draw_tree ~inter_leaf_space ~branch_factor ~height b.tip ~x:x' ~y)
     (Picture.path ~col:b.color ~thickness:`thick [ (x, y) ; (x', y) ])
 
 let draw_tree tree =
   let tree_height = tree_height tree in
-  let width = Float.of_int (tree_depth tree) in
-  let branch_factor = tree_height /. width in
+  let width = 5. *. Float.of_int (tree_depth tree) in
+  let branch_factor = width /. tree_height in
   let nb_leaves = nb_leaves tree in
   let delta = Biotk_croquis.Croquis.Font.(ymax free_sans -. ymin free_sans) in
   let height = 1.02 *. delta *. Float.of_int (nb_leaves + 1) in
@@ -105,8 +105,8 @@ let draw_tree tree =
 
 let draw_branch (Branch b as branch) =
   let tree_height = branch_height branch in
-  let width = Float.of_int (branch_depth branch) in
-  let branch_factor = tree_height /. width in
+  let width = 5. *. Float.of_int (branch_depth branch) in
+  let branch_factor = width /. tree_height in
   let nb_leaves = nb_leaves b.tip in
   let delta = Biotk_croquis.Croquis.Font.(ymax free_sans -. ymin free_sans) in
   let height = 1.02 *. delta *. Float.of_int (nb_leaves + 1) in
