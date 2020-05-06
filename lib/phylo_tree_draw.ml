@@ -1,14 +1,26 @@
+open Gg
 open Core_kernel
 open Biotk_croquis.Croquis
 
 type tree =
-  | Leaf of { text : string }
-  | Node of { children : branch list }
-and branch = Branch of { length : float ; tip : tree }
+  | Leaf of {
+      text : string ;
+      style : [ `normal | `bold | `oblique ] ;
+      color : Color.t
+    }
+  | Node of {
+      children : branch list ;
+      tag : Color.t option
+    }
+and branch = Branch of {
+    length : float ;
+    tip : tree ;
+    color : Color.t ;
+  }
 
 let rec nb_leaves = function
   | Leaf _ -> 1
-  | Node { children } ->
+  | Node { children ; _ } ->
     List.fold children ~init:0 ~f:(fun acc (Branch b) ->
         acc + nb_leaves b.tip
       )
@@ -29,10 +41,10 @@ let rec tree_depth = function
     |> Option.value ~default:0
 and branch_depth (Branch b) = 1 + tree_depth b.tip
 
-let leaf text = Leaf { text }
-let branch length tip = Branch { length ; tip }
-let bnode x y = Node { children = [ x ; y ] }
-let node children = Node { children }
+let leaf ?(style = `normal) ?(col = Color.black) text = Leaf { text ; style ; color = col }
+let branch ?(col = Color.black) length tip = Branch { length ; tip ; color = col }
+let bnode ?tag x y = Node { tag ; children = [ x ; y ] }
+let node ?tag children = Node { tag ; children }
 
 type tree_vertical_placement = {
   root : float ;
@@ -53,8 +65,14 @@ let vertical_tree_layout ~height ~y children =
   |> List.rev
 
 let rec draw_tree ~inter_leaf_space ~branch_factor ~x ~y ~height = function
-  | Leaf { text = t } -> Picture.text ~size:1. ~halign:`left ~valign:`balanced ~x ~y (" " ^ t)
-  | Node { children } ->
+  | Leaf l ->
+    let font = match l.style with
+      | `normal -> Font.free_sans
+      | `oblique -> Font.free_sans_oblique
+      | `bold -> Font.free_sans_bold
+    in
+    Picture.text ~size:1. ~halign:`left ~valign:`balanced ~font ~x ~y (" " ^ l.text)
+  | Node { children ; tag } ->
     let children_layout = vertical_tree_layout ~height ~y children in
     let children_pic =
       List.map2_exn children children_layout ~f:(fun b tvp ->
@@ -64,13 +82,16 @@ let rec draw_tree ~inter_leaf_space ~branch_factor ~x ~y ~height = function
     in
     let highest_root = (List.hd_exn children_layout).root in
     let lowest_root = (List.last_exn children_layout).root in
-    Picture.blend2 children_pic (Picture.path [ (x, highest_root) ; (x, lowest_root) ])
+    let node = Picture.blend2 children_pic (Picture.path ~thickness:`thick [ (x, highest_root) ; (x, lowest_root) ]) in
+    match tag with
+    | None -> node
+    | Some col -> Picture.(blend2 (circle ~x ~y ~draw:col ~fill:col ~radius:0.2 ()) node)
 
 and draw_branch ~inter_leaf_space ~height ~branch_factor ~x ~y (Branch b) =
   let x' = x +. b.length /. branch_factor in
   Picture.blend2
     (draw_tree ~inter_leaf_space ~branch_factor ~height b.tip ~x:x' ~y)
-    (Picture.path [ (x, y) ; (x', y) ])
+    (Picture.path ~col:b.color ~thickness:`thick [ (x, y) ; (x', y) ])
 
 let draw_tree tree =
   let tree_height = tree_height tree in

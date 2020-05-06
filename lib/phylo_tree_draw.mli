@@ -1,14 +1,38 @@
+open Gg
 open Biotk_croquis
 
 type tree =
-  | Leaf of { text : string }
-  | Node of { children : branch list }
-and branch = Branch of { length : float ; tip : tree }
+  | Leaf of {
+      text : string ;
+      style : [ `normal | `bold | `oblique ] ;
+      color : Color.t
+    }
+  | Node of {
+      children : branch list ;
+      tag : Color.t option
+    }
+and branch = Branch of {
+    length : float ;
+    tip : tree ;
+    color : Color.t ;
+  }
 
-val leaf : string -> tree
-val bnode : branch -> branch -> tree
-val node : branch list -> tree
-val branch : float -> tree -> branch
+val leaf :
+  ?style:[`normal | `bold | `oblique] ->
+  ?col:Color.t ->
+  string ->
+  tree
+
+val bnode :
+  ?tag:Color.t ->
+  branch -> branch -> tree
+
+val node :
+  ?tag:Color.t ->
+  branch list ->
+  tree
+
+val branch : ?col:Color.t -> float -> tree -> branch
 
 val draw_tree : tree -> Croquis.Picture.t
 val draw_branch : branch -> Croquis.Picture.t
