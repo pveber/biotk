@@ -5,9 +5,9 @@ open Core_kernel
 type point = float * float
 
 module Float_array = struct
-  let min xs = 
+  let min xs =
     Array.fold xs ~init:Float.max_value ~f:Float.min
-  let max xs = 
+  let max xs =
     Array.fold xs ~init:Float.min_value ~f:Float.max
 end
 
@@ -71,7 +71,7 @@ module Font = struct
   let ymax x = Vg_text.Font.ymax (Lazy.force x)
 
   let embedded_load s =
-    Lazy.from_fun (fun () -> 
+    Lazy.from_fun (fun () ->
         match Vg_text.Font.load_from_string s with
         | Ok f -> f
         | Error (#Otfm.error as e) ->
@@ -121,7 +121,7 @@ module Picture = struct
       method bbox =
         Box2.v (V2.v xmin ymin) (V2.v (xmax -. xmin) (ymax -. ymin))
     end
-    
+
   let rect ?draw ?fill ?(thickness = `normal) ~xmin ~xmax ~ymin ~ymax () =
     object
       method render =
@@ -299,7 +299,7 @@ module Picture = struct
         |> I.scale (V2.v sx sy)
         |> I.move dst_center
     end
-  
+
   let path_of_box2 b =
     P.empty
     |> P.line (Box2.bl_pt b)
@@ -307,7 +307,7 @@ module Picture = struct
     |> P.line (Box2.tr_pt b)
     |> P.line (Box2.tl_pt b)
     |> P.line (Box2.bl_pt b)
-      
+
   let crop t b =
     object
       method bbox = b
