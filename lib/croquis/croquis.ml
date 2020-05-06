@@ -155,6 +155,32 @@ module Picture = struct
         Box2.v (V2.v xmin ymin) (V2.v (xmax -. xmin) (ymax -. ymin))
     end
 
+  let circle ?draw ?fill ?(thickness = `normal) ~x ~y ~radius () =
+    let c = V2.v x y in
+    object
+      method render =
+        let p =
+          P.empty
+          |> P.circle c radius
+        in
+        let outline = match draw with
+          | None -> I.void
+          | Some col ->
+            let area = `O { P.o with P.width = thickness_value thickness ;
+                                     P.cap = `Square } in
+            I.cut ~area p (I.const col)
+        in
+        let background = match fill with
+          | None -> I.void
+          | Some col ->
+            I.cut ~area:`Anz p (I.const col)
+        in
+        I.blend outline background
+
+      method bbox =
+        Box2.v_mid c (V2.v (2. *. radius) (2. *. radius))
+    end
+
   let void =
     object
       method render = I.void

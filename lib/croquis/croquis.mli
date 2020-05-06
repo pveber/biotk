@@ -91,6 +91,16 @@ module Picture : sig
     point list ->
     t
 
+  val circle :
+    ?draw:Color.t ->
+    ?fill:Color.t ->
+    ?thickness:thickness ->
+    x:float ->
+    y:float ->
+    radius:float ->
+    unit ->
+    t
+
   val blend : t list -> t
   val blend2 : t -> t -> t
 
