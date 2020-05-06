@@ -71,7 +71,7 @@ let rec draw_tree ~inter_leaf_space ~branch_factor ~x ~y ~height = function
       | `oblique -> Font.free_sans_oblique
       | `bold -> Font.free_sans_bold
     in
-    Picture.text ~size:1. ~halign:`left ~valign:`balanced ~font ~x ~y (" " ^ l.text)
+    Picture.text ~size:1. ~halign:`left ~valign:`balanced ~col:l.color ~font ~x ~y (" " ^ l.text)
   | Node { children ; tag } ->
     let children_layout = vertical_tree_layout ~height ~y children in
     let children_pic =
