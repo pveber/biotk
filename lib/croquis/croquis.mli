@@ -125,6 +125,8 @@ module Picture : sig
     ?col:Color.t ->
     ?size:float ->
     ?font:Font.t ->
+    ?halign:[ `middle | `left | `right ] ->
+    ?valign:[ `balanced | `base | `top | `bottom ] ->
     x:float ->
     y:float ->
     string ->

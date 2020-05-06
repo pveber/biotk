@@ -235,20 +235,27 @@ module Picture = struct
           List.fold [ head#tip ; head#wing_up ; head#wing_down ] ~init ~f:Box2.add_pt
     end
 
-  let text ?(col = Color.black) ?(size = 12.) ?(font = Font.default) ~x ~y text =
+  let text ?(col = Color.black) ?(size = 12.) ?(font = Font.default) ?(halign = `middle) ?(valign = `balanced) ~x ~y text =
     let font = Lazy.force font in
-    let delta bb =
-      Box2.w bb /. 2., Vg_text.Font.(ymax font +. ymin font) *. size /. 2.
+    let img, bb = Vg_text.cut ~col:col ~size:size font text in
+    let dx =
+      match halign with
+      | `middle -> Box2.w bb /. 2.
+      | `left -> 0.
+      | `right -> Box2.w bb
+    in
+    let dy =
+      match valign with
+      | `base -> 0.
+      | `top -> Box2.maxy bb
+      | `bottom -> Box2.miny bb
+      | `balanced -> Box2.(0.4 *. maxy bb +. 0.6 *. miny bb)
     in
     object
       method render =
-        let img, bb = Vg_text.cut ~col:col ~size:size font text in
-        let dx, dy = delta bb in
         I.move (V2.v (x -. dx) (y -. dy)) img
 
       method bbox =
-        let bb = Vg_text.bbox ~size font text in
-        let dx, dy = delta bb in
         Box2.move (V2.v (x -. dx) (y -. dy)) bb
     end
 
