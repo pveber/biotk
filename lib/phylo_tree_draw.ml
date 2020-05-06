@@ -31,7 +31,8 @@ and branch_depth (Branch b) = 1 + tree_depth b.tip
 
 let leaf text = Leaf { text }
 let branch length tip = Branch { length ; tip }
-let bnode x y = Node { children = [ x ; y ] } 
+let bnode x y = Node { children = [ x ; y ] }
+let node children = Node { children }
 
 type tree_vertical_placement = {
   root : float ;
@@ -73,7 +74,7 @@ and draw_branch ~inter_leaf_space ~height ~branch_factor ~x ~y (Branch b) =
   Picture.blend2
     (draw_tree ~inter_leaf_space ~branch_factor ~height b.tip ~x:x' ~y)
     (Picture.path [ (x, y) ; (x', y) ])
-  
+
 let draw_tree tree =
   let tree_height = tree_height tree in
   let width = Float.of_int (tree_depth tree) in
@@ -93,4 +94,3 @@ let draw_branch (Branch b as branch) =
   let height = 1.02 *. delta *. Float.of_int (nb_leaves + 1) in
   let inter_leaf_space = height -. (Float.of_int nb_leaves +. 1.) *. delta in
   draw_branch ~inter_leaf_space ~branch_factor ~x:0. ~y:0. ~height branch
-  
