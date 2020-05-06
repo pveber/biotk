@@ -39,13 +39,10 @@ type tree_vertical_placement = {
   height : float ;
 }
 
-let vertical_tree_layout ~inter_leaf_space ~height ~y children =
-  let n_children = List.length children in
+let vertical_tree_layout ~height ~y children =
   let children_nb_leaves = List.map children ~f:(fun (Branch b) -> nb_leaves b.tip) in
   let total_leaves = List.fold children_nb_leaves ~init:0 ~f:( + ) in
-  let usable_height = height -. Float.of_int n_children *. inter_leaf_space in
   let y_start = y +. height /. 2. in
-  assert Float.(usable_height > 0.) ;
   List.fold children_nb_leaves ~init:([], y_start) ~f:(fun (acc, y_start) i ->
       let child_height = height *. Float.of_int i /. Float.of_int total_leaves in
       let y = y_start -. child_height /. 2. in
@@ -58,7 +55,7 @@ let vertical_tree_layout ~inter_leaf_space ~height ~y children =
 let rec draw_tree ~inter_leaf_space ~branch_factor ~x ~y ~height = function
   | Leaf { text = t } -> Picture.text ~size:1. ~halign:`left ~valign:`balanced ~x ~y (" " ^ t)
   | Node { children } ->
-    let children_layout = vertical_tree_layout ~inter_leaf_space ~height ~y children in
+    let children_layout = vertical_tree_layout ~height ~y children in
     let children_pic =
       List.map2_exn children children_layout ~f:(fun b tvp ->
           draw_branch ~inter_leaf_space ~branch_factor ~height:tvp.height b ~x ~y:tvp.root
