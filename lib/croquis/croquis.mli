@@ -46,6 +46,8 @@ module Font : sig
   val default : t
   val free_sans : t
   val free_sans_bold : t
+  val free_sans_oblique : t
+  val free_sans_bold_oblique : t
 end
 
 type thickness = [

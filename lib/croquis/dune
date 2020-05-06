@@ -13,3 +13,13 @@
   (target free_sans_bold.ml)
   (deps (file ocamlify_font.sh) (:font FreeSansBold.otf))
   (action (run bash ocamlify_font.sh %{font} %{target})))
+
+(rule
+  (target free_sans_oblique.ml)
+  (deps (file ocamlify_font.sh) (:font FreeSansOblique.otf))
+  (action (run bash ocamlify_font.sh %{font} %{target})))
+
+(rule
+  (target free_sans_bold_oblique.ml)
+  (deps (file ocamlify_font.sh) (:font FreeSansBoldOblique.otf))
+  (action (run bash ocamlify_font.sh %{font} %{target})))

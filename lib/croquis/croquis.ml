@@ -86,6 +86,8 @@ module Font = struct
 
   let free_sans = embedded_load Free_sans.contents
   let free_sans_bold = embedded_load Free_sans_bold.contents
+  let free_sans_oblique = embedded_load Free_sans_oblique.contents
+  let free_sans_bold_oblique = embedded_load Free_sans_bold_oblique.contents
 
   let default = free_sans
 end
@@ -539,6 +541,8 @@ module Layout = struct
       match f.name with
       | "FreeSans" -> otf_font Font.free_sans
       | "FreeSansBold" -> otf_font Font.free_sans_bold
+      | "FreeSansOblique" -> otf_font Font.free_sans_oblique
+      | "FreeSansBoldOblique" -> otf_font Font.free_sans_bold_oblique
       | _ -> `Sans
     in
     Out_channel.with_file fn ~f:(fun oc ->
