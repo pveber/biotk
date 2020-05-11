@@ -47,7 +47,7 @@ module Parser = struct
     p <?> "fasta"
 end
 
-let from_string s = Angstrom.parse_string Parser.fasta s
+let from_string s = Angstrom.(parse_string ~consume:All) Parser.fasta s
 
 let from_file fn =
   In_channel.with_file fn ~f:(fun ic ->

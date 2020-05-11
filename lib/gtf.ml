@@ -151,7 +151,7 @@ module Parser = struct
     >>| List.rev
 
   let test p s v =
-    match parse_string p s with
+    match parse_string p s ~consume:All with
     | Ok x -> Poly.(x = v)
     | Error msg ->
       print_endline msg ;
@@ -183,12 +183,12 @@ module Parser = struct
   [@@ deriving sexp]
 
   let expect_record s =
-    parse_string record s
+    parse_string ~consume:All record s
     |> [%sexp_of: ([`Record of record], string) Result.t]
     |> Sexp.output_hum Stdio.stdout
 
   let expect s =
-    parse_string file s
+    parse_string ~consume:All file s
     |> [%sexp_of: (item list, string) Result.t]
     |> Sexp.output_hum Stdio.stdout
 
