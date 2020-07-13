@@ -296,14 +296,23 @@ module Picture = struct
         |> I.move (V2.v dx dy)
     end
 
-  let scale ?(sx = 1.) ?(sy = 1.) t =
+  let scale ?(center = `bbox_center) ?(sx = 1.) ?(sy = 1.) t =
     object
       method bbox =
         let bb = t#bbox in
-        Box2.(v_mid (mid bb) (V2.v (w bb *. sx) (h bb *. sy)))
-
+        match center with
+        | `bbox_center ->
+           Box2.(v_mid (mid bb) (V2.v (w bb *. sx) (h bb *. sy)))
+        | `origin ->
+           Box2.of_pts
+             (V2.v (Box2.minx bb *. sx) (Box2.maxy bb *. sy))
+             (V2.v (Box2.maxx bb *. sx) (Box2.miny bb *. sy))
       method render =
-        let center = Box2.mid t#bbox in
+        let center =
+          match center with
+          | `bbox_center -> Box2.mid t#bbox
+          | `origin -> V2.zero
+        in
         t#render
         |> I.move V2.(neg center)
         |> I.scale (V2.v sx sy)

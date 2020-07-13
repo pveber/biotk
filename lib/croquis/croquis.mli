@@ -110,6 +110,7 @@ module Picture : sig
     t -> t
 
   val scale :
+    ?center:[`bbox_center | `origin] ->
     ?sx:float ->
     ?sy:float ->
     t -> t
