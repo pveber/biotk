@@ -21,7 +21,7 @@
   (depends
     "angstrom-unix"
     "biocaml"
-    "core"
+    ("core" (>= "v0.14.0"))
     "fmt"
     "gsl"
     "ocamlify"

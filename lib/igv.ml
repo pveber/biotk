@@ -43,7 +43,7 @@ let send_command ic oc c =
   | Some msg -> Error msg
 
 class proxy ?(addr = "127.0.0.1") ?(port = 60151) () =
-  let ic, oc = Unix.open_connection (Unix.ADDR_INET (Unix.inet_addr_of_string addr, port)) in
+  let ic, oc = Core.Unix.(open_connection (ADDR_INET (Inet_addr.of_string addr, port))) in
   let send = send_command ic oc in
   object
     method _new_ = send New

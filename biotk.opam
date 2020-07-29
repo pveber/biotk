@@ -17,7 +17,7 @@ depends: [
   "dune" {>= "1.11"}
   "angstrom-unix"
   "biocaml"
-  "core"
+  "core" {>= "v0.14.0"}
   "fmt"
   "gsl"
   "ocamlify"
