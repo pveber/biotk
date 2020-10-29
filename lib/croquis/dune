@@ -25,3 +25,23 @@
   (target dejavu_sans_mono_bold_oblique.ml)
   (deps (file ocamlify_font.sh) (:font DejaVuSansMono-BoldOblique.ttf))
   (action (run bash ocamlify_font.sh %{font} %{target})))
+
+(rule
+  (target liberation_sans.ml)
+  (deps (file ocamlify_font.sh) (:font LiberationSans-Regular.ttf))
+  (action (run bash ocamlify_font.sh %{font} %{target})))
+
+(rule
+  (target liberation_sans_bold.ml)
+  (deps (file ocamlify_font.sh) (:font LiberationSans-Bold.ttf))
+  (action (run bash ocamlify_font.sh %{font} %{target})))
+
+(rule
+  (target liberation_sans_italic.ml)
+  (deps (file ocamlify_font.sh) (:font LiberationSans-Italic.ttf))
+  (action (run bash ocamlify_font.sh %{font} %{target})))
+
+(rule
+  (target liberation_sans_bold_italic.ml)
+  (deps (file ocamlify_font.sh) (:font LiberationSans-BoldItalic.ttf))
+  (action (run bash ocamlify_font.sh %{font} %{target})))

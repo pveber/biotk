@@ -4,7 +4,7 @@ open Biotk_croquis
 type tree =
   | Leaf of {
       text : string ;
-      style : [ `normal | `bold | `oblique ] ;
+      style : [ `normal | `bold | `italic ] ;
       color : Color.t
     }
   | Node of {
@@ -18,7 +18,7 @@ and branch = Branch of {
   }
 
 val leaf :
-  ?style:[`normal | `bold | `oblique] ->
+  ?style:[`normal | `bold | `italic] ->
   ?col:Color.t ->
   string ->
   tree

@@ -5,7 +5,7 @@ open Biotk_croquis.Croquis
 type tree =
   | Leaf of {
       text : string ;
-      style : [ `normal | `bold | `oblique ] ;
+      style : [ `normal | `bold | `italic ] ;
       color : Color.t
     }
   | Node of {
@@ -67,9 +67,9 @@ let vertical_tree_layout ~height ~y children =
 let rec draw_tree ~inter_leaf_space ~branch_factor ~x ~y ~height = function
   | Leaf l ->
     let font = match l.style with
-      | `normal -> Font.dejavu_sans_mono
-      | `oblique -> Font.dejavu_sans_mono_oblique
-      | `bold -> Font.dejavu_sans_mono_bold
+      | `normal -> Font.liberation_sans
+      | `italic -> Font.liberation_sans_italic
+      | `bold -> Font.liberation_sans_bold
     in
     Picture.text ~size:1. ~halign:`left ~valign:`base ~col:l.color ~font ~x ~y (" " ^ l.text)
     |> Picture.translate ~dy:(-0.4)

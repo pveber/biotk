@@ -89,7 +89,12 @@ module Font = struct
   let dejavu_sans_mono_oblique = embedded_load Dejavu_sans_mono_oblique.contents
   let dejavu_sans_mono_bold_oblique = embedded_load Dejavu_sans_mono_bold_oblique.contents
 
-  let default = dejavu_sans_mono
+  let liberation_sans = embedded_load Liberation_sans.contents
+  let liberation_sans_bold = embedded_load Liberation_sans_bold.contents
+  let liberation_sans_italic = embedded_load Liberation_sans_italic.contents
+  let liberation_sans_bold_italic = embedded_load Liberation_sans_bold_italic.contents
+
+  let default = liberation_sans
 end
 
 module Picture = struct
@@ -580,6 +585,10 @@ module Layout = struct
       | "DejaVuSansMono-Bold" -> otf_font Font.dejavu_sans_mono_bold
       | "DejaVuSansMono-Oblique" -> otf_font Font.dejavu_sans_mono_oblique
       | "DejaVuSansMono-BoldOblique" -> otf_font Font.dejavu_sans_mono_bold_oblique
+      | "LiberationSans" -> otf_font Font.liberation_sans
+      | "LiberationSans-Bold" -> otf_font Font.liberation_sans_bold
+      | "LiberationSans-Italic" -> otf_font Font.liberation_sans_italic
+      | "LiberationSans-BoldItalic" -> otf_font Font.liberation_sans_bold_italic
       | _ -> `Sans
     in
     Out_channel.with_file fn ~f:(fun oc ->
