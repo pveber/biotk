@@ -72,7 +72,7 @@ let rec draw_tree ~inter_leaf_space ~branch_factor ~x ~y ~height = function
       | `bold -> Font.liberation_sans_bold
     in
     Picture.text ~size:1. ~halign:`left ~valign:`base ~col:l.color ~font ~x ~y (" " ^ l.text)
-    |> Picture.translate ~dy:(-0.4)
+    |> Picture.translate ~dy:(-0.3)
   | Node { children ; tag } ->
     let children_layout = vertical_tree_layout ~height ~y children in
     let children_pic =
