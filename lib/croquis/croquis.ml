@@ -290,7 +290,7 @@ module Picture = struct
         I.move (V2.v (x -. dx) (y -. dy)) img
 
       method bbox =
-        let bb = Box2.v V2.zero (V2.v width (maxy +. miny)) in
+        let bb = Box2.of_pts V2.(v 0. miny) V2.(v width maxy) in
         Box2.move (V2.v (x -. dx) (y -. dy)) bb
     end
 
