@@ -190,6 +190,7 @@ module Layout = struct
 
   let make fi ~size text =
     let u_to_em = float fi.Font.units_per_em in
+    let scale x = (size *. float x) /. u_to_em in
     let glyphs = glyphs_of_string fi text in
     let rel_advs, kernings =
       rel_advances_and_kernings_of_glyphs fi glyphs in
@@ -197,15 +198,14 @@ module Layout = struct
       let rec loop acc len advs kerns = match advs, kerns with
         | adv :: advs, k :: kerns ->
           let adv = adv + k in
-          let sadv = V2.v ((size *. (float adv)) /. u_to_em) 0. in
+          let sadv = V2.v (scale adv) 0. in
           loop (sadv :: acc) (len + adv) advs kerns
-        | adv :: [], [] -> acc, len + adv
+        | adv :: [], [] -> List.rev acc, len + adv
         | _ -> assert false
       in
       loop [] 0 rel_advs kernings
     in
     let maxy, miny = maxy_and_miny_of_glyphs fi glyphs in
-    let scale x = (size *. float x) /. u_to_em in
     let width = scale len in
     let maxy = scale maxy in
     let miny = scale miny in
