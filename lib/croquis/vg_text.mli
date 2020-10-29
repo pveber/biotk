@@ -15,11 +15,19 @@ module Font : sig
 
   val load_from_string :
     string ->
-    (t, [> Otfm.error | `Read_error of string]) result
+    (t, [> Otfm.error]) result
 
   val load_from_file :
     string ->
     (t, [> Otfm.error | `Read_error of string]) result
+end
+
+module Layout : sig
+  type t
+  val make : Font.t -> size:float -> string -> t
+  val width : t -> float
+  val maxy : t -> float
+  val miny : t -> float
 end
 
 (** [cut ?col ?size font text] returns an image displaying [text] with
@@ -29,13 +37,5 @@ end
    reasonable appromixation. *)
 val cut :
   ?col:Color.t ->
-  ?size:float ->
-  Font.t ->
-  string ->
-  image * box2
-
-(** {5 Low-level functions} *)
-val glyphs_of_string : Font.t -> string -> glyph list
-val layout : Font.t -> font_size:float -> string -> int list * v2 list * float
-val text_length : Font.t -> font_size:float -> string -> float
-val bbox : size:float -> Font.t -> string -> box2
+  Layout.t ->
+  image

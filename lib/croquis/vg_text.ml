@@ -31,6 +31,7 @@ module Font = struct
     head : Otfm.head ;
     hhea : Otfm.hhea ;
     units_per_em : int;                        (* Number of units per em. *)
+    glyph_bbox : (int * int * int * int) Gmap.t option ;
   }
 
   let name fi = fi.font_name
@@ -83,6 +84,37 @@ module Font = struct
     let m = try Gmap.find g0 acc with Not_found -> Gmap.empty in
     Gmap.add g0 (Gmap.add g1 kv m) acc
 
+  let int_seq a b =
+    Seq.unfold (fun i -> if i < b then Some (i, i + 1) else None) a
+
+  let seq_fold xs ~init ~f =
+    let rec loop acc = function
+      | Seq.Nil -> Ok acc
+      | Cons (x, xs) ->
+        match f acc x with
+        | Ok y -> loop y (xs ())
+        | Error _ as e -> e
+    in
+    loop init (xs ())
+
+  let glyph_bbox d =
+    Otfm.glyph_count d >>= fun gc ->
+    int_seq 0 gc
+    |> seq_fold ~init:Gmap.empty ~f:(fun acc i ->
+        Otfm.loca d i >>= fun maybe_glyph_loc ->
+        match maybe_glyph_loc with
+        | Some glyph_loc ->
+          Otfm.glyf d glyph_loc >>= fun (_, bbox) ->
+          Ok (Gmap.add i bbox acc)
+        | None -> Ok acc
+      )
+
+  let maybe_glyph_bbox d =
+    match glyph_bbox d with
+    | Ok r -> Ok (Some r)
+    | Error (`Missing_required_table _) -> Ok None
+    | Error _ as e -> e
+
   let load_from_string raw =
     let d = Otfm.decoder (`String raw) in
     let r =
@@ -94,7 +126,8 @@ module Font = struct
       Otfm.hhea d                                 >>= fun hhea ->
       let font_name = match font_name with None -> "Unknown" | Some n -> n in
       let units_per_em = head.Otfm.head_units_per_em in
-      Ok { font_name ; raw; cmap; advs; kern; hhea ; units_per_em ; head }
+      maybe_glyph_bbox d                          >>= fun glyph_bbox ->
+      Ok { font_name ; raw; cmap; advs; kern; hhea ; units_per_em ; head ; glyph_bbox }
     in
     (r : (_, Otfm.error) result :> (_, [> Otfm.error]) result)
 
@@ -109,58 +142,84 @@ let get_adv fi g = try Gmap.find g fi.Font.advs with Not_found -> 0
 let get_kern fi g g' =
   try Gmap.find g' (Gmap.find g fi.Font.kern) with Not_found -> 0
 
-let layout fi ~font_size:size text =
-  let u_to_em = float fi.Font.units_per_em in
-  let rec add (prev, gs, advs, kerns as acc) i = function
-  | `Malformed _ -> add acc i (`Uchar Uutf.u_rep)
-  | `Uchar u ->
-      let g = get_glyph fi (Uchar.to_int u) in
+module Layout = struct
+  type t = {
+    font : Font.t ;
+    size : float ;
+    text : string ;
+    glyphs : Otfm.glyph_id list ;
+    advances : v2 list ;
+    width : float ;
+    maxy : float ;
+    miny : float ;
+  }
+
+  let rev_glyphs_of_string fi text =
+    let f acc _ = function
+      | `Malformed _ -> get_glyph fi (Uchar.to_int Uutf.u_rep) :: acc
+      | `Uchar u ->
+        get_glyph fi (Uchar.to_int u) :: acc
+    in
+    Uutf.String.fold_utf_8 f [] text
+
+  let glyphs_of_string fi text =
+    rev_glyphs_of_string fi text
+    |> List.rev
+
+  let maxy_and_miny_of_glyphs (fi : Font.t) glyphs =
+    match fi.glyph_bbox with
+    | None -> (fi.hhea.hhea_descender, fi.hhea.hhea_descender)
+    | Some table ->
+      let foreach_glyph ((maxy, miny) as acc) gl =
+        match Gmap.find_opt gl table with
+        | None -> acc
+        | Some (_, miny', _, maxy') -> (max maxy maxy', min miny miny')
+      in
+      List.fold_left foreach_glyph (0, 0) glyphs
+
+  let rel_advances_and_kernings_of_glyphs fi glyphs =
+    let foreach_glyph (prev, advs, kerns) g =
       let advs = get_adv fi g :: advs in
       let kerns = if prev = -1 then kerns else (get_kern fi prev g) :: kerns in
-      (g, g :: gs, advs, kerns)
-  in
-  let rec advances acc len advs kerns = match advs, kerns with
-  | adv :: advs, k :: kerns ->
-      let adv = adv + k in
-      let sadv = V2.v ((size *. (float adv)) /. u_to_em) 0. in
-      advances (sadv :: acc) (len + adv) advs kerns
-  | adv :: [], [] -> acc, len + adv
-  | _ -> assert false
-  in
-  let _, gs, advs, kerns = Uutf.String.fold_utf_8 add (-1, [], [], []) text in
-  let advs, len = advances [] 0 (List.rev advs) (List.rev kerns) in
-  List.rev gs, List.rev advs, ((size *. float len) /. u_to_em)
+      (g, advs, kerns)
+    in
+    let _, rev_rel_advs, rev_kernings =
+      List.fold_left foreach_glyph (-1, [], []) glyphs in
+    List.rev rev_rel_advs,
+    List.rev rev_kernings
 
-let glyphs_of_string fi text =
-  let f acc _ = function
-    | `Malformed _ -> get_glyph fi (Uchar.to_int Uutf.u_rep) :: acc
-    | `Uchar u ->
-      let g = get_glyph fi (Uchar.to_int u) in
-      g :: acc
-  in
-  Uutf.String.fold_utf_8 f [] text
-  |> List.rev
+  let make fi ~size text =
+    let u_to_em = float fi.Font.units_per_em in
+    let glyphs = glyphs_of_string fi text in
+    let rel_advs, kernings =
+      rel_advances_and_kernings_of_glyphs fi glyphs in
+    let advances, len =
+      let rec loop acc len advs kerns = match advs, kerns with
+        | adv :: advs, k :: kerns ->
+          let adv = adv + k in
+          let sadv = V2.v ((size *. (float adv)) /. u_to_em) 0. in
+          loop (sadv :: acc) (len + adv) advs kerns
+        | adv :: [], [] -> acc, len + adv
+        | _ -> assert false
+      in
+      loop [] 0 rel_advs kernings
+    in
+    let maxy, miny = maxy_and_miny_of_glyphs fi glyphs in
+    let scale x = (size *. float x) /. u_to_em in
+    let width = scale len in
+    let maxy = scale maxy in
+    let miny = scale miny in
+    { font = fi ; size ; text ; glyphs ; width ; advances ; maxy ; miny }
 
-let text_length fi ~font_size text =
-  let _glyphs_rev, _advances_rev, len = layout fi ~font_size text in
-  len
+  let width l = l.width
+  let maxy l = l.maxy
+  let miny l = l.miny
+end
 
-let cut ?(col = Color.black) ?(size = 12.) font text =
+let cut ?(col = Color.black) { Layout.font ; advances ; glyphs ; text ; size ; _ } =
   let vg_font = { Vg.Font.name = Font.name font ;
                   slant = `Normal;
                   weight = `W400;
                   size } in
-  let base = size *. Font.descender font in
-  let height = size *. Font.ascender font -. base in
-  let glyphs, advances, width = layout font ~font_size:size text in
-  let i =
-    Vg.I.const col |>
-    Vg.I.cut_glyphs ~text ~advances vg_font glyphs
-  in
-  i, Box2.v (V2.v 0. base) (Size2.v width height)
-
-let bbox ~size font text =
-  let under = size *. Font.ymin font in
-  let above = size *. Font.ymax font in
-  let _, _, width = layout font ~font_size:size text in
-  Box2.v (V2.v 0. under) (Size2.v width (above -. under))
+  Vg.I.const col |>
+  Vg.I.cut_glyphs ~text ~advances vg_font glyphs

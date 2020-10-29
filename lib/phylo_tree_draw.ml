@@ -71,7 +71,8 @@ let rec draw_tree ~inter_leaf_space ~branch_factor ~x ~y ~height = function
       | `oblique -> Font.dejavu_sans_mono_oblique
       | `bold -> Font.dejavu_sans_mono_bold
     in
-    Picture.text ~size:1. ~halign:`left ~valign:`balanced ~col:l.color ~font ~x ~y (" " ^ l.text)
+    Picture.text ~size:1. ~halign:`left ~valign:`base ~col:l.color ~font ~x ~y (" " ^ l.text)
+    |> Picture.translate ~dy:(-0.4)
   | Node { children ; tag } ->
     let children_layout = vertical_tree_layout ~height ~y children in
     let children_pic =

@@ -139,7 +139,7 @@ module Picture : sig
     ?size:float ->
     ?font:Font.t ->
     ?halign:[ `middle | `left | `right ] ->
-    ?valign:[ `balanced | `base | `top | `bottom ] ->
+    ?valign:[ `base | `top | `bottom ] ->
     x:float ->
     y:float ->
     string ->
