@@ -44,10 +44,10 @@ module Font : sig
   val xmax : t -> float
   val ymax : t -> float
   val default : t
-  val free_sans : t
-  val free_sans_bold : t
-  val free_sans_oblique : t
-  val free_sans_bold_oblique : t
+  val dejavu_sans_mono : t
+  val dejavu_sans_mono_bold : t
+  val dejavu_sans_mono_oblique : t
+  val dejavu_sans_mono_bold_oblique : t
 end
 
 type thickness = [

@@ -55,7 +55,7 @@ module Make(A : Alphabet) = struct
   let draw_y_scale () =
     let open Croquis.Picture in
     let text x y msg =
-      text ~x ~y msg ~font:Croquis.Font.free_sans_bold ~size:0.1
+      text ~x ~y msg ~font:Croquis.Font.dejavu_sans_mono_bold ~size:0.1
     in
     blend [
       path [ 0., 0. ; 0., 2. ] ;
@@ -71,8 +71,8 @@ module Make(A : Alphabet) = struct
     let open Croquis in
     let open Picture in
     let open Gg in
-    let size = 10. in
-    let font = Font.free_sans_bold in
+    let size = 2.7 in
+    let font = Font.dejavu_sans_mono_bold in
     let letter =
       List.map A.all ~f:(fun c ->
           sprintf "%c" (Char.uppercase (A.to_char c))

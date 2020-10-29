@@ -67,9 +67,9 @@ let vertical_tree_layout ~height ~y children =
 let rec draw_tree ~inter_leaf_space ~branch_factor ~x ~y ~height = function
   | Leaf l ->
     let font = match l.style with
-      | `normal -> Font.free_sans
-      | `oblique -> Font.free_sans_oblique
-      | `bold -> Font.free_sans_bold
+      | `normal -> Font.dejavu_sans_mono
+      | `oblique -> Font.dejavu_sans_mono_oblique
+      | `bold -> Font.dejavu_sans_mono_bold
     in
     Picture.text ~size:1. ~halign:`left ~valign:`balanced ~col:l.color ~font ~x ~y (" " ^ l.text)
   | Node { children ; tag } ->
@@ -98,7 +98,7 @@ let draw_tree tree =
   let width = 5. *. Float.of_int (tree_depth tree) in
   let branch_factor = width /. tree_height in
   let nb_leaves = nb_leaves tree in
-  let delta = Biotk_croquis.Croquis.Font.(ymax free_sans -. ymin free_sans) in
+  let delta = Biotk_croquis.Croquis.Font.(ymax dejavu_sans_mono -. ymin dejavu_sans_mono) in
   let height = 1.02 *. delta *. Float.of_int (nb_leaves + 1) in
   let inter_leaf_space = height -. (Float.of_int nb_leaves +. 1.) *. delta in
   draw_tree ~inter_leaf_space ~branch_factor ~x:0. ~y:0. ~height tree
@@ -108,7 +108,7 @@ let draw_branch (Branch b as branch) =
   let width = 5. *. Float.of_int (branch_depth branch) in
   let branch_factor = width /. tree_height in
   let nb_leaves = nb_leaves b.tip in
-  let delta = Biotk_croquis.Croquis.Font.(ymax free_sans -. ymin free_sans) in
+  let delta = Biotk_croquis.Croquis.Font.(ymax dejavu_sans_mono -. ymin dejavu_sans_mono) in
   let height = 1.02 *. delta *. Float.of_int (nb_leaves + 1) in
   let inter_leaf_space = height -. (Float.of_int nb_leaves +. 1.) *. delta in
   draw_branch ~inter_leaf_space ~branch_factor ~x:0. ~y:0. ~height branch

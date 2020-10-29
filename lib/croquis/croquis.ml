@@ -84,12 +84,12 @@ module Font = struct
           failwithf "Read_error: %s" msg ()
       )
 
-  let free_sans = embedded_load Free_sans.contents
-  let free_sans_bold = embedded_load Free_sans_bold.contents
-  let free_sans_oblique = embedded_load Free_sans_oblique.contents
-  let free_sans_bold_oblique = embedded_load Free_sans_bold_oblique.contents
+  let dejavu_sans_mono = embedded_load Dejavu_sans_mono.contents
+  let dejavu_sans_mono_bold = embedded_load Dejavu_sans_mono_bold.contents
+  let dejavu_sans_mono_oblique = embedded_load Dejavu_sans_mono_oblique.contents
+  let dejavu_sans_mono_bold_oblique = embedded_load Dejavu_sans_mono_bold_oblique.contents
 
-  let default = free_sans
+  let default = dejavu_sans_mono
 end
 
 module Picture = struct
@@ -574,10 +574,10 @@ module Layout = struct
     in
     let font (f : Vg.Font.t) =
       match f.name with
-      | "FreeSans" -> otf_font Font.free_sans
-      | "FreeSansBold" -> otf_font Font.free_sans_bold
-      | "FreeSansOblique" -> otf_font Font.free_sans_oblique
-      | "FreeSansBoldOblique" -> otf_font Font.free_sans_bold_oblique
+      | "DejaVuSansMono" -> otf_font Font.dejavu_sans_mono
+      | "DejaVuSansMono-Bold" -> otf_font Font.dejavu_sans_mono_bold
+      | "DejaVuSansMono-Oblique" -> otf_font Font.dejavu_sans_mono_oblique
+      | "DejaVuSansMono-BoldOblique" -> otf_font Font.dejavu_sans_mono_bold_oblique
       | _ -> `Sans
     in
     Out_channel.with_file fn ~f:(fun oc ->
