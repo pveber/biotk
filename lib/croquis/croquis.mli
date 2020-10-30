@@ -128,6 +128,8 @@ module Picture : sig
 
   val crop : t -> box2 -> t
 
+  val frame : t -> t
+
   val pileup : t list -> t
 
   val vstack :
@@ -139,7 +141,7 @@ module Picture : sig
     ?align:[`none | `centered | `top | `bottom ] ->
     t list ->
     t
-  
+
   val text :
     ?col:Color.t ->
     ?size:float ->

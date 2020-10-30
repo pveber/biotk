@@ -357,6 +357,28 @@ module Picture = struct
         I.cut (path_of_box2 b) t#render
     end
 
+  let frame t =
+    object
+      method bbox = t#bbox
+      method render =
+        let bb = t#bbox in
+        let sw = Box2.bl_pt bb in
+        let nw = Box2.tl_pt bb in
+        let ne = Box2.tr_pt bb in
+        let se = Box2.br_pt bb in
+        let p =
+          P.empty
+          |> P.sub sw
+          |> P.line nw
+          |> P.line ne
+          |> P.line se
+          |> P.line sw
+        in
+        let area = `O { P.o with P.width = 0.01 ;
+                                 P.cap = `Square } in
+        I.blend t#render (I.cut ~area p (I.const Color.black))
+    end
+
   (* Tetris-like layout *)
   module Pileup_layout = struct
     type block = {
@@ -443,7 +465,7 @@ module Picture = struct
         in
         translate ~dx ~dy pic
       in
-      List.fold2_exn items bboxes ~init:(height /. 2., []) ~f:(fun (y, acc) pic bbox ->
+      List.fold2_exn items bboxes ~init:(height, []) ~f:(fun (y, acc) pic bbox ->
           let pic' = justify y pic bbox in
           (y -. Box2.h bbox, pic' :: acc)
         )
@@ -458,10 +480,6 @@ module Picture = struct
   module HStack_layout = struct
     let make alignment items =
       let bboxes = List.map items ~f:(fun i -> i#bbox) in
-      let width = List.fold bboxes ~init:0. ~f:(fun acc bb ->
-          acc +. Box2.w bb
-        )
-      in
       let justify x pic bbox =
         let dx = x -. Box2.minx bbox in
         let dy = match alignment with
@@ -472,7 +490,7 @@ module Picture = struct
         in
         translate ~dx ~dy pic
       in
-      List.fold2_exn items bboxes ~init:(-. width /. 2., []) ~f:(fun (x, acc) pic bbox ->
+      List.fold2_exn items bboxes ~init:(0., []) ~f:(fun (x, acc) pic bbox ->
           let pic' = justify x pic bbox in
           (x +. Box2.w bbox, pic' :: acc)
         )
