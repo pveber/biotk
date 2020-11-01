@@ -71,7 +71,6 @@ module Make(A : Alphabet) = struct
     let open Croquis in
     let open Picture in
     let open Gg in
-    let size = 2.7 in
     let font = Font.dejavu_sans_mono_bold in
     let letter =
       List.map A.all ~f:(fun c ->
@@ -85,41 +84,27 @@ module Make(A : Alphabet) = struct
       else
         Array.init A.card ~f:(fun i -> Color.gray (float i *. 127. /. float A.card))
     in
-    let left = 3.5 and right = 3.5 in
-    let draw_letter ~x ~y ~col ~sy l =
+    let draw_letter ~x ~col ~sy l =
       if Core_kernel.Float.(sy < 1e-6) then None
       else
-        let xmin = x -. left in
-        let ymin = y -. Font.(ymax font +. ymin font) *. size /. 2. *. 1.1 in
-        let xmax = x +. right in
-        let ymax = 0.425 *. size *. Font.ymax font in
-        let bbox = Box2.of_pts (V2.v xmin ymin) (V2.v xmax ymax) in
         Some (
-          (* blend2 *)
-            (crop (text ~size ~font l ~col ~x ~y) bbox)
-            (* (rect ~draw:Color.black ~xmin ~xmax ~ymin ~ymax ()) *)
-          |> scale ~sy
+          text ~valign:`base ~font l ~col ~x ~y:0.
+          |> scale ~center:`origin ~sy
         )
     in
     let draw_col p_i =
+      let entropy = column_entropy p_i in
       List.init A.card ~f:(fun j ->
-          draw_letter letter.(j) ~col:color.(j) ~x:0. ~y:0. ~sy:p_i.(j)
+          draw_letter letter.(j) ~col:color.(j) ~x:0. ~sy:p_i.(j)
         )
       |> List.filter_opt
       |> vstack ~align:`centered
+      |> reshape ~bbox:(Box2.v (V2.v 0. 0.) (V2.v 1. (2. -. entropy)))
     in
-    let entropy = Array.map ~f:column_entropy t in
-    let min_entropy = Array.reduce_exn entropy ~f:Core_kernel.Float.min in
-    let logo =
-      Array.map t ~f:draw_col
-      |> Array.to_list
-      |> List.mapi ~f:(fun i pic ->
-          reshape ~bbox:(Box2.v (V2.v 0. 0.) (V2.v 1. (2. -. entropy.(i)))) pic
-        )
-      |> hstack ~align:`bottom
-      |> reshape ~bbox:(Box2.(v V2.zero V2.(v (float (Array.length t)) (2. -. min_entropy))))
-    in
-    blend2 (draw_y_scale ()) logo
+    Array.map t ~f:draw_col
+    |> Array.to_list
+    |> List.cons (draw_y_scale ())
+    |> hstack ~align:`bottom
 end
 
 module DNA = struct
