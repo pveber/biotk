@@ -23,11 +23,9 @@
     "biocaml"
     ("core" (>= "v0.14.0"))
     "fmt"
-    "gsl"
     "ocamlify"
     "ocamlnet"
     "otfm"
-    "owl"
     "ppx_csv_conv"
     "ppx_deriving"
     "vg"))
