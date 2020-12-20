@@ -1,7 +1,7 @@
 (library
  (name biotk_croquis)
  (public_name biotk.croquis)
- (libraries core_kernel otfm vg vg.pdf)
+ (libraries core_kernel otfm vg vg.pdf vg.svg)
  (private_modules Dejavu_sans_mono Dejavu_sans_mono_bold
                   Dejavu_sans_mono_oblique Dejavu_sans_mono_bold_oblique
                   Vg_text))

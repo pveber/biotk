@@ -183,9 +183,10 @@ module Layout : sig
 
   val simple : Picture.t -> t
 
-  val render_pdf :
+  val render :
     ?width:float ->
     ?height:float ->
+    [`pdf | `svg] ->
     t ->
     target ->
     unit

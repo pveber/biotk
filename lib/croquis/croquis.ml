@@ -591,32 +591,38 @@ module Layout = struct
       (V2.v (w +. delta) (h +. delta))
 
 
-  let render_pdf ?width ?height (Simple pic) target =
+  let render ?width ?height format (Simple pic) target =
     let view = box2_padding 0.01 pic#bbox in
     let size = size ?width ?height view in
     let image = pic#render in
-    let otf_font x =
-      Lazy.force x
-      |> Vg_text.Font.data
-      |> Vgr_pdf.otf_font
-      |> function
-      | Ok x -> x
-      | Error _ -> assert false
-    in
-    let font (f : Vg.Font.t) =
-      match f.name with
-      | "DejaVuSansMono" -> otf_font Font.dejavu_sans_mono
-      | "DejaVuSansMono-Bold" -> otf_font Font.dejavu_sans_mono_bold
-      | "DejaVuSansMono-Oblique" -> otf_font Font.dejavu_sans_mono_oblique
-      | "DejaVuSansMono-BoldOblique" -> otf_font Font.dejavu_sans_mono_bold_oblique
-      | "LiberationSans" -> otf_font Font.liberation_sans
-      | "LiberationSans-Bold" -> otf_font Font.liberation_sans_bold
-      | "LiberationSans-Italic" -> otf_font Font.liberation_sans_italic
-      | "LiberationSans-BoldItalic" -> otf_font Font.liberation_sans_bold_italic
-      | _ -> `Sans
+    let renderer =
+      match format with
+      | `pdf ->
+        let otf_font x =
+          Lazy.force x
+          |> Vg_text.Font.data
+          |> Vgr_pdf.otf_font
+          |> function
+          | Ok x -> x
+          | Error _ -> assert false
+        in
+        let font (f : Vg.Font.t) =
+          match f.name with
+          | "DejaVuSansMono" -> otf_font Font.dejavu_sans_mono
+          | "DejaVuSansMono-Bold" -> otf_font Font.dejavu_sans_mono_bold
+          | "DejaVuSansMono-Oblique" -> otf_font Font.dejavu_sans_mono_oblique
+          | "DejaVuSansMono-BoldOblique" -> otf_font Font.dejavu_sans_mono_bold_oblique
+          | "LiberationSans" -> otf_font Font.liberation_sans
+          | "LiberationSans-Bold" -> otf_font Font.liberation_sans_bold
+          | "LiberationSans-Italic" -> otf_font Font.liberation_sans_italic
+          | "LiberationSans-BoldItalic" -> otf_font Font.liberation_sans_bold_italic
+          | _ -> `Sans
+        in
+        Vgr_pdf.target ~font ()
+      | `svg -> Vgr_svg.target ()
     in
     let render target =
-      let r = Vgr.create (Vgr_pdf.target ~font ()) target in
+      let r = Vgr.create renderer target in
       ignore (Vgr.render r (`Image (V2.of_tuple size, view, image))) ;
       ignore (Vgr.render r `End)
     in
