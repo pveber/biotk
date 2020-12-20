@@ -172,6 +172,12 @@ module Plot : sig
     Picture.t
 end
 
+type target = [
+  | `File of string
+  | `Channel of Stdlib.out_channel
+  | `Buffer of Buffer.t
+]
+
 module Layout : sig
   type t
 
@@ -181,6 +187,6 @@ module Layout : sig
     ?width:float ->
     ?height:float ->
     t ->
-    string ->
+    target ->
     unit
 end

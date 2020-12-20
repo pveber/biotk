@@ -558,6 +558,12 @@ module Plot = struct
       |> Picture.blend
 end
 
+type target = [
+  | `File of string
+  | `Channel of Stdlib.out_channel
+  | `Buffer of Buffer.t
+]
+
 module Layout = struct
   type t =
     | Simple of Picture.t
@@ -585,7 +591,7 @@ module Layout = struct
       (V2.v (w +. delta) (h +. delta))
 
 
-  let render_pdf ?width ?height (Simple pic) fn =
+  let render_pdf ?width ?height (Simple pic) target =
     let view = box2_padding 0.01 pic#bbox in
     let size = size ?width ?height view in
     let image = pic#render in
@@ -609,9 +615,13 @@ module Layout = struct
       | "LiberationSans-BoldItalic" -> otf_font Font.liberation_sans_bold_italic
       | _ -> `Sans
     in
-    Out_channel.with_file fn ~f:(fun oc ->
-        let r = Vgr.create (Vgr_pdf.target ~font ()) (`Channel oc) in
-        ignore (Vgr.render r (`Image (V2.of_tuple size, view, image))) ;
-        ignore (Vgr.render r `End)
-      )
+    let render target =
+      let r = Vgr.create (Vgr_pdf.target ~font ()) target in
+      ignore (Vgr.render r (`Image (V2.of_tuple size, view, image))) ;
+      ignore (Vgr.render r `End)
+    in
+    match target with
+    | `File fn ->
+      Out_channel.with_file fn ~f:(fun oc -> render (`Channel oc))
+    | (`Channel _ | `Buffer _) as target -> render target
 end
