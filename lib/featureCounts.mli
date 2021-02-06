@@ -10,6 +10,7 @@ module Tsv : sig
   } [@@deriving fields, csv]
 
   val load : string -> t list
+  val loc : t -> GLoc.t
 end
 
 module Summary : sig

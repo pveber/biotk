@@ -15,6 +15,8 @@ module Tsv = struct
     In_channel.read_lines fn
     |> Fn.flip List.drop 2
     |> List.map ~f:(fun l -> try t_of_row (String.split ~on:'\t' l) with _ -> failwith l)
+
+  let loc { chr ; lo ; hi ; _ } = { GLoc.chr ; lo ; hi }
 end
 
 module Summary = struct
