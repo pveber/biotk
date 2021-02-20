@@ -195,7 +195,7 @@ module Bed5 = struct
     chromStart : int ;
     chromEnd : int ;
     name : string ;
-    score : float ;
+    score : int ;
   }
   module Base = struct
     type t = record
@@ -206,12 +206,12 @@ module Bed5 = struct
         { chrom ;
           chromStart = Int.of_string chromStart ;
           chromEnd = Int.of_string chromEnd ;
-          name ; score = Float.of_string score }
+          name ; score = Int.of_string score }
       | l -> failwithf "Expected more fields, got %s" (show_fields l) ()
 
     let to_fields r = [
       r.chrom ; sprintf "%d" r.chromStart ; sprintf "%d" r.chromEnd ;
-      r.name ; sprintf "%g" r.score
+      r.name ; sprintf "%d" r.score
     ]
   end
   include Make'(Base)
@@ -232,7 +232,7 @@ module Bed6 = struct
     chromStart : int ;
     chromEnd : int ;
     name : string ;
-    score : float ;
+    score : int ;
     strand : strand ;
   }
   module Base = struct
@@ -245,7 +245,7 @@ module Bed6 = struct
           chromStart = Int.of_string chromStart ;
           chromEnd = Int.of_string chromEnd ;
           name ;
-          score = Float.of_string score ;
+          score = Int.of_string score ;
           strand = (
             match parse_strand strand with
             | Ok s -> s
@@ -256,7 +256,7 @@ module Bed6 = struct
 
     let to_fields r = [
       r.chrom ; sprintf "%d" r.chromStart ; sprintf "%d" r.chromEnd ;
-      r.name ; sprintf "%g" r.score ;
+      r.name ; sprintf "%d" r.score ;
       (match r.strand with
        | `Not_relevant -> "."
        | `Unknown -> "?"

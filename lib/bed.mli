@@ -64,7 +64,7 @@ module Bed5 : sig
     chromStart : int ;
     chromEnd : int ;
     name : string ;
-    score : float ;
+    score : int ;
   }
   module Record : sig
     include Record with type t = record
@@ -79,7 +79,7 @@ module Bed6 : sig
     chromStart : int ;
     chromEnd : int ;
     name : string ;
-    score : float ;
+    score : int ;
     strand : strand ;
   }
   module Record : Record with type t = record
