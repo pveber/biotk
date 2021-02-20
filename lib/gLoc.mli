@@ -2,7 +2,7 @@ type t = {
   chr : string ;
   lo : int ;
   hi : int ;
-} [@@deriving compare, sexp]
+} [@@deriving equal, compare, sexp]
 
 val of_string : string -> (t, [> `Parse_error]) result
 val of_string_exn : string -> t
@@ -36,3 +36,6 @@ val dist : t -> t -> int option
 val position : from:t -> t -> int option
 
 val union : t -> t -> t option
+
+module Set : Core_kernel.Set.S with type Elt.t := t
+module Map : Core_kernel.Map.S with type Key.t := t

@@ -4,7 +4,7 @@ type t = {
   chr : string ;
   lo : int ;
   hi : int ;
-} [@@deriving compare, sexp]
+} [@@deriving equal, compare, sexp]
 
 let to_string { chr ; lo ; hi } =
   Printf.sprintf "%s:%d-%d" chr lo hi
@@ -96,3 +96,12 @@ let union s s' =
     }
   else
     None
+
+module Elt = struct
+  type nonrec t = t
+  let sexp_of_t = sexp_of_t
+  let t_of_sexp = t_of_sexp
+  let compare = compare
+end
+module Map = Core_kernel.Map.Make(Elt)
+module Set = Core_kernel.Set.Make(Elt)
