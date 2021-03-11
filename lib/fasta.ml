@@ -60,6 +60,10 @@ let from_file fn =
         Error msg
     )
 
+let from_file_exn fn =
+  from_file fn
+  |> Result.ok_or_failwith
+
 let sequences_from_file_exn fn =
   match from_file fn with
   | Ok (_, items) -> List.map items ~f:(fun i -> i.sequence)

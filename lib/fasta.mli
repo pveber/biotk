@@ -15,6 +15,10 @@ val from_file :
   string ->
   (header * item list, string) result
 
+val from_file_exn :
+  string ->
+  header * item list
+
 val sequences_from_file_exn :
   string ->
   string list
