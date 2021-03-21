@@ -224,7 +224,7 @@ module Picture = struct
         end
       )
 
-  let path ?(col = Color.black) ?(thickness = `normal) ?(arrow_head = false) points =
+  let path ?(col = Color.black) ?(thickness = `normal) ?(arrow_head = false) ?(cap = `Butt) points =
     let arrow_head = if arrow_head then arrow_head_geometry points else None in
     object
       method render =
@@ -240,7 +240,8 @@ module Picture = struct
                   P.line (V2.v x y) acc
                 )
             in
-            let area = `O { P.o with P.width = thickness_value thickness } in
+            let area = `O { P.o with P.width = thickness_value thickness ;
+                                     cap } in
             I.cut ~area path (I.const col)
         and head = match arrow_head with
           | None -> I.void

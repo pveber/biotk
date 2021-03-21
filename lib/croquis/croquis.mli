@@ -94,6 +94,7 @@ module Picture : sig
     ?col:Color.t ->
     ?thickness:thickness ->
     ?arrow_head:bool ->
+    ?cap:Vg.P.cap ->
     point list ->
     t
 
