@@ -43,8 +43,8 @@ and branch_depth (Branch b) = 1 + tree_depth b.tip
 
 let leaf ?(style = `normal) ?(col = Color.black) text = Leaf { text ; style ; color = col }
 let branch ?(col = Color.black) length tip = Branch { length ; tip ; color = col }
-let bnode ?tag x y = Node { tag ; children = [ x ; y ] }
 let node ?tag children = Node { tag ; children }
+let bnode ?tag x y = node ?tag [ x ; y ]
 
 type tree_vertical_placement = {
   root : float ;
@@ -77,22 +77,25 @@ let rec draw_tree ~inter_leaf_space ~branch_factor ~x ~y ~height = function
     let children_layout = vertical_tree_layout ~height ~y children in
     let children_pic =
       List.map2_exn children children_layout ~f:(fun b tvp ->
-          draw_branch ~inter_leaf_space ~branch_factor ~height:tvp.height b ~x ~y:tvp.root
+          draw_branch ~inter_leaf_space ~branch_factor ~height:tvp.height b ~root_y:y ~x ~y:tvp.root
         )
       |> Picture.blend
     in
     let highest_root = (List.hd_exn children_layout).root in
     let lowest_root = (List.last_exn children_layout).root in
-    let node = Picture.blend2 children_pic (Picture.path ~thickness:`thick [ (x, highest_root) ; (x, lowest_root) ]) in
+    let node =
+      Picture.path ~col:Color.red ~thickness:`thick [ (x, highest_root) ; (x, lowest_root) ]
+      |> Picture.blend2 children_pic
+    in
     match tag with
     | None -> node
     | Some col -> Picture.(blend2 (circle ~x ~y ~draw:col ~fill:col ~radius:0.2 ()) node)
 
-and draw_branch ~inter_leaf_space ~height ~branch_factor ~x ~y (Branch b) =
+and draw_branch ~inter_leaf_space ~height ~branch_factor ~root_y ~x ~y (Branch b) =
   let x' = x +. b.length *. branch_factor in
   Picture.blend2
     (draw_tree ~inter_leaf_space ~branch_factor ~height b.tip ~x:x' ~y)
-    (Picture.path ~col:b.color ~thickness:`thick [ (x, y) ; (x', y) ])
+    (Picture.path ~col:b.color ~thickness:`thick [ (x, root_y) ; (x, y) ; (x', y) ])
 
 let draw_tree tree =
   let tree_height = tree_height tree in
@@ -112,4 +115,4 @@ let draw_branch (Branch b as branch) =
   let delta = Biotk_croquis.Croquis.Font.(ymax dejavu_sans_mono -. ymin dejavu_sans_mono) in
   let height = 1.02 *. delta *. Float.of_int (nb_leaves + 1) in
   let inter_leaf_space = height -. (Float.of_int nb_leaves +. 1.) *. delta in
-  draw_branch ~inter_leaf_space ~branch_factor ~x:0. ~y:0. ~height branch
+  draw_branch ~inter_leaf_space ~branch_factor ~root_y:0. ~x:0. ~y:0. ~height branch

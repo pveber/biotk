@@ -11,7 +11,7 @@ let tree =
     branch 2.5 (
       node ~tag:red [
         branch ~col:red 1. (Phylo_tree_draw.leaf ~col:red "Mus musculus");
-        branch ~col:red 1.5 (leaf ~col:red "Rattus norvegicus");
+        branch ~col:blue 1.5 (leaf ~col:blue "Rattus norvegicus");
       ]
     )
   ]
@@ -39,4 +39,4 @@ let picture =
   |> Croquis.Layout.simple
 
 let () =
-  Croquis.Layout.render_pdf picture "croquis_demo.pdf"
+  Croquis.Layout.render `pdf picture (`File "croquis_demo.pdf")
