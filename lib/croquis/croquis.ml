@@ -204,6 +204,8 @@ module Picture = struct
 
   let blend2 x y = blend [ x ; y ]
 
+  let bbox x = x#bbox
+
   let arrow_head_geometry points =
     match List.rev points with
     | [] | [ _ ] -> None

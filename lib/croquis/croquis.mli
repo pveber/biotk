@@ -153,6 +153,8 @@ module Picture : sig
     y:float ->
     string ->
     t
+
+  val bbox : t -> Gg.box2
 end
 
 module Plot : sig
