@@ -7,6 +7,7 @@ module type S = sig
   val length : t -> int
   val composition : t -> float array
   val draw : t -> Croquis.Picture.t
+  val entropy : t -> float array
 end
 
 module type Alphabet = sig

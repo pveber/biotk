@@ -9,6 +9,7 @@ module type S = sig
   val length : t -> int
   val composition : t -> float array
   val draw : t -> Croquis.Picture.t
+  val entropy : t -> float array
 end
 
 module type Alphabet = sig
@@ -51,6 +52,8 @@ module Make(A : Alphabet) = struct
 
   let column_entropy p =
     -. sum (Array.length p) ~f:(fun j -> xlnx p.(j))
+
+  let entropy = Array.map ~f:column_entropy
 
   let draw_y_scale () =
     let open Croquis.Picture in
