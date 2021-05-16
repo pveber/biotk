@@ -1,3 +1,4 @@
+open Gg
 open Core_kernel
 open Misc
 open Biotk_croquis
@@ -55,25 +56,26 @@ module Make(A : Alphabet) = struct
 
   let entropy = Array.map ~f:column_entropy
 
+  let max_entropy = Float.log (float A.card) /. Float.log 2.
+
   let draw_y_scale () =
     let open Croquis.Picture in
     let text x y msg =
       text ~x ~y msg ~font:Croquis.Font.dejavu_sans_mono_bold ~size:0.1
     in
     blend [
-      path [ 0., 0. ; 0., 2. ] ;
+      path [ 0., 0. ; 0., max_entropy ] ;
       path [ -. 0.1, 0. ; 0., 0. ] ;
-      path [ -. 0.1, 1. ; 0., 1. ] ;
-      path [ -. 0.1, 2. ; 0., 2. ] ;
+      path [ -. 0.1, max_entropy /. 2. ; 0., max_entropy /. 2. ] ;
+      path [ -. 0.1, max_entropy ; 0., max_entropy ] ;
       text (-. 0.2) 0. "0" ;
-      text (-. 0.2) 1. "1" ;
-      text (-. 0.2) 2. "2" ;
+      text (-. 0.2) (max_entropy /. 2.) (Float.to_string (max_entropy /. 2.)) ;
+      text (-. 0.2) max_entropy (Float.to_string max_entropy) ;
     ]
 
   let draw t =
     let open Croquis in
     let open Picture in
-    let open Gg in
     let font = Font.dejavu_sans_mono_bold in
     let letter =
       List.map A.all ~f:(fun c ->
@@ -102,7 +104,7 @@ module Make(A : Alphabet) = struct
         )
       |> List.filter_opt
       |> vstack ~align:`centered
-      |> reshape ~bbox:(Box2.v (V2.v 0. 0.) (V2.v 1. (2. -. entropy)))
+      |> reshape ~bbox:(Box2.v (V2.v 0. 0.) (V2.v 1. (max_entropy -. entropy)))
     in
     Array.map t ~f:draw_col
     |> Array.to_list
