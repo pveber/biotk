@@ -82,7 +82,7 @@ let rev_convert_col col =
   else
     try Ints (conv Int.of_string) with _ ->
     try Floats (conv Float.of_string) with _ ->
-    Strings (Array.of_list_rev col)
+      Strings (Array.of_list_rev col)
 
 let parse_lines ncols lines =
   let open Result.Monad_infix in
@@ -156,35 +156,53 @@ module Ez = struct
   let error msg = raise (Error msg)
   let errorf fmt = Printf.ksprintf error fmt
 
-  let get_ints df i = match get_col df i with
+  let by_int gen_func = gen_func ~f:get_col ~string_of_id:string_of_int
+  let by_name gen_func = gen_func ~f:get_col_by_name ~string_of_id:Fn.id
+
+  let get_ints_gen ~f ~string_of_id df id  = match f df id with
     | Some (Ints xs) -> xs
-    | Some _ -> errorf "Column %d is not integer" i
-    | None -> errorf "No column %d" i
+    | Some _ -> errorf "Column %s is not integer" (string_of_id id)
+    | None -> errorf "No column %s" (string_of_id id)
+  let get_ints = by_int get_ints_gen
+  let get_ints_by_name = by_name get_ints_gen
 
-  let get_int_opts df i = match get_col df i with
+  let get_int_opts_gen ~f ~string_of_id df id = match f df id with
     | Some (Int_opts xs) -> xs
-    | Some _ -> errorf "Column %d is not integer with options" i
-    | None -> errorf "No column %d" i
+    | Some _ -> errorf "Column %s is not integer with options" (string_of_id id)
+    | None -> errorf "No column %s" (string_of_id id)
+  let get_int_opts = by_int get_int_opts_gen
+  let get_int_opts_by_name = by_name get_int_opts_gen
 
-  let get_floats df i = match get_col df i with
+  let get_floats_gen ~f ~string_of_id df id = match f df id with
     | Some (Floats xs) -> xs
-    | Some _ -> errorf "Column %d is not float" i
-    | None -> errorf "No column %d" i
+    | Some _ -> errorf "Column %s is not float" (string_of_id id)
+    | None -> errorf "No column %s" (string_of_id id)
+  let get_floats = by_int get_floats_gen
+  let get_floats_by_name = by_name get_floats_gen
 
-  let get_float_opts df i = match get_col df i with
+
+  let get_float_opts_gen ~f ~string_of_id df id = match f df id with
     | Some (Float_opts xs) -> xs
-    | Some _ -> errorf "Column %d is not float with options" i
-    | None -> errorf "No column %d" i
+    | Some _ -> errorf "Column %s is not float with options" (string_of_id id)
+    | None -> errorf "No column %s" (string_of_id id)
+  let get_float_opts = by_int get_float_opts_gen
+  let get_float_opts_by_name = by_name get_float_opts_gen
 
-  let get_strings df i = match get_col df i with
+  let get_strings_gen ~f ~string_of_id df id = match f df id with
     | Some (Strings xs) -> xs
-    | Some _ -> errorf "Column %d is not string" i
-    | None -> errorf "No column %d" i
+    | Some _ -> errorf "Column %s is not string" (string_of_id id)
+    | None -> errorf "No column %s" (string_of_id id)
+  let get_strings = by_int get_strings_gen
+  let get_strings_by_name = by_name get_strings_gen
 
-  let get_string_opts df i = match get_col df i with
+  let get_string_opts_gen ~f ~string_of_id df id = match f df id with
     | Some (String_opts xs) -> xs
-    | Some _ -> errorf "Column %d is not string with options" i
-    | None -> errorf "No column %d" i
+    | Some _ -> errorf "Column %s is not string with options" (string_of_id id)
+    | None -> errorf "No column %s" (string_of_id id)
+  let get_string_opts = by_int get_string_opts_gen
+  let get_string_opts_by_name = by_name get_string_opts_gen
+
+
 end
 
 type html_formatter =

@@ -37,6 +37,13 @@ module Ez : sig
   val get_float_opts : t -> int -> float option array
   val get_strings : t -> int -> string array
   val get_string_opts : t -> int -> string option array
+
+  val get_ints_by_name : t -> string -> int array
+  val get_int_opts_by_name : t -> string -> int option array
+  val get_floats_by_name : t -> string -> float array
+  val get_float_opts_by_name : t -> string -> float option array
+  val get_strings_by_name : t -> string -> string array
+  val get_string_opts_by_name : t -> string -> string option array
 end
 
 type html_formatter =
