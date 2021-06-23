@@ -25,6 +25,7 @@ depends: [
   "ppx_csv_conv"
   "ppx_deriving"
   "vg"
+  "tyxml"
 ]
 build: [
   ["dune" "subst"] {pinned}

@@ -28,4 +28,5 @@
     "otfm"
     "ppx_csv_conv"
     "ppx_deriving"
-    "vg"))
+    "vg"
+    "tyxml"))
