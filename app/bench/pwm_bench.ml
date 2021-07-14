@@ -6,9 +6,18 @@ let scan pwm seq theta f =
   f pwm seq theta
   |> ignore
 
+let random_nucleotide () =
+  match Random.bool (), Random.bool () with
+  | true, true -> 'A'
+  | true, false -> 'C'
+  | false, true -> 'G'
+  | false, false -> 'T'
+
+let random_sequence n = String.init n ~f:(fun _ -> random_nucleotide ())
+
 let tests =
   let n = 100_000 in
-  let seq = Dna_sequence.random n 0.5 in
+  let seq = random_sequence n in
   let pwm = Pwm.random ~len:10 (Pwm.flat_background ()) in
   let theta = Pwm_stats.TFM_pvalue.score_of_pvalue pwm (Pwm.flat_background ()) 1e-4 in
   [
@@ -19,4 +28,3 @@ let tests =
   ]
 
 let () = Command.run (Bench.make_command tests)
-
