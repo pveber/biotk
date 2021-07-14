@@ -27,5 +27,6 @@
     "otfm"
     "ppx_csv_conv"
     "ppx_deriving"
+    ("result" (>= 1.5))
     "vg"
     ("tyxml" (>= 4.4.0))))
