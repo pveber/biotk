@@ -1,4 +1,4 @@
-(lang dune 1.11)
+(lang dune 2.7)
 (generate_opam_files true)
 
 (name biotk)
@@ -21,10 +21,11 @@
     "biocaml"
     ("core" (>= "v0.14.0"))
     "fmt"
+    (ocaml (>= 4.11.0))
     "ocamlify"
     "ocamlnet"
     "otfm"
     "ppx_csv_conv"
     "ppx_deriving"
     "vg"
-    "tyxml"))
+    ("tyxml" (>= 4.4.0))))

@@ -12,21 +12,23 @@ license: "CeCILL-B"
 homepage: "https://github.com/pveber/biotk/"
 bug-reports: "https://github.com/pveber/biotk/issues"
 depends: [
-  "dune" {>= "1.11"}
+  "dune" {>= "2.7"}
   "angstrom-unix"
   "biocaml"
   "core" {>= "v0.14.0"}
   "fmt"
+  "ocaml" {>= "4.11.0"}
   "ocamlify"
   "ocamlnet"
   "otfm"
   "ppx_csv_conv"
   "ppx_deriving"
   "vg"
-  "tyxml"
+  "tyxml" {>= "4.4.0"}
+  "odoc" {with-doc}
 ]
 build: [
-  ["dune" "subst"] {pinned}
+  ["dune" "subst"] {dev}
   [
     "dune"
     "build"

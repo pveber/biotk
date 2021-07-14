@@ -1,8 +1,7 @@
 (library
  (name biotk)
  (public_name biotk)
- (c_names pwm_stub)
- (c_flags (-O3))
+ (foreign_stubs (language c) (names pwm_stub) (flags (-O3)))
  (inline_tests (deps ../data/ex1.bam.bai))
  (flags :standard -short-paths)
  (libraries
