@@ -1,6 +1,6 @@
 open Core
 open Biocaml_unix
-open Gzt
+open Biotk
 open Rresult
 
 let time f =
@@ -19,13 +19,13 @@ let ok_exn' = function
   | Error e -> failwith (Error.to_string_hum e)
 
 let loc_of_al = function
-  | { Sam.rname = Some chr ; pos = Some pos ; seq = Some seq ; _ } ->
+  | { Biocaml_unix.Sam.rname = Some chr ; pos = Some pos ; seq = Some seq ; _ } ->
     let lo = pos - 1 in
     let len = String.length seq in
     let hi = lo + len in
     Some GLoc.{ chr ; lo ; hi }
   | _ -> None
-  
+
 let loc_of_al0 header al =
   let open Result in
   Bam.Alignment0.decode al header >>| loc_of_al
@@ -33,7 +33,7 @@ let loc_of_al0 header al =
 let indexed_traversal ~bam ~bai ~loc =
   let visited = ref 0 in
   let count =
-    Bam_iterator.fold0 ~loc ~bam ~bai ~init:0 ~f:(fun n header al ->
+    Bam_iterator.fold0 ~loc ~bam ~bai ~init:0 ~f:(fun header n al ->
         incr visited ;
         match loc_of_al0 header al with
         | Ok (Some loc') ->
@@ -69,14 +69,14 @@ let main ~bam ~bai ~loc () =
   let (intersecting, visited), t = time (fun () -> indexed_traversal ~bam ~bai ~loc) in
   let (intersecting', visited'), t' = time (fun () -> full_traversal ~bam ~loc) in
   printf "(/\\ %d, visited = %d, %f) VS (/\\ %d, visited = %d, %f)\n" intersecting visited t intersecting' visited' t'
-      
+
 let command =
   let open Command.Let_syntax in
   Command.basic
     ~summary:"BAM traversal demo/test"
     [%map_open
-      let bam = flag "--bam" (required file) ~doc:"PATH BAM file"
-      and bai = flag "--bai" (required file) ~doc:"PATH BAI file"
+      let bam = flag "--bam" (required Filename.arg_type) ~doc:"PATH BAM file"
+      and bai = flag "--bai" (required Filename.arg_type) ~doc:"PATH BAI file"
       and loc = flag "--loc" (required string) ~doc:"LOC Location CHR:START-END" in
       main ~bam ~bai ~loc ]
 
