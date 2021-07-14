@@ -11,13 +11,11 @@
 
 (package
   (name biotk)
-  (synopsis "Biotope toolkit")
+  (synopsis "Bioinformatics toolkit")
   (description "biotk implements various functionalities in
                 computational biology, like parsers/unparsers for some
                 file formats, a few basic data structures and sequence
-                algorithms, as well as access to some databases. The
-                purpose of this library is to support the development
-                of computational pipelines with the biotope library.")
+                algorithms, as well as access to some databases.")
   (depends
     "angstrom-unix"
     "biocaml"
