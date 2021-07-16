@@ -17,7 +17,7 @@
                 file formats, a few basic data structures and sequence
                 algorithms, as well as access to some databases.")
   (depends
-    "angstrom-unix"
+    ("angstrom-unix" (>= 0.15.0))
     "biocaml"
     ("core" (>= "v0.14.0"))
     "fmt"
@@ -28,5 +28,6 @@
     "ppx_csv_conv"
     "ppx_deriving"
     ("result" (>= 1.5))
+    ("rresult" (>= 0.6.0))
     "vg"
     ("tyxml" (>= 4.4.0))))
