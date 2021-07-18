@@ -17,6 +17,7 @@
                 file formats, a few basic data structures and sequence
                 algorithms, as well as access to some databases.")
   (depends
+    ("angstrom" (>= 0.15.0))
     ("angstrom-unix" (>= 0.15.0))
     "biocaml"
     ("core" (>= "v0.14.0"))
