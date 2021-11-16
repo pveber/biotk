@@ -65,46 +65,66 @@ let optionally f = function
   | "NA" -> None
   | s -> Some (f s)
 
-let rev_convert_col col =
-  let conv f =
+let revconv f col =
+  try
     List.rev_map col ~f
     |> Array.of_list
-  in
-  let conv_opt f = conv (optionally f) in
-  if List.mem col "NA" ~equal:String.equal then
-    try Int_opts (conv_opt Int.of_string) with _ ->
-    try Float_opts (conv_opt Float.of_string)
-    with _ ->
-      String_opts (
-        List.map col ~f:Option.some
-        |> Array.of_list
-      )
-  else
-    try Ints (conv Int.of_string) with _ ->
-    try Floats (conv Float.of_string) with _ ->
-      Strings (Array.of_list_rev col)
+    |> Result.return
+  with _ -> Error `Conversion_failure
 
-let parse_lines ncols lines =
+let revconv_opt f = revconv (optionally f)
+
+let try_with f x ~ok ~error =
+  match f x with
+  | Ok y -> ok y
+  | Error e -> error e
+
+let ints x = Ints x
+let int_opts x = Int_opts x
+let strings x = Strings x
+let string_opts x = String_opts x
+let floats x = Floats x
+let float_opts x = Float_opts x
+
+let guess_rev_convert_col col =
+  if List.mem col "NA" ~equal:String.equal then
+    try_with (revconv_opt Int.of_string) col ~ok:int_opts
+      ~error:(fun _ ->
+          try_with (revconv_opt Float.of_string) col ~ok:float_opts
+            ~error:(fun _ -> List.map col ~f:Option.some |> Array.of_list |> string_opts)
+        )
+  else
+    try_with (revconv Int.of_string) col ~ok:ints
+      ~error:(fun _ ->
+          try_with (revconv Float.of_string) col ~ok:floats
+            ~error:(fun _ -> Array.of_list col |> strings)
+        )
+
+let parse_lines ~file_has_header ncols lines f =
   let open Result.Monad_infix in
+  let origin = 1 + if file_has_header then 1 else 0 in
   let init = 0, List.init ncols ~f:(Fn.const []) in
   fold_lines lines ~init ~f:(fun i (nr, acc) l ->
       let fields = String.split l ~on:'\t' in
       match List.map2 fields acc ~f:List.cons with
       | Ok r -> Ok (nr + 1, r)
-      | Unequal_lengths -> Rresult.R.error_msgf "Line %d doesn't have the expected %d fields" (i + 1) ncols
+      | Unequal_lengths -> Rresult.R.error_msgf "Line %d doesn't have the expected %d fields" (i + origin) ncols
     ) >>| fun (nrows, cols) ->
-  nrows, List.map cols ~f:rev_convert_col
+  f ~nrows ~list_of_reverted_columns:cols
 
 type parse_result = (int * column list, [`Msg of string]) result
 [@@deriving show]
 
 let%expect_test "Dataframe.parse_line ex1" =
+  let guess_rev_convert_cols ~nrows ~list_of_reverted_columns:cols =
+    nrows, List.map cols ~f:guess_rev_convert_col
+  in
   let got =
-    parse_lines 3 [
+    parse_lines ~file_has_header:false 3 [
       "a\t1.2\tNA" ;
       "a\t1.2\t2" ;
       "c\t-1.2\tNA" ;
-    ]
+    ] guess_rev_convert_cols
   in
   print_endline (show_parse_result got) ;
   [%expect {|
@@ -119,7 +139,7 @@ let check_header ~colnames header =
   | Ok false -> Error (`Msg "header is different from expected value")
   | Unequal_lengths -> Error (`Msg "incorrect number of columns")
 
-let from_file ?(header = `Read_in_file) path =
+let from_file_gen ?(header = `Read_in_file) path f =
   let open Let_syntax.Result in
   let lines = In_channel.read_lines path in
   let* labels, ncols, data_lines =
@@ -143,9 +163,22 @@ let from_file ?(header = `Read_in_file) path =
       Ok (colnames, List.length colnames, data_lines)
     | `None, [] -> Ok ([], 0, [])
   in
-  parse_lines ncols data_lines >>= fun (nrows, cols) ->
-  let cols = List.zip_exn labels cols in
-  Ok { nrows ; ncols ; cols }
+  let file_has_header = match header with
+    | `Use _ | `None -> false
+    | `Read_in_file | `Expect _ -> true
+  in
+  parse_lines ~file_has_header ncols data_lines (fun ~nrows ~list_of_reverted_columns ->
+      f ~nrows ~ncols ~labels ~list_of_reverted_columns
+    )
+
+let from_file ?header path =
+  from_file_gen ?header path (fun ~nrows ~ncols ~labels ~list_of_reverted_columns ->
+      let cols = List.map2_exn labels list_of_reverted_columns ~f:(fun label col ->
+          label, guess_rev_convert_col col
+        )
+      in
+      { nrows ; ncols ; cols }
+    )
 
 exception Error of string
 
