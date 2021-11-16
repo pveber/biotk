@@ -24,6 +24,36 @@ val from_file :
   string ->
   (t, [> `Msg of string]) result
 
+module Parser : sig
+  type error = [
+    | `Conversion_failure
+    | `Msg of string
+    | `Not_enough_columns
+    | `Too_many_columns
+    | `Unexpected_label of string * string
+  ]
+  [@@deriving show]
+
+  type 'a t
+
+  val return : 'a -> 'a t
+  val bind : 'a t -> f:('a -> 'b t) -> 'b t
+  val ints : string -> int array t
+  val floats : string -> float array t
+  val strings : string -> string array t
+  val int_opts : string -> int option array t
+  val float_opts : string -> float option array t
+  val string_opts : string -> string option array t
+  val (let*) : 'a t -> ('a -> 'b t) -> 'b t
+  val (let+) : 'a t -> ('a -> 'b) -> 'b t
+end
+
+val from_file_parse :
+  header:bool ->
+  string ->
+  'a Parser.t ->
+  ('a, Parser.error) result
+
 exception Error of string
 
 module Ez : sig

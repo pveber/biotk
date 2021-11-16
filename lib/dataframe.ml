@@ -180,6 +180,76 @@ let from_file ?header path =
       { nrows ; ncols ; cols }
     )
 
+module Parser = struct
+  type error = [
+    | `Conversion_failure
+    | `Msg of string
+    | `Not_enough_columns
+    | `Too_many_columns
+    | `Unexpected_label of string * string
+  ]
+  [@@deriving show]
+
+  type 'a t =
+    | Return : 'a -> 'a t
+    | Bind : 'a t * ('a -> 'b t) -> 'b t
+    | Column : string * (string list -> ('a array, error) result) -> 'a array t
+
+  let return x = Return x
+  let bind x ~f = Bind (x, f)
+  let ints label = Column (label, revconv Int.of_string)
+  let floats label = Column (label, revconv Float.of_string)
+  let strings label = Column (label, revconv Fn.id)
+  let int_opts label = Column (label, revconv_opt Int.of_string)
+  let float_opts label = Column (label, revconv_opt Float.of_string)
+  let string_opts label = Column (label, revconv_opt Fn.id)
+  let (let*) x f = Bind (x, f)
+  let (let+) x f = Bind (x, fun x -> return (f x))
+
+  let rec run
+    : type a. a t -> labels:string list -> list_of_reverted_columns:string list list -> (a, [> error]) result * string list * string list list
+    = fun p ~labels ~list_of_reverted_columns ->
+      match p, labels, list_of_reverted_columns with
+      | Return x, _, _ -> Ok x, labels, list_of_reverted_columns
+      | Bind (x, f), _, _ -> (
+          let r, labels, list_of_reverted_columns = run x ~labels ~list_of_reverted_columns in
+          match r with
+          | Ok x -> run (f x) ~labels ~list_of_reverted_columns
+          | Error e -> Error e, labels, list_of_reverted_columns
+        )
+      | Column _, [], _
+      | Column _, _, [] -> Error `Not_enough_columns, labels, list_of_reverted_columns
+      | Column (col_label, col_conv), label :: labels, rev_col :: list_of_reverted_columns ->
+        let res =
+          if not (String.equal col_label label) then
+            Error (`Unexpected_label (label, col_label))
+          else
+            col_conv rev_col
+        in
+        res, labels, list_of_reverted_columns
+end
+
+let from_file_parse ~header fn p =
+  let open Let_syntax.Result in
+  let header = if header then `Read_in_file else `None in
+  let* res, labels, _ =
+    from_file_gen ~header fn (fun ~nrows:_ ~ncols:_ ~labels ~list_of_reverted_columns ->
+        Parser.run ~labels ~list_of_reverted_columns p
+      )
+  in
+  match labels with
+  | [] -> res
+  | _ :: _ -> Error `Too_many_columns
+
+let%expect_test "Dataframe.Parser.from_file_parse" =
+  from_file_parse ~header:true "../data/survival.tsv" Parser.(
+      let* replicate = strings "replicate" in
+      let+ nsurv = ints "Nsurv" in
+      (replicate, nsurv)
+    )
+  |> [%derive.show: (string array * int array, Parser.error) result]
+  |> print_endline
+
 exception Error of string
 
 module Ez = struct
