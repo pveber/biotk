@@ -24,6 +24,27 @@ val from_file :
   string ->
   (t, [> `Msg of string]) result
 
+module Signature : sig
+  type ('a, 'b) t
+  val empty : ('a, 'a) t
+  val ints : string -> ('a, 'b) t -> (int array -> 'a, 'b) t
+  val int_opts : string -> ('a, 'b) t -> (int option array -> 'a, 'b) t
+  val floats : string -> ('a, 'b) t -> (float array -> 'a, 'b) t
+  val float_opts : string -> ('a, 'b) t -> (float option array -> 'a, 'b) t
+  val strings : string -> ('a, 'b) t -> (string array -> 'a, 'b) t
+  val string_opts : string -> ('a, 'b) t -> (string option array -> 'a, 'b) t
+end
+
+val from_file_and_apply :
+  header:bool ->
+  ('a, 'b) Signature.t ->
+  string ->
+  'a ->
+  ('b, [> `Conversion_failure
+       | `Msg of string
+       | `Not_enough_columns
+       | `Too_many_columns ]) result
+
 module Parser : sig
   type error = [
     | `Conversion_failure

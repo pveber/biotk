@@ -180,6 +180,73 @@ let from_file ?header path =
       { nrows ; ncols ; cols }
     )
 
+
+module Signature = struct
+  type ('a, 'b) t =
+    | Empty : ('a, 'a) t
+    | Ints : string * ('a, 'b) t -> (int array -> 'a, 'b) t
+    | Int_opts : string * ('a, 'b) t -> (int option array -> 'a, 'b) t
+    | Floats : string * ('a, 'b) t -> (float array -> 'a, 'b) t
+    | Float_opts : string * ('a, 'b) t -> (float option array -> 'a, 'b) t
+    | Strings : string * ('a, 'b) t -> (string array -> 'a, 'b) t
+    | String_opts : string * ('a, 'b) t -> (string option array -> 'a, 'b) t
+
+  let empty = Empty
+  let ints label rest = Ints (label, rest)
+  let int_opts label rest = Int_opts (label, rest)
+  let floats label rest = Floats (label, rest)
+  let float_opts label rest = Float_opts (label, rest)
+  let strings label rest = Strings (label, rest)
+  let string_opts label rest = String_opts (label, rest)
+
+  let rec labels : type a b. (a, b) t -> string list = function
+    | Empty -> []
+    | Ints (label, rest) -> label :: labels rest
+    | Int_opts (label, rest) -> label :: labels rest
+    | Floats (label, rest) -> label :: labels rest
+    | Float_opts (label, rest) -> label :: labels rest
+    | Strings (label, rest) -> label :: labels rest
+    | String_opts (label, rest) -> label :: labels rest
+
+  let rec apply : type a b. (a, b) t -> a -> string list list -> (b, _) result = fun signature f list_of_reverted_columns ->
+    let open Let_syntax.Result in
+    match signature, list_of_reverted_columns with
+    | Empty, [] -> Ok f
+    | Empty, _ :: _ -> Error `Too_many_columns
+    | Floats (_, rest), h :: t ->
+      let* col = revconv Float.of_string h in
+      apply rest (f col) t
+    | Floats _, [] -> Error `Not_enough_columns
+    | Ints (_, rest), h :: t ->
+      let* col = revconv Int.of_string h in
+      apply rest (f col) t
+    | Ints _, [] -> Error `Not_enough_columns
+    | Strings (_, rest), h :: t ->
+      let* col = revconv Fn.id h in
+      apply rest (f col) t
+    | Strings _, [] -> Error `Not_enough_columns
+    | Float_opts (_, rest), h :: t ->
+      let* col = revconv_opt Float.of_string h in
+      apply rest (f col) t
+    | Float_opts _, [] -> Error `Not_enough_columns
+    | Int_opts (_, rest), h :: t ->
+      let* col = revconv_opt Int.of_string h in
+      apply rest (f col) t
+    | Int_opts _, [] -> Error `Not_enough_columns
+    | String_opts (_, rest), h :: t ->
+      let* col = revconv_opt Fn.id h in
+      apply rest (f col) t
+    | String_opts _, [] -> Error `Not_enough_columns
+end
+
+let from_file_and_apply ~header signature fn f =
+  let labels = Signature.labels signature in
+  let header = if header then `Expect labels else `Use labels in
+  from_file_gen ~header fn (fun ~nrows:_ ~ncols:_ ~labels:_ ~list_of_reverted_columns ->
+      Signature.apply signature f list_of_reverted_columns
+    )
+  |> Result.join
+
 module Parser = struct
   type error = [
     | `Conversion_failure
