@@ -67,8 +67,7 @@ let optionally f = function
 
 let revconv f col =
   try
-    List.rev_map col ~f
-    |> Array.of_list
+    Array.of_list_rev_map col ~f
     |> Result.return
   with _ -> Error `Conversion_failure
 
