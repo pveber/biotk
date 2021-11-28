@@ -96,7 +96,7 @@ let guess_rev_convert_col col =
     try_with (revconv Int.of_string) col ~ok:ints
       ~error:(fun _ ->
           try_with (revconv Float.of_string) col ~ok:floats
-            ~error:(fun _ -> Array.of_list col |> strings)
+            ~error:(fun _ -> Array.of_list_rev col |> strings)
         )
 
 let parse_lines ~file_has_header ncols lines f =
