@@ -236,15 +236,25 @@ let from_file_parse ~header fn p =
         Parser.run ~labels ~list_of_reverted_columns p
       )
   in
-  match labels with
-  | [] -> res
-  | _ :: _ -> Error `Too_many_columns
+  match res, labels with
+  | Ok _, _ :: _ -> Error `Too_many_columns
+  | Ok _, _
+  | Error _, _ -> res
 
 let%expect_test "Dataframe.Parser.from_file_parse" =
   from_file_parse ~header:true "../data/survival.tsv" Parser.(
       let* replicate = strings "replicate" in
       let+ nsurv = ints "Nsurv" in
       (replicate, nsurv)
+    )
+  |> [%derive.show: (string array * int array, Parser.error) result]
+  |> print_endline
+
+let%expect_test "Dataframe.Parser.from_file_parse" =
+  from_file_parse ~header:true "../data/survival.tsv" Parser.(
+      let* replicate = strings "replicates" in
+      let+ nsurv = ints "Nsurvz" in
+      replicate, nsurv
     )
   |> [%derive.show: (string array * int array, Parser.error) result]
   |> print_endline
