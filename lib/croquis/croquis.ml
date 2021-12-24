@@ -468,9 +468,11 @@ module Picture = struct
         in
         translate ~dx ~dy pic
       in
-      List.fold2_exn items bboxes ~init:(height, []) ~f:(fun (y, acc) pic bbox ->
-          let pic' = justify y pic bbox in
-          (y -. Box2.h bbox, pic' :: acc)
+      List.fold2_exn items bboxes ~init:(height, []) ~f:(fun ((y, acc) as p) pic bbox ->
+          if Box2.is_empty bbox then p
+          else
+            let pic' = justify y pic bbox in
+            (y -. Box2.h bbox, pic' :: acc)
         )
       |> snd
       |> List.rev
@@ -493,9 +495,11 @@ module Picture = struct
         in
         translate ~dx ~dy pic
       in
-      List.fold2_exn items bboxes ~init:(0., []) ~f:(fun (x, acc) pic bbox ->
-          let pic' = justify x pic bbox in
-          (x +. Box2.w bbox, pic' :: acc)
+      List.fold2_exn items bboxes ~init:(0., []) ~f:(fun ((x, acc) as p) pic bbox ->
+          if Box2.is_empty bbox then p
+          else
+            let pic' = justify x pic bbox in
+            (x +. Box2.w bbox, pic' :: acc)
         )
       |> snd
       |> List.rev
