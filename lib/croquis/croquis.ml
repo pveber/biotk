@@ -70,9 +70,10 @@ module Font = struct
   let ymin x = Vg_text.Font.ymin (Lazy.force x)
   let ymax x = Vg_text.Font.ymax (Lazy.force x)
 
-  let embedded_load s =
+  let embedded_load fn =
     Lazy.from_fun (fun () ->
-        match Vg_text.Font.load_from_string s with
+        let src = Stdlib.Option.get (Font_data.read fn) in
+        match Vg_text.Font.load_from_string src with
         | Ok f -> f
         | Error (#Otfm.error as e) ->
           let buf = Buffer.create 253 in
@@ -84,15 +85,15 @@ module Font = struct
           failwithf "Read_error: %s" msg ()
       )
 
-  let dejavu_sans_mono = embedded_load Dejavu_sans_mono.contents
-  let dejavu_sans_mono_bold = embedded_load Dejavu_sans_mono_bold.contents
-  let dejavu_sans_mono_oblique = embedded_load Dejavu_sans_mono_oblique.contents
-  let dejavu_sans_mono_bold_oblique = embedded_load Dejavu_sans_mono_bold_oblique.contents
+  let dejavu_sans_mono = embedded_load "DejaVuSansMono.ttf"
+  let dejavu_sans_mono_bold = embedded_load "DejaVuSansMono-Bold.ttf"
+  let dejavu_sans_mono_oblique = embedded_load "DejaVuSansMono-Oblique.ttf"
+  let dejavu_sans_mono_bold_oblique = embedded_load "DejaVuSansMono-BoldOblique.ttf"
 
-  let liberation_sans = embedded_load Liberation_sans.contents
-  let liberation_sans_bold = embedded_load Liberation_sans_bold.contents
-  let liberation_sans_italic = embedded_load Liberation_sans_italic.contents
-  let liberation_sans_bold_italic = embedded_load Liberation_sans_bold_italic.contents
+  let liberation_sans = embedded_load "LiberationSans-Regular.ttf"
+  let liberation_sans_bold = embedded_load "LiberationSans-Bold.ttf"
+  let liberation_sans_italic = embedded_load "LiberationSans-Italic.ttf"
+  let liberation_sans_bold_italic = embedded_load "LiberationSans-BoldItalic.ttf"
 
   let default = liberation_sans
 end

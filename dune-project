@@ -21,9 +21,9 @@
     ("angstrom-unix" (>= 0.15.0))
     "biocaml"
     ("core" (>= "v0.14.0"))
+    (crunch (>= 3.2.0))
     "fmt"
     (ocaml (>= 4.11.0))
-    "ocamlify"
     "ocamlnet"
     "otfm"
     "ppx_csv_conv"
