@@ -248,7 +248,8 @@ let%expect_test "Dataframe.Parser.from_file_parse" =
       (replicate, nsurv)
     )
   |> [%derive.show: (string array * int array, Parser.error) result]
-  |> print_endline
+  |> print_endline;
+  [%expect {| (Ok ([|"A"; "F"; "B"|], [|3; 11; 0|])) |}]
 
 let%expect_test "Dataframe.Parser.from_file_parse" =
   from_file_parse ~header:true "../data/survival.tsv" Parser.(
@@ -257,7 +258,8 @@ let%expect_test "Dataframe.Parser.from_file_parse" =
       replicate, nsurv
     )
   |> [%derive.show: (string array * int array, Parser.error) result]
-  |> print_endline
+  |> print_endline;
+  [%expect {| (Error `Unexpected_label (("replicate", "replicates"))) |}]
 
 exception Error of string
 
