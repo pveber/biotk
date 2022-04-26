@@ -141,8 +141,9 @@ let check_header ~colnames header =
 let from_file_gen ?(header = `Read_in_file) path f =
   let open Let_syntax.Result in
   let lines = In_channel.read_lines path in
+  let non_comment_lines = List.drop_while lines ~f:(String.is_prefix ~prefix:"#") in
   let* labels, ncols, data_lines =
-    match header, lines with
+    match header, non_comment_lines with
     | (`Read_in_file | `Expect _), [] ->
       Error (`Msg "empty file but expected header")
     | `Read_in_file, header :: lines ->
