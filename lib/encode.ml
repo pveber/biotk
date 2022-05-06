@@ -1,4 +1,4 @@
-open Core_kernel
+open Core
 
 module Experiment_list = struct
   type t = item list

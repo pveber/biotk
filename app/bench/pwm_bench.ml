@@ -27,4 +27,4 @@ let tests =
     Bench.Test.create ~name:"look_ahead_c" (fun () -> scan pwm seq theta Pwm.opt_fast_scan) ;
   ]
 
-let () = Command.run (Bench.make_command tests)
+let () = Command_unix.run (Bench.make_command tests)

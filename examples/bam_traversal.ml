@@ -4,9 +4,9 @@ open Biotk
 open Rresult
 
 let time f =
-  let start = Unix.gettimeofday () in
+  let start = Core_unix.gettimeofday () in
   let y = f () in
-  let stop = Unix.gettimeofday () in
+  let stop = Core_unix.gettimeofday () in
   (y, stop -. start)
 
 let ok_exn = function
@@ -75,9 +75,9 @@ let command =
   Command.basic
     ~summary:"BAM traversal demo/test"
     [%map_open
-      let bam = flag "--bam" (required Filename.arg_type) ~doc:"PATH BAM file"
-      and bai = flag "--bai" (required Filename.arg_type) ~doc:"PATH BAI file"
+      let bam = flag "--bam" (required Filename_unix.arg_type) ~doc:"PATH BAM file"
+      and bai = flag "--bai" (required Filename_unix.arg_type) ~doc:"PATH BAI file"
       and loc = flag "--loc" (required string) ~doc:"LOC Location CHR:START-END" in
       main ~bam ~bai ~loc ]
 
-let () = Command.run command
+let () = Command_unix.run command

@@ -1,5 +1,5 @@
 open Gg
-open Core_kernel
+open Core
 open Biotk_croquis.Croquis
 
 type tree =

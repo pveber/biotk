@@ -1,4 +1,4 @@
-open Core_kernel
+open Core
 
 type fields = string list
 [@@deriving show]

@@ -4,7 +4,7 @@ TODO: check those potentially interesting papers
 - https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5860096/
 - http://stat.wharton.upenn.edu/~tcai/paper/FDR-HMM.pdf
 *)
-open Core_kernel
+open Core
 
 (* Naive computation of score distribution *)
 let naive_score_distribution pwm bg =

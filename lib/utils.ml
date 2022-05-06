@@ -1,4 +1,4 @@
-open Core_kernel
+open Core
 
 let unique_value xs ~equal ~f =
   match xs with

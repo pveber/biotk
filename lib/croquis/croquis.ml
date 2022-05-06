@@ -1,6 +1,6 @@
 open Gg
 open Vg
-open Core_kernel
+open Core
 
 type point = float * float
 
@@ -35,8 +35,8 @@ module Viewport = struct
     { scale_x ; scale_y }
 
   let id = {
-    scale_x = ident ;
-    scale_y = ident ;
+    scale_x = Fun.id ;
+    scale_y = Fun.id ;
   }
   let scale_x vp = vp.scale_x
   let scale_y vp = vp.scale_y

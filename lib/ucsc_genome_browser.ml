@@ -1,4 +1,4 @@
-open Core_kernel
+open Core
 open Printf
 
 type assembly = [ `dm3 | `droSim1 | `hg18 | `hg19 | `hg38 | `mm8 | `mm9 | `mm10 | `sacCer2 ]

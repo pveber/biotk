@@ -37,5 +37,5 @@ val position : from:t -> t -> int option
 
 val union : t -> t -> t option
 
-module Set : Core_kernel.Set.S with type Elt.t := t
-module Map : Core_kernel.Map.S with type Key.t := t
+module Set : Core.Set.S with type Elt.t := t
+module Map : Core.Map.S with type Key.t := t

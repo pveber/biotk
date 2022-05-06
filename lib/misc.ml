@@ -1,4 +1,4 @@
-open Core_kernel
+open Core
 
 let int_fold a b ~init ~f =
   let rec loop acc i =

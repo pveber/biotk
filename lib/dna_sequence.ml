@@ -1,4 +1,4 @@
-open Core_kernel
+open Core
 
 let gc s =
   let c = ref 0 and n = ref 0 in

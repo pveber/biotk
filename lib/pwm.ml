@@ -1,4 +1,4 @@
-open Core_kernel
+open Core
 open CFStream
 
 type count_matrix = int array array
@@ -69,11 +69,11 @@ let tandem ?(orientation = `direct) ~spacer mat1 mat2 bg =
   Array.concat [
     (match orientation with
      | `everted -> reverse_complement
-     | `inverted | `direct -> ident) (make mat1 bg) ;
+     | `inverted | `direct -> Fun.id) (make mat1 bg) ;
     Array.init spacer ~f:(fun _ -> Caml.Array.make 5 0.) ;
     (match orientation with
      | `inverted -> reverse_complement
-     | `everted | `direct -> ident) (make mat2 bg)
+     | `everted | `direct -> Fun.id) (make mat2 bg)
   ]
 
 let gen_scan f init mat seq tol =

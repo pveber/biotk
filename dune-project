@@ -20,7 +20,8 @@
     ("angstrom" (>= 0.15.0))
     ("angstrom-unix" (>= 0.15.0))
     "biocaml"
-    ("core" (>= "v0.14.0"))
+    ("core" (>= "v0.15.0"))
+    ("core_unix" (>= "v0.15.0"))
     (crunch (>= 3.2.0))
     "fmt"
     (ocaml (>= 4.11.0))

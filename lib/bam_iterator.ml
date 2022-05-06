@@ -1,4 +1,4 @@
-open Core_kernel
+open Core
 open Rresult
 open Biocaml_unix
 

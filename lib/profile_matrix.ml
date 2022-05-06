@@ -1,5 +1,5 @@
 open Gg
-open Core_kernel
+open Core
 open Misc
 open Biotk_croquis
 
@@ -90,7 +90,7 @@ module Make(A : Alphabet) = struct
         Array.init A.card ~f:(fun i -> Color.gray (float i *. 127. /. float A.card))
     in
     let draw_letter ~x ~col ~sy l =
-      if Core_kernel.Float.(sy < 1e-6) then None
+      if Core.Float.(sy < 1e-6) then None
       else
         Some (
           text ~valign:`base ~font l ~col ~x ~y:0.

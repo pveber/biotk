@@ -103,5 +103,5 @@ module Elt = struct
   let t_of_sexp = t_of_sexp
   let compare = compare
 end
-module Map = Core_kernel.Map.Make(Elt)
-module Set = Core_kernel.Set.Make(Elt)
+module Map = Core.Map.Make(Elt)
+module Set = Core.Set.Make(Elt)

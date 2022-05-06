@@ -1,4 +1,4 @@
-open Core_kernel
+open Core
 
 let pwm_archive_url = "http://cisbp.ccbr.utoronto.ca/data/1.02/DataFiles/Bulk_downloads/EntireDataset/PWMs.zip"
 let tf_information_archive_url = "http://cisbp.ccbr.utoronto.ca/data/1.02/DataFiles/Bulk_downloads/EntireDataset/TF_Information_all_motifs.txt.zip"
@@ -130,7 +130,7 @@ module Motif = struct
     |> Array.of_list
 
   let read_all_in_dir dir =
-    Sys.readdir dir
+    Stdlib.Sys.readdir dir
     |> Array.to_list
     |> List.filter ~f:(Fn.flip Filename.check_suffix ".txt")
     |> List.map ~f:(fun fn -> fn, from_file (Filename.concat dir fn))
