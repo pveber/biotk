@@ -1,4 +1,4 @@
 (executables
   (names bam_bai bam_traversal)
-  (libraries core_unix.command_unix core_bench biotk)
+  (libraries core_bench core_unix.command_unix core_unix.filename_unix biotk)
   (preprocess (pps ppx_jane)))
