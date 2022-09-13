@@ -6,7 +6,7 @@ module type S = sig
   val flat : int -> t
   val length : t -> int
   val composition : t -> float array
-  val draw : t -> Croquis.Picture.t
+  val draw : t -> Croquis.t
   val entropy : t -> float array
 end
 

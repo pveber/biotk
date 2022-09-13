@@ -71,31 +71,30 @@ let rec draw_tree ~inter_leaf_space ~branch_factor ~x ~y ~height = function
       | `italic -> Font.liberation_sans_italic
       | `bold -> Font.liberation_sans_bold
     in
-    Picture.text ~size:1. ~halign:`left ~valign:`base ~col:l.color ~font ~x ~y (" " ^ l.text)
-    |> Picture.translate ~dy:(-0.3)
+    text ~size:1. ~halign:`left ~valign:`base ~col:l.color ~font ~x ~y (" " ^ l.text)
+    |> translate ~dy:(-0.3)
   | Node { children ; tag } ->
     let children_layout = vertical_tree_layout ~height ~y children in
     let children_pic =
       List.map2_exn children children_layout ~f:(fun b tvp ->
           draw_branch ~inter_leaf_space ~branch_factor ~height:tvp.height b ~root_y:y ~x ~y:tvp.root
         )
-      |> Picture.blend
+      |> group
     in
     let highest_root = (List.hd_exn children_layout).root in
     let lowest_root = (List.last_exn children_layout).root in
     let node =
-      Picture.path ~col:Color.red ~thickness:`thick [ (x, highest_root) ; (x, lowest_root) ]
-      |> Picture.blend2 children_pic
+      children_pic
+      ++ line ~col:Color.red ~thickness:0.1 (x, highest_root) (x, lowest_root)
     in
     match tag with
     | None -> node
-    | Some col -> Picture.(blend2 (circle ~x ~y ~draw:col ~fill:col ~radius:0.2 ()) node)
+    | Some col -> circle ~x ~y ~draw:col ~fill:col ~radius:0.2 () ++ node
 
 and draw_branch ~inter_leaf_space ~height ~branch_factor ~root_y ~x ~y (Branch b) =
   let x' = x +. b.length *. branch_factor in
-  Picture.blend2
-    (draw_tree ~inter_leaf_space ~branch_factor ~height b.tip ~x:x' ~y)
-    (Picture.path ~col:b.color ~thickness:`thick [ (x, root_y) ; (x, y) ; (x', y) ])
+  draw_tree ~inter_leaf_space ~branch_factor ~height b.tip ~x:x' ~y
+  ++ lines ~col:b.color ~thickness:0.1 ~x:[| x ; x ; x' |] ~y:[| root_y ; y ; y |] ()
 
 let draw_tree tree =
   let tree_height = tree_height tree in

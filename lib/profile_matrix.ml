@@ -9,7 +9,7 @@ module type S = sig
   val flat : int -> t
   val length : t -> int
   val composition : t -> float array
-  val draw : t -> Croquis.Picture.t
+  val draw : t -> Croquis.t
   val entropy : t -> float array
 end
 
@@ -59,15 +59,15 @@ module Make(A : Alphabet) = struct
   let max_entropy = Float.log (float A.card) /. Float.log 2.
 
   let draw_y_scale () =
-    let open Croquis.Picture in
+    let open Croquis in
     let text x y msg =
       text ~x ~y msg ~font:Croquis.Font.dejavu_sans_mono_bold ~size:0.1
     in
-    blend [
-      path [ 0., 0. ; 0., max_entropy ] ;
-      path [ -. 0.1, 0. ; 0., 0. ] ;
-      path [ -. 0.1, max_entropy /. 2. ; 0., max_entropy /. 2. ] ;
-      path [ -. 0.1, max_entropy ; 0., max_entropy ] ;
+    group [
+      line (0., 0.) (0., max_entropy) ;
+      line (-0.1, 0.) (0., 0.) ;
+      line (-0.1, max_entropy /. 2.) (0., max_entropy /. 2.) ;
+      line (-. 0.1, max_entropy) (0., max_entropy) ;
       text (-. 0.2) 0. "0" ;
       text (-. 0.2) (max_entropy /. 2.) (Float.to_string (max_entropy /. 2.)) ;
       text (-. 0.2) max_entropy (Float.to_string max_entropy) ;
@@ -75,7 +75,6 @@ module Make(A : Alphabet) = struct
 
   let draw t =
     let open Croquis in
-    let open Picture in
     let font = Font.dejavu_sans_mono_bold in
     let letter =
       List.map A.all ~f:(fun c ->

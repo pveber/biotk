@@ -34,5 +34,5 @@ val node :
 
 val branch : ?col:Color.t -> float -> tree -> branch
 
-val draw_tree : tree -> Croquis.Picture.t
-val draw_branch : branch -> Croquis.Picture.t
+val draw_tree : tree -> Croquis.t
+val draw_branch : branch -> Croquis.t

@@ -32,11 +32,10 @@ let pssm =
   |> PSSM.draw
 
 let picture =
-  Croquis.Picture.vstack [
+  Croquis.vstack [
     tree ;
     pssm ;
   ]
-  |> Croquis.Layout.simple
 
 let () =
-  Croquis.Layout.render `pdf picture (`File "croquis_demo.pdf")
+  Croquis.render picture `pdf (`File "croquis_demo.pdf")
