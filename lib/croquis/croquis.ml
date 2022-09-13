@@ -62,10 +62,10 @@ let labeling l i =
   | `C c -> c
   | `A xs -> xs.(i)
 
-let labeling_map l ~f =
-  match l with
-  | `C x -> `C (f x)
-  | `A xs -> `A (Array.map xs ~f)
+(* let labeling_map l ~f =
+ *   match l with
+ *   | `C x -> `C (f x)
+ *   | `A xs -> `A (Array.map xs ~f) *)
 
 let labeling_map2_exn l1 l2 ~f =
   match l1, l2 with
@@ -79,6 +79,45 @@ let labeling_map2_exn l1 l2 ~f =
 type mark = Bullet | Circle
 
 let normal_thickness = 0.01
+
+let box_convex_hull ~x ~y =
+  let xmin = Float_array.min x in
+  let xmax = Float_array.max x in
+  let ymin = Float_array.min y in
+  let ymax = Float_array.max y in
+  Box2.of_pts (V2.v xmin ymin) (V2.v xmax ymax)
+
+module Points = struct
+  type t =  {
+    col : Color.t labeling ;
+    mark : mark labeling ;
+    thickness : float labeling ;
+    x : float array ; (* inv: Array.(length x = length y *)
+    y : float array ;
+  }
+
+  let make ?(col = `C Color.black) ?(mark = `C Bullet) ?(thickness = `C 0.01) ~x ~y () =
+    if Array.(length x <> length y) then invalid_arg "x and y should have same length" ;
+    { col ; mark ; thickness ; x ; y }
+
+  let bbox { x ; y ; _ } = box_convex_hull ~x ~y
+
+  let render { mark ; col ; thickness ; x ; y } =
+    let area = labeling_map2_exn mark thickness ~f:(fun mark thickness ->
+        match mark with
+        | Bullet -> `Anz
+        | Circle ->
+          `O { P.o with P.width = thickness }
+      )
+    in
+    let mark = labeling_map2_exn col area ~f:(fun col area ->
+        I.cut ~area (P.empty |> P.circle V2.zero 0.1) (I.const col)
+      )
+    in
+    ifold (Array.length x) ~init:I.void ~f:(fun acc i ->
+        I.blend acc (I.move (V2.v x.(i) y.(i)) (labeling mark i))
+      )
+end
 
 module Arrow_head = struct
   type t = {
@@ -102,154 +141,186 @@ module Arrow_head = struct
       |> Fun.flip add_pt wing_down
       |> Fun.flip add_pt wing_up
     )
+
+  let render { tip ; wing_up ; wing_down ; _ } col =
+    let path =
+      P.empty
+      |> P.sub tip
+      |> P.line wing_up
+      |> P.line wing_down
+    in
+    I.cut ~area:`Anz path (I.const col)
+
+end
+
+module Lines = struct
+  type t = {
+    col : Color.t ;
+    thickness : float ;
+    cap : P.cap ;
+    x : float array ; (* inv: Array.(length x = length y *)
+    y : float array ;
+    maybe_arrow_head : Arrow_head.t option ;
+  }
+
+  let bbox { maybe_arrow_head ; x ; y ; _ } =
+    let segment_bbox = box_convex_hull ~x ~y in
+    match maybe_arrow_head with
+    | None -> segment_bbox
+    | Some ah -> Box2.union segment_bbox (Arrow_head.bbox ah)
+
+  let make ?(col = Color.black) ?(thickness = normal_thickness) ?(cap = `Butt) ?(arrow_head = false) ~x ~y () =
+    if Array.(length x <> length y) then invalid_arg "x and y should have same length" ;
+    let n = Array.length x in
+    if n < 2 then invalid_arg "at least two points expected" ;
+    let maybe_arrow_head =
+      if arrow_head then
+        let _from_ = V2.v x.(n - 2) y.(n - 2) in
+        let _to_   = V2.v x.(n - 1) y.(n - 1) in
+        Some (Arrow_head.make _from_ _to_)
+      else None
+    in
+    { x ; y ; col ; maybe_arrow_head ; thickness ; cap }
+
+  let render { x ; y ; col ; cap ; thickness ; maybe_arrow_head ; _ } =
+    let n = Array.length x in
+    let path =
+      ifold n ~init:P.empty ~f:(fun acc i ->
+          P.line (V2.v x.(i) y.(i)) acc
+        )
+    in
+    let area = `O { P.o with P.width = thickness ; cap } in
+    let line_img = I.cut ~area path (I.const col) in
+    match maybe_arrow_head with
+    | None -> line_img
+    | Some ah ->
+      I.blend (Arrow_head.render ah col) line_img
+end
+
+module Rect = struct
+  type t = {
+    xmin : float ; (* xmin <= xmax *)
+    ymin : float ; (* ymin <= ymax *)
+    xmax : float ;
+    ymax : float ;
+    draw : Color.t option ;
+    fill : Color.t option ;
+    thickness : float ;
+  }
+
+  let make ?draw ?fill ?(thickness = normal_thickness) ~xmin ~xmax ~ymin ~ymax () =
+    if Float.(xmin > xmax || ymin > ymax) then invalid_arg "invalid coordinates" ;
+    { xmin ; ymin ; xmax ; ymax ; draw ; fill ; thickness }
+
+  let render { xmin ; ymin ; xmax ; ymax ; thickness ; draw ; fill } =
+    let sw = V2.v xmin ymin in
+    let nw = V2.v xmin ymax in
+    let ne = V2.v xmax ymax in
+    let se = V2.v xmax ymin in
+    let p =
+      P.empty
+      |> P.sub sw
+      |> P.line nw
+      |> P.line ne
+      |> P.line se
+      |> P.line sw
+    in
+    let outline = match draw with
+      | None -> I.void
+      | Some col ->
+        let area = `O { P.o with P.width = thickness ;
+                                 P.cap = `Square } in
+        I.cut ~area p (I.const col)
+    in
+    let background = match fill with
+      | None -> I.void
+      | Some col ->
+        I.cut ~area:`Anz p (I.const col)
+    in
+    I.blend outline background
+
+  let bbox { xmin ; ymin ; xmax ; ymax ; _ } =
+    Box2.v (V2.v xmin ymin) (V2.v (xmax -. xmin) (ymax -. ymin))
+end
+
+module Circle = struct
+  type t = {
+    center : V2.t ;
+    radius : float ;
+    draw : Color.t option ;
+    fill : Color.t option ;
+    thickness : float ;
+  }
+
+  let make ?draw ?fill ?(thickness = normal_thickness) ~x ~y ~radius () =
+    let center = V2.v x y in
+    { center ; radius ; draw ; fill ; thickness }
+
+  let render { center ; radius ; draw ; fill ; thickness } =
+    let p =
+      P.empty
+      |> P.circle center radius
+    in
+    let outline = match draw with
+      | None -> I.void
+      | Some col ->
+        let area = `O { P.o with P.width = thickness ;
+                                 P.cap = `Square } in
+        I.cut ~area p (I.const col)
+    in
+    let background = match fill with
+      | None -> I.void
+      | Some col ->
+        I.cut ~area:`Anz p (I.const col)
+    in
+    I.blend outline background
+
+  let bbox { center ; radius ; _ } =
+    Box2.v_mid center (V2.v (2. *. radius) (2. *. radius))
 end
 
 type t =
   | Empty
-  | Points of {
-      bbox : Box2.t ;
-      col : Color.t labeling ;
-      mark : mark labeling ;
-      thickness : float labeling ;
-      x : float array ; (* inv: Array.(length x = length y *)
-      y : float array ;
-    }
-  | Lines of {
-      bbox : Box2.t ;
-      col : Color.t labeling ;
-      thickness : float ;
-      x : float array ; (* inv: Array.(length x = length y *)
-      y : float array ;
-      arrow_head : Arrow_head.t option ;
-    }
+  | Points of Points.t * Box2.t
+  | Lines of Lines.t * Box2.t
+  | Rect of Rect.t * Box2.t
+  | Circle of Circle.t * Box2.t
 
 let empty = Empty
 
-let box_convex_hull ~x ~y =
-  let xmin = Float_array.min x in
-  let xmax = Float_array.max x in
-  let ymin = Float_array.min y in
-  let ymax = Float_array.max y in
-  Box2.of_pts (V2.v xmin ymin) (V2.v xmax ymax)
+let points ?col ?mark ?thickness ~x ~y () =
+  let pts = Points.make ?col ?mark ?thickness ~x ~y () in
+  let bbox = Points.bbox pts in
+  Points (pts, bbox)
 
-let points ?(col = `C Color.black) ?(mark = `C Bullet) ?(thickness = `C 0.01) ~x ~y () =
-  if Array.(length x <> length y) then invalid_arg "x and y should have same length" ;
-  let bbox = box_convex_hull ~x ~y in
-  Points { col ; bbox ; mark ; thickness ; x ; y }
+let lines ?col ?thickness ?arrow_head ?cap ~x ~y () =
+  let l = Lines.make ?col ?thickness ?arrow_head ?cap ~x ~y () in
+  let bbox = Lines.bbox l in
+  Lines (l, bbox)
 
-let lines ?(col = `C Color.black) ?(thickness = normal_thickness) ?(arrow_head = false) ~x ~y () =
-  if Array.(length x <> length y) then invalid_arg "x and y should have same length" ;
-  let n = Array.length x in
-  if n < 2 then invalid_arg "at least two points expected" ;
-  let arrow_head =
-    if arrow_head then
-      let _from_ = V2.v x.(n - 2) y.(n - 2) in
-      let _to_   = V2.v x.(n - 1) y.(n - 1) in
-      Some (Arrow_head.make _from_ _to_)
-    else None
-  in
-  let line_bbox = box_convex_hull ~x ~y in
-  let bbox = match arrow_head with
-    | None -> line_bbox
-    | Some ah -> Box2.union line_bbox (Arrow_head.bbox ah)
-  in
-  Lines { x ; y ; col ; bbox ; arrow_head ; thickness }
+let rect ?draw ?fill ?thickness ~xmin ~xmax ~ymin ~ymax () =
+  let r = Rect.make ?draw ?fill ?thickness ~xmin ~xmax ~ymin ~ymax () in
+  let bbox = Rect.bbox r in
+  Rect (r, bbox)
 
-let image_of_lines ~x ~y ~col ~cap ~thickness ~arrow_head =
-  let n = Array.length x in
-  let path =
-    ifold n ~init:P.empty ~f:(fun acc i ->
-        P.line (V2.v x.(i) y.(i)) acc
-      )
-  in
-  let area = `O { P.o with P.width = thickness ; cap } in
-  let line_img = I.cut ~area path (I.const col) in
-  match arrow_head with
-  | None -> line_img
-  | Some (ah : Arrow_head.t) ->
-      let path =
-        P.empty
-        |> P.sub ah.tip
-        |> P.line ah.wing_up
-        |> P.line ah.wing_down
-      in
-      I.blend
-        (I.cut ~area:`Anz path (I.const col))
-        line_img
-
-let path ?(col = Color.black) ?(thickness = `normal) ?(arrow_head = false) ?(cap = `Butt) points =
-    let arrow_head = if arrow_head then arrow_head_geometry points else None in
-    object
-      method render =
-        let body = match List.rev points with
-          | [] | [ _ ] -> I.void
-          | (ox, oy) :: (_ :: _ as t) ->
-            let tip = match arrow_head with
-              | None -> V2.v ox oy
-              | Some h -> h#bottom
-            in
-            let path =
-              List.fold t ~init:(P.empty |> P.sub tip) ~f:(fun acc (x, y) ->
-                  P.line (V2.v x y) acc
-                )
-            in
-            let area = `O { P.o with P.width = thickness_value thickness ;
-                                     cap } in
-            I.cut ~area path (I.const col)
-        and head = match arrow_head with
-          | None -> I.void
-          | Some head ->
-            let path =
-              P.empty
-              |> P.sub head#tip
-              |> P.line head#wing_up
-              |> P.line head#wing_down
-              in
-              I.cut ~area:`Anz path (I.const col)
-        in
-        I.blend head body
-
-      method bbox =
-        let init = Box2.empty in
-        let init =
-          List.fold points ~init ~f:(fun acc (x, y) ->
-              Box2.add_pt acc (V2.v x y)
-            )
-        in
-        match arrow_head with
-        | None -> init
-        | Some head ->
-          List.fold [ head#tip ; head#wing_up ; head#wing_down ] ~init ~f:Box2.add_pt
-    end
-
+let circle ?draw ?fill ?thickness ~x ~y ~radius () =
+  let c  = Circle.make ?draw ?fill ?thickness ~x ~y ~radius () in
+  let bbox = Circle.bbox c in
+  Circle (c, bbox)
 
 let bbox = function
   | Empty -> Box2.empty
-  | Points pts -> pts.bbox
-  | Lines l -> l.bbox
-
-let image_of_points ~mark ~col ~thickness ~x ~y =
-  let area = labeling_map2_exn mark thickness ~f:(fun mark thickness ->
-      match mark with
-      | Bullet -> `Anz
-      | Circle ->
-        `O { P.o with P.width = thickness }
-    )
-  in
-  let mark = labeling_map2_exn col area ~f:(fun col area ->
-      I.cut ~area (P.empty |> P.circle V2.zero 0.1) (I.const col)
-    )
-  in
-  ifold (Array.length x) ~init:I.void ~f:(fun acc i ->
-      I.blend acc (I.move (V2.v x.(i) y.(i)) (labeling mark i))
-    )
+  | Points (_, bbox)
+  | Lines (_, bbox)
+  | Rect (_, bbox)
+  | Circle (_, bbox) -> bbox
 
 let image_of_croquis = function
   | Empty -> Vg.I.void
-  | Points { mark ; col ; x ; y ; thickness ; _ } ->
-    image_of_points ~mark ~col ~x ~y ~thickness
-  | Lines { x ; y ; _ } ->
-    image_of_lines ~x ~y
+  | Points (pts, _) -> Points.render pts
+  | Lines (l, _) -> Lines.render l
+  | Rect (r, _) -> Rect.render r
+  | Circle (c, _) -> Circle.render c
 
 let render croquis file_format target =
   let view = bbox croquis in
@@ -290,8 +361,6 @@ let render croquis file_format target =
   | `File fn ->
     Out_channel.with_file fn ~f:(fun oc -> render (`Channel oc))
   | (`Channel _ | `Buffer _) as target -> render target
-
-
 
 type point = float * float
 
@@ -335,17 +404,16 @@ type point_shape = [
   | `circle
 ]
 
+type thickness = [
+  | `normal
+  | `thick
+]
 
 module Picture = struct
   class type t = object
     method render : image
     method bbox : Box2.t
   end
-
-  type thickness = [
-    | `normal
-    | `thick
-  ]
 
   let thickness_value = function
     | `thin -> 0.001
