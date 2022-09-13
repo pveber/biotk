@@ -1,5 +1,87 @@
 open Gg
 
+module Font : sig
+  type t
+
+  val ascender : t -> float
+  val descender : t -> float
+  val xmin : t -> float
+  val ymin : t -> float
+  val xmax : t -> float
+  val ymax : t -> float
+  val default : t
+
+  val dejavu_sans_mono : t
+  val dejavu_sans_mono_bold : t
+  val dejavu_sans_mono_oblique : t
+  val dejavu_sans_mono_bold_oblique : t
+
+  val liberation_sans : t
+  val liberation_sans_bold : t
+  val liberation_sans_italic : t
+  val liberation_sans_bold_italic : t
+end
+
+type t
+
+val empty : t
+
+type mark = Bullet | Circle
+
+type 'a labeling = [`C of 'a | `A of 'a array]
+
+val points :
+  ?col:Color.t labeling ->
+  ?mark:mark labeling ->
+  ?thickness:float labeling ->
+  x:float array ->
+  y:float array ->
+  unit ->
+  t
+
+val lines :
+  ?col:Color.t ->
+  ?thickness:float ->
+  ?arrow_head:bool ->
+  ?cap:Vg.P.cap ->
+  x:float array ->
+  y:float array ->
+  unit ->
+  t
+
+val rect :
+  ?draw:Color.t ->
+  ?fill:Color.t ->
+  ?thickness:float ->
+  xmin:float ->
+  xmax:float ->
+  ymin:float ->
+  ymax:float ->
+  unit ->
+  t
+
+val circle :
+  ?draw:Color.t ->
+  ?fill:Color.t ->
+  ?thickness:float ->
+  x:float ->
+  y:float ->
+  radius:float ->
+  unit ->
+  t
+
+type target = [
+  | `File of string
+  | `Channel of Stdlib.out_channel
+  | `Buffer of Buffer.t
+]
+
+val render :
+  t ->
+  [`pdf | `svg] ->
+  target ->
+  unit
+
 type point = float * float
 
 module Scaling : sig
@@ -34,36 +116,15 @@ module Viewport : sig
   val scale : t -> point -> point
 end
 
-module Font : sig
-  type t
-
-  val ascender : t -> float
-  val descender : t -> float
-  val xmin : t -> float
-  val ymin : t -> float
-  val xmax : t -> float
-  val ymax : t -> float
-  val default : t
-
-  val dejavu_sans_mono : t
-  val dejavu_sans_mono_bold : t
-  val dejavu_sans_mono_oblique : t
-  val dejavu_sans_mono_bold_oblique : t
-
-  val liberation_sans : t
-  val liberation_sans_bold : t
-  val liberation_sans_italic : t
-  val liberation_sans_bold_italic : t
-end
-
-type thickness = [
-  | `normal
-  | `thick
-]
 
 type point_shape = [
   | `bullet
   | `circle
+]
+
+type thickness = [
+  | `normal
+  | `thick
 ]
 
 module Picture : sig
@@ -175,11 +236,6 @@ module Plot : sig
     Picture.t
 end
 
-type target = [
-  | `File of string
-  | `Channel of Stdlib.out_channel
-  | `Buffer of Buffer.t
-]
 
 module Layout : sig
   type t

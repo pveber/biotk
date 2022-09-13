@@ -2,7 +2,13 @@ open Gg
 open Vg
 open Core
 
-type point = float * float
+let ifold n ~init ~f =
+  if n < 0 then invalid_arg "n should be positive" ;
+  let rec loop i acc =
+    if i = n then acc
+    else loop (i + 1) (f acc i)
+  in
+  loop 0 init
 
 module Float_array = struct
   let min xs =
@@ -10,55 +16,6 @@ module Float_array = struct
   let max xs =
     Array.fold xs ~init:Float.min_value ~f:Float.max
 end
-
-module Scaling = struct
-  type 'a t = 'a -> float
-
-  let id x = x
-  let linear ~domain:(from_lo, from_hi) ~range:(to_lo, to_hi) =
-    let delta = to_hi -. to_lo in
-    let rho = delta /. (from_hi -. from_lo) in
-    fun x -> (x -. from_lo) *. rho +. to_lo
-end
-
-module Viewport = struct
-  type t = {
-    scale_x : float -> float ;
-    scale_y : float -> float ;
-  }
-
-  let linear ~xlim ~ylim ~size:(w, h) =
-    { scale_x = Scaling.linear ~domain:xlim ~range:(0., w) ;
-      scale_y = Scaling.linear ~domain:ylim ~range:(0., h) }
-
-  let make ?(scale_x = Scaling.id) ?(scale_y = Scaling.id) () =
-    { scale_x ; scale_y }
-
-  let id = {
-    scale_x = Fun.id ;
-    scale_y = Fun.id ;
-  }
-  let scale_x vp = vp.scale_x
-  let scale_y vp = vp.scale_y
-
-  let scale vp (x, y) =
-    (vp.scale_x x, vp.scale_y y)
-end
-
-type thickness = [
-  | `normal
-  | `thick
-]
-
-let thickness_value = function
-  | `thin -> 0.001
-  | `normal -> 0.01
-  | `thick -> 0.1
-
-type point_shape = [
-  | `bullet
-  | `circle
-]
 
 module Font = struct
   type t = Vg_text.Font.t Lazy.t
@@ -98,11 +55,302 @@ module Font = struct
   let default = liberation_sans
 end
 
+type 'a labeling = [`C of 'a | `A of 'a array]
+
+let labeling l i =
+  match l with
+  | `C c -> c
+  | `A xs -> xs.(i)
+
+let labeling_map l ~f =
+  match l with
+  | `C x -> `C (f x)
+  | `A xs -> `A (Array.map xs ~f)
+
+let labeling_map2_exn l1 l2 ~f =
+  match l1, l2 with
+  | `C x1, `C x2 -> `C (f x1 x2)
+  | `C c, `A xs -> `A (Array.map xs ~f:(f c))
+  | `A xs, `C c -> `A (Array.map xs ~f:(Fun.flip f c))
+  | `A xs1, `A xs2 ->
+    if Array.(length xs1 <> length xs2) then invalid_arg "array labelings with different lengths" ;
+    `A (Array.map2_exn xs1 xs2 ~f)
+
+type mark = Bullet | Circle
+
+let normal_thickness = 0.01
+
+module Arrow_head = struct
+  type t = {
+    base : V2.t ;
+    tip : V2.t ;
+    wing_up : V2.t ;
+    wing_down : V2.t ;
+  }
+
+  let make _from_ _to_ =
+    let delta_colinear = V2.(sub _from_ _to_ |> unit) in
+    let delta_ortho = V2.(delta_colinear |> ortho |> smul 0.3) in
+    let base = V2.(add _to_ delta_colinear) in
+    let wing_up = V2.add base delta_ortho in
+    let wing_down = V2.sub base delta_ortho in
+    { base ; wing_down ; wing_up ; tip = _to_ }
+
+  let bbox { base ; tip ; wing_up ; wing_down } =
+    Box2.(
+      of_pts base tip
+      |> Fun.flip add_pt wing_down
+      |> Fun.flip add_pt wing_up
+    )
+end
+
+type t =
+  | Empty
+  | Points of {
+      bbox : Box2.t ;
+      col : Color.t labeling ;
+      mark : mark labeling ;
+      thickness : float labeling ;
+      x : float array ; (* inv: Array.(length x = length y *)
+      y : float array ;
+    }
+  | Lines of {
+      bbox : Box2.t ;
+      col : Color.t labeling ;
+      thickness : float ;
+      x : float array ; (* inv: Array.(length x = length y *)
+      y : float array ;
+      arrow_head : Arrow_head.t option ;
+    }
+
+let empty = Empty
+
+let box_convex_hull ~x ~y =
+  let xmin = Float_array.min x in
+  let xmax = Float_array.max x in
+  let ymin = Float_array.min y in
+  let ymax = Float_array.max y in
+  Box2.of_pts (V2.v xmin ymin) (V2.v xmax ymax)
+
+let points ?(col = `C Color.black) ?(mark = `C Bullet) ?(thickness = `C 0.01) ~x ~y () =
+  if Array.(length x <> length y) then invalid_arg "x and y should have same length" ;
+  let bbox = box_convex_hull ~x ~y in
+  Points { col ; bbox ; mark ; thickness ; x ; y }
+
+let lines ?(col = `C Color.black) ?(thickness = normal_thickness) ?(arrow_head = false) ~x ~y () =
+  if Array.(length x <> length y) then invalid_arg "x and y should have same length" ;
+  let n = Array.length x in
+  if n < 2 then invalid_arg "at least two points expected" ;
+  let arrow_head =
+    if arrow_head then
+      let _from_ = V2.v x.(n - 2) y.(n - 2) in
+      let _to_   = V2.v x.(n - 1) y.(n - 1) in
+      Some (Arrow_head.make _from_ _to_)
+    else None
+  in
+  let line_bbox = box_convex_hull ~x ~y in
+  let bbox = match arrow_head with
+    | None -> line_bbox
+    | Some ah -> Box2.union line_bbox (Arrow_head.bbox ah)
+  in
+  Lines { x ; y ; col ; bbox ; arrow_head ; thickness }
+
+let image_of_lines ~x ~y ~col ~cap ~thickness ~arrow_head =
+  let n = Array.length x in
+  let path =
+    ifold n ~init:P.empty ~f:(fun acc i ->
+        P.line (V2.v x.(i) y.(i)) acc
+      )
+  in
+  let area = `O { P.o with P.width = thickness ; cap } in
+  let line_img = I.cut ~area path (I.const col) in
+  match arrow_head with
+  | None -> line_img
+  | Some (ah : Arrow_head.t) ->
+      let path =
+        P.empty
+        |> P.sub ah.tip
+        |> P.line ah.wing_up
+        |> P.line ah.wing_down
+      in
+      I.blend
+        (I.cut ~area:`Anz path (I.const col))
+        line_img
+
+let path ?(col = Color.black) ?(thickness = `normal) ?(arrow_head = false) ?(cap = `Butt) points =
+    let arrow_head = if arrow_head then arrow_head_geometry points else None in
+    object
+      method render =
+        let body = match List.rev points with
+          | [] | [ _ ] -> I.void
+          | (ox, oy) :: (_ :: _ as t) ->
+            let tip = match arrow_head with
+              | None -> V2.v ox oy
+              | Some h -> h#bottom
+            in
+            let path =
+              List.fold t ~init:(P.empty |> P.sub tip) ~f:(fun acc (x, y) ->
+                  P.line (V2.v x y) acc
+                )
+            in
+            let area = `O { P.o with P.width = thickness_value thickness ;
+                                     cap } in
+            I.cut ~area path (I.const col)
+        and head = match arrow_head with
+          | None -> I.void
+          | Some head ->
+            let path =
+              P.empty
+              |> P.sub head#tip
+              |> P.line head#wing_up
+              |> P.line head#wing_down
+              in
+              I.cut ~area:`Anz path (I.const col)
+        in
+        I.blend head body
+
+      method bbox =
+        let init = Box2.empty in
+        let init =
+          List.fold points ~init ~f:(fun acc (x, y) ->
+              Box2.add_pt acc (V2.v x y)
+            )
+        in
+        match arrow_head with
+        | None -> init
+        | Some head ->
+          List.fold [ head#tip ; head#wing_up ; head#wing_down ] ~init ~f:Box2.add_pt
+    end
+
+
+let bbox = function
+  | Empty -> Box2.empty
+  | Points pts -> pts.bbox
+  | Lines l -> l.bbox
+
+let image_of_points ~mark ~col ~thickness ~x ~y =
+  let area = labeling_map2_exn mark thickness ~f:(fun mark thickness ->
+      match mark with
+      | Bullet -> `Anz
+      | Circle ->
+        `O { P.o with P.width = thickness }
+    )
+  in
+  let mark = labeling_map2_exn col area ~f:(fun col area ->
+      I.cut ~area (P.empty |> P.circle V2.zero 0.1) (I.const col)
+    )
+  in
+  ifold (Array.length x) ~init:I.void ~f:(fun acc i ->
+      I.blend acc (I.move (V2.v x.(i) y.(i)) (labeling mark i))
+    )
+
+let image_of_croquis = function
+  | Empty -> Vg.I.void
+  | Points { mark ; col ; x ; y ; thickness ; _ } ->
+    image_of_points ~mark ~col ~x ~y ~thickness
+  | Lines { x ; y ; _ } ->
+    image_of_lines ~x ~y
+
+let render croquis file_format target =
+  let view = bbox croquis in
+  let size = Box2.size view in
+  let image = image_of_croquis croquis in
+  let renderer =
+    match file_format with
+    | `pdf ->
+      let otf_font x =
+        Lazy.force x
+        |> Vg_text.Font.data
+        |> Vgr_pdf.otf_font
+        |> function
+        | Ok x -> x
+        | Error _ -> assert false
+      in
+      let font (f : Vg.Font.t) =
+        match f.name with
+        | "DejaVuSansMono" -> otf_font Font.dejavu_sans_mono
+        | "DejaVuSansMono-Bold" -> otf_font Font.dejavu_sans_mono_bold
+        | "DejaVuSansMono-Oblique" -> otf_font Font.dejavu_sans_mono_oblique
+        | "DejaVuSansMono-BoldOblique" -> otf_font Font.dejavu_sans_mono_bold_oblique
+        | "LiberationSans" -> otf_font Font.liberation_sans
+        | "LiberationSans-Bold" -> otf_font Font.liberation_sans_bold
+        | "LiberationSans-Italic" -> otf_font Font.liberation_sans_italic
+        | "LiberationSans-BoldItalic" -> otf_font Font.liberation_sans_bold_italic
+        | _ -> `Sans
+      in
+      Vgr_pdf.target ~font ()
+    | `svg -> Vgr_svg.target ()
+  in
+  let render target =
+    let r = Vgr.create renderer target in
+    ignore (Vgr.render r (`Image (size, view, image))) ;
+    ignore (Vgr.render r `End)
+  in
+  match target with
+  | `File fn ->
+    Out_channel.with_file fn ~f:(fun oc -> render (`Channel oc))
+  | (`Channel _ | `Buffer _) as target -> render target
+
+
+
+type point = float * float
+
+
+module Scaling = struct
+  type 'a t = 'a -> float
+
+  let id x = x
+  let linear ~domain:(from_lo, from_hi) ~range:(to_lo, to_hi) =
+    let delta = to_hi -. to_lo in
+    let rho = delta /. (from_hi -. from_lo) in
+    fun x -> (x -. from_lo) *. rho +. to_lo
+end
+
+module Viewport = struct
+  type t = {
+    scale_x : float -> float ;
+    scale_y : float -> float ;
+  }
+
+  let linear ~xlim ~ylim ~size:(w, h) =
+    { scale_x = Scaling.linear ~domain:xlim ~range:(0., w) ;
+      scale_y = Scaling.linear ~domain:ylim ~range:(0., h) }
+
+  let make ?(scale_x = Scaling.id) ?(scale_y = Scaling.id) () =
+    { scale_x ; scale_y }
+
+  let id = {
+    scale_x = Fun.id ;
+    scale_y = Fun.id ;
+  }
+  let scale_x vp = vp.scale_x
+  let scale_y vp = vp.scale_y
+
+  let scale vp (x, y) =
+    (vp.scale_x x, vp.scale_y y)
+end
+
+type point_shape = [
+  | `bullet
+  | `circle
+]
+
+
 module Picture = struct
   class type t = object
     method render : image
     method bbox : Box2.t
   end
+
+  type thickness = [
+    | `normal
+    | `thick
+  ]
+
+  let thickness_value = function
+    | `thin -> 0.001
+    | `normal -> 0.01
+    | `thick -> 0.1
 
   let points ?(col = Color.black) ?(shape = `bullet) ~x ~y () =
     let xmin = Float_array.min x in
