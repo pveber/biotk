@@ -13,17 +13,7 @@ module type S = sig
   val entropy : t -> float array
 end
 
-module type Alphabet = sig
-  type t
-  val all : t list
-  val card : int
-  val to_char : t -> char
-  val of_char : char -> t option
-  val of_char_exn : char -> t
-  val to_int : t -> int
-end
-
-module Make(A : Alphabet) = struct
+module Make(A : Alphabet.S) = struct
   type t = float array array
 
   let length = Array.length
