@@ -9,7 +9,7 @@ module type S = sig
   val flat : int -> t
   val length : t -> int
   val composition : t -> float array
-  val draw : t -> Croquis.t
+  val draw : ?palette:Color.t array -> t -> Croquis.t
   val entropy : t -> float array
 end
 
@@ -63,7 +63,16 @@ module Make(A : Alphabet.S) = struct
       text (-. 0.2) max_entropy (Float.to_string max_entropy) ;
     ]
 
-  let draw t =
+  let draw ?palette t =
+    let color =
+      match palette with
+      | None ->
+        if A.card = 4 then
+          Color.[| red ; blue ; v_srgbi 0xFF 0xB3 0 ; v_srgbi 0 0x80 0 |]
+        else
+          Croquis.Colormap.hsl ~lightness:0.5 ~saturation:1. A.card
+      | Some p -> p
+    in
     let open Croquis in
     let font = Font.dejavu_sans_mono_bold in
     let letter =
@@ -71,12 +80,6 @@ module Make(A : Alphabet.S) = struct
           sprintf "%c" (Char.uppercase (A.to_char c))
         )
       |> Array.of_list
-    in
-    let color =
-      if A.card = 4 then
-        Color.[| red ; blue ; v_srgbi 0xFF 0xB3 0 ; v_srgbi 0 0x80 0 |]
-      else
-        Array.init A.card ~f:(fun i -> Color.gray (float i *. 127. /. float A.card))
     in
     let draw_letter ~x ~col ~sy l =
       if Core.Float.(sy < 1e-6) then None
@@ -93,7 +96,8 @@ module Make(A : Alphabet.S) = struct
         )
       |> List.filter_opt
       |> vstack ~align:`centered
-      |> reshape ~bbox:(Box2.v (V2.v 0. 0.) (V2.v 1. (max_entropy -. entropy)))
+      |> reshape
+        ~bbox:(Box2.v (V2.v 0. 0.) (V2.v 1. (max_entropy -. entropy)))
     in
     Array.map t ~f:draw_col
     |> Array.to_list
