@@ -17,8 +17,8 @@ let tree =
   ]
   |> draw_tree
 
-let pssm =
-  let module PSSM = Profile_matrix.DNA in
+let pfm =
+  let module PFM = Profile_matrix.DNA in
   [|
     [| 0.654 ; 0.045 ; 0.262 ; 0.039 |] ;
     [| 0.019 ; 0.01  ; 0.935 ; 0.036 |] ;
@@ -27,14 +27,30 @@ let pssm =
     [| 0.01  ; 0.819 ; 0.113 ; 0.058 |] ;
     [| 0.893 ; 0.01  ; 0.068 ; 0.029 |]
   |]
-  |> PSSM.of_array
+  |> PFM.of_array
   |> Stdlib.Option.get
-  |> PSSM.draw
+  |> PFM.draw
+
+let protein_pfm =
+  let module PFM = Profile_matrix.Protein in
+  let rng = Gsl.Rng.(make (default ())) in
+  let pfm =
+    Array.init 10 ~f:(fun i ->
+        Profile_matrix.random_profile
+          (module Amino_acid) (0.1 /. Float.of_int (i + 1)) rng
+      )
+    |> PFM.of_array
+    |> Stdlib.Option.get
+  in
+  PFM.draw pfm
 
 let picture =
-  Croquis.vstack [
+  Croquis.vstack ~align:`centered [
     tree ;
-    pssm ;
+    pfm ;
+    pfm ;
+    protein_pfm ;
+    Croquis.(palette (Colormap.hsl ~lightness:0.5 ~saturation:1. 20)) ;
   ]
 
 let () =

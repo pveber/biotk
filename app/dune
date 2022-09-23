@@ -1,4 +1,5 @@
 (executable
   (name croquis_demo)
   (modules Croquis_demo)
-  (libraries biotk biotk.croquis core_unix.command_unix))
+  (libraries biotk biotk.croquis core_unix.command_unix)
+  (preprocess (pps ppx_deriving.show)))
