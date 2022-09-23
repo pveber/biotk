@@ -542,6 +542,16 @@ end
 
 let pileup xs = group (Pileup_layout.make xs)
 
+let padding ?(delta = 0.1) ?(left = 0.) ?(right = 0.) ?(top = 0.) ?(bottom = 0.) x =
+  let o = Box2.o x.bbox in
+  let o' = V2.v (V2.x o -. delta -. left) (V2.y o -. delta -. top) in
+  let w = Box2.w x.bbox in
+  let w' = w +. 2. *. delta +. left +. right in
+  let h = Box2.h x.bbox in
+  let h' = h +. 2. *. delta +. top +. bottom in
+  let bbox = Box2.v o' (V2.v w' h') in
+  { x with bbox }
+
 let box2_padding alpha b =
   let w = Box2.w b in
   let h = Box2.h b in

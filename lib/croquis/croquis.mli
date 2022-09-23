@@ -115,6 +115,15 @@ val frame : t -> t
 
 val pileup : t list -> t
 
+val padding :
+  ?delta:float ->
+  ?left:float ->
+  ?right:float ->
+  ?top:float ->
+  ?bottom:float ->
+  t ->
+  t
+
 val vstack :
   ?align:[`none | `centered | `left | `right ] ->
   t list ->
