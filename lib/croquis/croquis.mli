@@ -198,3 +198,17 @@ val plot :
   ?height:float ->
   Plot.t list ->
   t
+
+
+module Colormap : sig
+  type t = Color.t array
+
+  val greys : int -> t
+
+  val hsl :
+    saturation:float ->
+    lightness:float ->
+    int -> t
+end
+
+val palette : Colormap.t -> t

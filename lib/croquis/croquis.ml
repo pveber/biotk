@@ -702,3 +702,51 @@ end
 
 let plot ?width ?height pl =
   Plot.render ?width ?height pl
+
+module Colormap = struct
+  type t = Color.t array
+
+  let greys n =
+    Array.init n ~f:(fun i ->
+        Color.gray (float i /. float n)
+      )
+
+  let check_interval label value lo hi =
+    if Float.(lo > value || value > hi) then
+      invalid_argf "Argument %s should lie between %g and %g" label lo hi ()
+
+  (* The formula are taken from https://en.wikipedia.org/wiki/HSL_and_HSV#HSL_to_RGB *)
+  let color_of_hsl ~h ~s ~l =
+    check_interval "h" h 0. 360. ;
+    check_interval "s" s 0. 1. ;
+    check_interval "l" l 0. 1. ;
+    let chroma = (1. -. Float.abs (2. *. l -. 1.)) *. s in
+    let h' = h /. 60. in
+    let x = chroma *. (1. -. Float.abs (Float.(h' % 2.) -. 1.)) in
+    let r1, g1, b1 =
+      if Float.(h' < 1.) then (chroma, x, 0.)
+      else if Float.(h' < 2.) then (x, chroma, 0.)
+      else if Float.(h' < 3.) then (0., chroma, x)
+      else if Float.(h' < 4.) then (0., x, chroma)
+      else if Float.(h' < 5.) then (x, 0., chroma)
+      else if Float.(h' < 6.) then (chroma, 0., x)
+      else assert false
+    in
+    let m = l -. chroma /. 2. in
+    Color.v (r1 +. m) (g1 +. m) (b1 +. m) 1.
+
+  let hsl ~saturation:s ~lightness:l n =
+    Array.init n ~f:(fun i ->
+        let h = float i /. float n *. 360. in
+        color_of_hsl ~h ~s ~l
+      )
+end
+
+let palette xs =
+  Array.map xs ~f:(fun col ->
+      rect ~fill:col ~xmin:0. ~xmax:1. ~ymin:0. ~ymax:1. ()
+      |> frame
+      |> padding ~delta:0.3
+    )
+  |> Array.to_list
+  |> hstack
