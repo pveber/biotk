@@ -19,3 +19,11 @@ module DNA : sig
   include S
   val reverse_complement : t -> t
 end
+
+module Protein : S
+
+val random_profile :
+  (module Alphabet.S) ->
+  float ->
+  Gsl.Rng.t ->
+  float array

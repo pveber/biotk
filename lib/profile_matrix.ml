@@ -116,3 +116,13 @@ module DNA = struct
         Nucleotide.[| f i t ; f i g ; f i c ; f i a |]
       )
 end
+
+module Protein = struct
+  include Make(Amino_acid)
+end
+
+let random_profile (module A : Alphabet.S) alpha rng =
+  let alpha = Array.create ~len:A.card alpha in
+  let theta = Array.create ~len:A.card 0. in
+  Gsl.Randist.dirichlet rng ~alpha ~theta ;
+  theta
