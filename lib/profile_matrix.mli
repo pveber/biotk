@@ -10,6 +10,10 @@ module type S = sig
     ?palette:Gg.Color.t array ->
     t ->
     Croquis.t
+  val draw_profile :
+    ?palette:Gg.Color.t array ->
+    float array ->
+    Croquis.t
   val entropy : t -> float array
 end
 

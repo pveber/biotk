@@ -31,18 +31,17 @@ let pfm =
   |> Stdlib.Option.get
   |> PFM.draw
 
-let protein_pfm =
+let protein_pfm, site_profile1, site_profile2 =
   let module PFM = Profile_matrix.Protein in
   let rng = Gsl.Rng.(make (default ())) in
-  let pfm =
+  let freqs =
     Array.init 10 ~f:(fun i ->
         Profile_matrix.random_profile
           (module Amino_acid) (0.1 /. Float.of_int (i + 1)) rng
       )
-    |> PFM.of_array
-    |> Stdlib.Option.get
   in
-  PFM.draw pfm
+  let pfm = Option.value_exn (PFM.of_array freqs) in
+  PFM.draw pfm, PFM.draw_profile freqs.(0), PFM.draw_profile freqs.(8)
 
 let picture =
   Croquis.vstack ~align:`centered [
@@ -51,6 +50,8 @@ let picture =
     pfm ;
     protein_pfm ;
     Croquis.(palette (Colormap.hsl ~lightness:0.5 ~saturation:1. 20)) ;
+    site_profile1 ;
+    site_profile2 ;
   ]
 
 let () =

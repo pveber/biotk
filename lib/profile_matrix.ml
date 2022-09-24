@@ -10,6 +10,10 @@ module type S = sig
   val length : t -> int
   val composition : t -> float array
   val draw : ?palette:Color.t array -> t -> Croquis.t
+  val draw_profile :
+    ?palette:Gg.Color.t array ->
+    float array ->
+    Croquis.t
   val entropy : t -> float array
 end
 
@@ -48,31 +52,31 @@ module Make(A : Alphabet.S) = struct
 
   let max_entropy = Float.log (float A.card) /. Float.log 2.
 
-  let draw_y_scale () =
+  let draw_y_scale max =
     let open Croquis in
     let text x y msg =
       text ~x ~y msg ~font:Croquis.Font.dejavu_sans_mono_bold ~size:0.1
     in
     group [
-      line (0., 0.) (0., max_entropy) ;
+      line (0., 0.) (0., max) ;
       line (-0.1, 0.) (0., 0.) ;
-      line (-0.1, max_entropy /. 2.) (0., max_entropy /. 2.) ;
-      line (-. 0.1, max_entropy) (0., max_entropy) ;
+      line (-0.1, max /. 2.) (0., max /. 2.) ;
+      line (-. 0.1, max) (0., max) ;
       text (-. 0.2) 0. "0" ;
-      text (-. 0.2) (max_entropy /. 2.) (Float.to_string (max_entropy /. 2.)) ;
-      text (-. 0.2) max_entropy (Float.to_string max_entropy) ;
+      text (-. 0.2) (max /. 2.) (Float.to_string (max /. 2.)) ;
+      text (-. 0.2) max (Float.to_string max) ;
     ]
 
+  let color_palette = function
+    | None ->
+      if A.card = 4 then
+        Color.[| red ; blue ; v_srgbi 0xFF 0xB3 0 ; v_srgbi 0 0x80 0 |]
+      else
+        Croquis.Colormap.hsl ~lightness:0.5 ~saturation:1. A.card
+    | Some p -> p
+
   let draw ?palette t =
-    let color =
-      match palette with
-      | None ->
-        if A.card = 4 then
-          Color.[| red ; blue ; v_srgbi 0xFF 0xB3 0 ; v_srgbi 0 0x80 0 |]
-        else
-          Croquis.Colormap.hsl ~lightness:0.5 ~saturation:1. A.card
-      | Some p -> p
-    in
+    let color = color_palette palette in
     let open Croquis in
     let font = Font.dejavu_sans_mono_bold in
     let letter =
@@ -101,8 +105,40 @@ module Make(A : Alphabet.S) = struct
     in
     Array.map t ~f:draw_col
     |> Array.to_list
-    |> List.cons (draw_y_scale ())
+    |> List.cons (draw_y_scale max_entropy)
     |> hstack ~align:`bottom
+
+  let draw_profile ?palette xs =
+    if Array.length xs <> A.card
+    then invalid_argf "profile of length %d expected" A.card () ;
+    let color = color_palette palette in
+    if Array.length color <> A.card
+    then invalid_argf "palette of length %d expected" A.card () ;
+    let font = Croquis.Font.dejavu_sans_mono_bold in
+    let symbols =
+      List.mapi A.all ~f:(fun i symbol ->
+          let unscaled =
+            A.to_char symbol
+            |> String.of_char
+            |> Croquis.text ~font ~size:2. ~col:color.(i) ~x:0. ~y:0. in
+          let bbox_unscaled = Croquis.bbox unscaled in
+          let target_box =
+            Box2.v
+              (V2.v 0. (Box2.miny bbox_unscaled /. Box2.maxy bbox_unscaled))
+              (V2.v (Box2.w bbox_unscaled /. 4.) xs.(i)) in
+          let img =
+            if Float.(xs.(i) < 1e-6) then Croquis.void target_box
+            else Croquis.reshape unscaled ~bbox:target_box
+          in
+          img, Box2.w target_box
+        )
+      |> List.fold ~init:(0., []) ~f:(fun (pos_x, acc) (img, w) ->
+          pos_x +. w, Croquis.translate ~dx:pos_x img :: acc
+        )
+      |> snd
+      |> Croquis.group
+    in
+    Croquis.group [ draw_y_scale 1. ; symbols ]
 end
 
 module DNA = struct
