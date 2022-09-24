@@ -24,7 +24,9 @@ end
 
 type t
 
-val void : t
+val bbox : t -> box2
+
+val void : box2 -> t
 
 type mark = Bullet | Circle
 

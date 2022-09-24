@@ -286,9 +286,11 @@ type t = {
   img : image ;
 }
 
-let void = {
+let bbox { bbox ; _ } = bbox
+
+let void bbox = {
   img = I.void ;
-  bbox = Box2.empty ;
+  bbox ;
 }
 
 let points ?col ?mark ?thickness ~x ~y () =
@@ -341,7 +343,7 @@ let text ?(col = Color.black) ?(size = 12.) ?(font = Font.default) ?(halign = `m
       Box2.move (V2.v (x -. dx) (y -. dy)) bb }
 
 let group = function
-  | [] -> void
+  | [] -> void Box2.empty
   | h :: t as xs ->
     let img = List.fold t ~init:h.img ~f:(fun acc crq -> I.blend acc crq.img) in
     let bbox =
@@ -676,7 +678,7 @@ module Plot = struct
 
   let render ?(width = 10.) ?(height = 6.) plots =
     match plots with
-    | [] -> void
+    | [] -> void Box2.empty
     | _ ->
       let bb =
         List.map plots ~f:bb
