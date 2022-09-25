@@ -41,7 +41,7 @@ let protein_pfm, site_profile1, site_profile2 =
       )
   in
   let pfm = Option.value_exn (PFM.of_array freqs) in
-  PFM.draw pfm, PFM.draw_profile freqs.(0), PFM.draw_profile freqs.(8)
+  PFM.draw ~palette:PFM.dayhoff_palette pfm, PFM.draw_profile freqs.(0), PFM.draw_profile freqs.(8)
 
 let picture =
   Croquis.vstack ~align:`centered [
@@ -50,6 +50,7 @@ let picture =
     pfm ;
     protein_pfm ;
     Croquis.(palette (Colormap.hsl ~lightness:0.5 ~saturation:1. 20)) ;
+    Croquis.(palette Profile_matrix.Protein.dayhoff_palette) ;
     site_profile1 ;
     site_profile2 ;
   ]

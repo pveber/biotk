@@ -24,7 +24,11 @@ module DNA : sig
   val reverse_complement : t -> t
 end
 
-module Protein : S
+module Protein : sig
+  include S
+  val dayhoff_palette : Gg.color array
+end
+
 
 val random_profile :
   (module Alphabet.S) ->

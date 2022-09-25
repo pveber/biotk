@@ -155,6 +155,31 @@ end
 
 module Protein = struct
   include Make(Amino_acid)
+
+  (* Colors were taken from this publication :
+     https://www.biorxiv.org/content/10.1101/2022.02.24.479670v1.full *)
+  let dayhoff_palette = Color.[|
+      v_srgb 1. 0.875 0.875 ;
+      v_srgb 0.871 0.757 0.82 ;
+      v_srgb 0.655 1. 0.953 ;
+      v_srgb 0.482 1. 0.929 ;
+      v_srgb 0.922 0.969 0.98 ;
+      v_srgb 1. 0.749 0.749 ;
+      v_srgb 1. 0.925 0.733 ;
+      v_srgb 1. 0.882 0.745 ; (* Ile *)
+      v_srgb 1. 0.851 0.471 ;
+      v_srgb 1. 0.761 0.49 ;
+      v_srgb 1. 0.643 0.235 ;
+      v_srgb 0.31 1. 0.91 ;
+      v_srgb 1. 0.502 0.502 ;
+      v_srgb 0.137 1. 0.886 ;
+      v_srgb 1. 0.812 0.337 ;
+      v_srgb 1. 0.376 0.376 ;
+      v_srgb 0.875 0. 0. ;
+      v_srgb 1. 0.702 0.361 ;
+      v_srgb 0.761 0.902 0.941 ;
+      v_srgb 0.6 0.835 0.902 ;
+    |]
 end
 
 let random_profile (module A : Alphabet.S) alpha rng =
