@@ -24,6 +24,7 @@
     ("core_unix" (>= "v0.15.0"))
     (crunch (>= 3.2.0))
     "fmt"
+    "gsl"
     (ocaml (>= 4.11.0))
     "ocamlnet"
     "otfm"
