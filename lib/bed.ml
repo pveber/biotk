@@ -111,12 +111,12 @@ module Make'(T : Base) = struct
 
   let load_as_lmap fn = (* FIXME: could use stream to read bed file *)
     load fn
-    |> Stream.of_list
-    |> CFStream.Stream.filter_map ~f:(function
+    |> Stdlib.List.to_seq
+    |> Seq.filter_map (function
         | `Comment _ -> None
         | `Record x -> Some (T.loc x, x)
       )
-    |> GAnnot.LMap.of_stream
+    |> GAnnot.LMap.of_seq
 
 end
 

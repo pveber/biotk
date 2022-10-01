@@ -1,35 +1,35 @@
 open Core
-open CFStream
-open Stream.Infix
+
+let rec seq_of_sequence xs () =
+  match Sequence.next xs with
+  | None -> Seq.Nil
+  | Some (h, t) -> Seq.Cons (h, seq_of_sequence t)
 
 module Map = struct
   include Map.Make(String)
 
-  let to_stream t = Stream.of_list (to_alist t)
-  let of_stream xs =
-    Stream.fold xs ~init:empty ~f:(fun accu (key,data) -> set accu ~key ~data)
+  let to_seq t = seq_of_sequence (to_sequence t)
+  let of_seq xs =
+    Seq.fold_left (fun accu (key,data) -> set accu ~key ~data) empty xs
 end
 
-module Accu = Biocaml_unix.Accu
-
 module Selection = struct
-  module Iset = Biocaml_unix.Iset
-  type t = Iset.t Map.t
+  type t = ISet.t Map.t
 
   let empty = Map.empty
   let add sel GLoc.{ chr ; lo ; hi } =
     let set_chr =
       match Map.find sel chr with
-      | None -> Iset.empty
+      | None -> ISet.empty
       | Some s -> s
     in
-    let set_chr = Iset.add_range set_chr lo hi in
+    let set_chr = ISet.add_range set_chr lo hi in
     Map.set sel ~key:chr ~data:set_chr
 
   let inter u v =
     Map.fold u ~init:Map.empty ~f:(fun ~key:k ~data:set_u accu ->
         match Map.find v k with
-        | Some set_v -> Map.set accu ~key:k ~data:(Iset.inter set_u set_v)
+        | Some set_v -> Map.set accu ~key:k ~data:(ISet.inter set_u set_v)
         | None -> accu
       )
 
@@ -37,9 +37,9 @@ module Selection = struct
     let keys = List.dedup_and_sort ~compare:String.compare (Map.keys u @ Map.keys v) in
     List.fold keys ~init:Map.empty ~f:(fun accu k ->
         Map.set accu ~key:k ~data:(
-          Iset.union
-            (Option.value (Map.find u k) ~default:Iset.empty)
-            (Option.value (Map.find v k) ~default:Iset.empty)
+          ISet.union
+            (Option.value (Map.find u k) ~default:ISet.empty)
+            (Option.value (Map.find v k) ~default:ISet.empty)
         )
       )
 
@@ -47,16 +47,16 @@ module Selection = struct
     Map.fold u ~init:Map.empty ~f:(fun ~key:k ~data:set_u accu ->
         let set_u' =
           match Map.find v k with
-          | Some set_v -> Iset.diff set_u set_v
+          | Some set_v -> ISet.diff set_u set_v
           | None -> set_u
         in
         Map.set ~key:k ~data:set_u' accu
       )
 
   let size x =
-    Map.fold x ~init:0 ~f:(fun ~key:_ ~data:set accu -> Iset.cardinal set + accu)
+    Map.fold x ~init:0 ~f:(fun ~key:_ ~data:set accu -> ISet.cardinal set + accu)
 
-  let overlap sel GLoc.{ chr ; lo ; hi } = Iset.(
+  let overlap sel GLoc.{ chr ; lo ; hi } = ISet.(
       match Map.find sel chr with
       | Some x ->
         inter (add_range empty lo hi) x
@@ -68,33 +68,31 @@ module Selection = struct
     Option.value_map
       (Map.find sel chr)
       ~default:false
-      ~f:(fun x -> Iset.intersects_range x lo hi)
+      ~f:(fun x -> ISet.intersects_range x lo hi)
 
-  let to_stream sel =
-    Map.to_stream sel
-    |> Stream.map ~f:(fun (chr, s) ->
-        Stream.map (Iset.to_stream s) ~f:(fun (lo, hi) ->
-            GLoc.{ chr ; lo ; hi }
-          )
+  let to_seq sel =
+    Map.to_seq sel
+    |> Seq.map (fun (chr, s) ->
+        Seq.map
+          (fun (lo, hi) -> GLoc.{ chr ; lo ; hi })
+          (ISet.to_seq s)
       )
-    |> Stream.concat
+    |> Seq.concat
 
-  let of_stream e =
+  let of_seq e =
     let accu =
-      Accu.create
+      Binning.create
         ~bin:(fun x -> x.GLoc.chr)
-        ~zero:Iset.empty
-        ~add:GLoc.(fun loc x -> Iset.add_range x loc.lo loc.hi)
+        ~zero:ISet.empty
+        ~add:GLoc.(fun loc x -> ISet.add_range x loc.lo loc.hi)
         ()
     in
-    Stream.iter ~f:(fun loc -> Accu.add accu loc loc) e ;
-    Map.of_stream (Accu.stream accu)
+    Seq.iter (fun loc -> Binning.add accu loc loc) e ;
+    Map.of_seq (Binning.seq accu)
 end
 
 module LMap = struct
-  module T = Biocaml_unix.Interval_tree
-
-  type 'a t = 'a T.t Map.t
+  type 'a t = 'a Interval_tree.t Map.t
 
   let empty = Map.empty
 
@@ -102,55 +100,55 @@ module LMap = struct
     Option.value_map
       (Map.find lmap chr)
       ~default:false
-      ~f:(fun x -> T.intersects x ~low:lo ~high:hi)
+      ~f:(fun x -> Interval_tree.intersects x ~low:lo ~high:hi)
 
   let closest lmap { GLoc.chr ; lo ; hi } =
     Option.bind
       (Map.find lmap chr)
       ~f:(fun x ->
           try
-            let lo, hi, label, d = T.find_closest lo hi x in
+            let lo, hi, label, d = Interval_tree.find_closest x lo hi in
             Some ({ GLoc.chr ; lo ; hi }, label, d)
-          with T.Empty_tree -> None
+          with Interval_tree.Empty_tree -> None
         )
 
   let intersecting_elems lmap { GLoc.chr ; lo ; hi } =
     match Map.find lmap chr with
     | Some x ->
-      T.find_intersecting_elem lo hi x
-      /@ (fun (lo, hi, x) -> { GLoc.chr ; lo ; hi }, x)
-    | None -> Stream.empty ()
+      Interval_tree.find_intersecting_elem x lo hi
+      |> Seq.map (fun (lo, hi, x) -> { GLoc.chr ; lo ; hi }, x)
+    | None -> Seq.empty
 
-  let to_stream lmap =
-    (Map.to_stream lmap)
-    /@ (fun (chr, t) ->
-        Stream.map
-          ~f:(fun (lo, hi, x) -> { GLoc.chr ; lo ; hi }, x)
-          (T.to_stream t))
-    |> Stream.concat
+  let to_seq lmap =
+    Map.to_seq lmap
+    |> Seq.map (fun (chr, t) ->
+        Seq.map
+          (fun (lo, hi, x) -> { GLoc.chr ; lo ; hi }, x)
+          (Interval_tree.to_seq t))
+    |> Seq.concat
 
-  let of_stream e =
+  let of_seq e =
     let accu =
-      Accu.create
+      Binning.create
         ~bin:GLoc.(fun l -> l.chr)
-        ~zero:T.empty
-        ~add:GLoc.(fun (l, v) -> T.add ~data:v ~low:l.lo ~high:l.hi)
+        ~zero:Interval_tree.empty
+        ~add:GLoc.(fun (l, v) -> Interval_tree.add ~data:v ~low:l.lo ~high:l.hi)
         ()
     in
-    Stream.iter ~f:(fun (loc, value) -> Accu.add accu loc (loc, value)) e ;
-    Map.of_stream (Accu.stream accu)
+    Seq.iter (fun (loc, value) -> Binning.add accu loc (loc, value)) e ;
+    Map.of_seq (Binning.seq accu)
 
   let add m k v =
     let chr = k.GLoc.chr  in
-    let t = Option.value ~default:T.empty (Map.find m chr) in
-    let t = T.(add t ~data:v ~low:k.lo ~high:k.hi) in
+    let t = Option.value ~default:Interval_tree.empty (Map.find m chr) in
+    let t = Interval_tree.(add t ~data:v ~low:k.lo ~high:k.hi) in
     Map.set m ~key:chr ~data:t
 end
 
 module LSet = struct
   module T = Biocaml_unix.Interval_tree
 
-  type t = unit T.t Map.t
+  type t = unit Interval_tree.t Map.t
 
   let empty = Map.empty
 
@@ -160,10 +158,10 @@ module LSet = struct
     Option.map (LMap.closest lset loc) ~f:(fun (loc', (), d) -> loc', d)
 
   let intersecting_elems lset loc =
-    LMap.intersecting_elems lset loc /@ fst
+    LMap.intersecting_elems lset loc |> Seq.map fst
 
-  let to_stream lset = LMap.to_stream lset /@ fst
-  let of_stream e = e /@ (fun x -> x, ()) |> LMap.of_stream
+  let to_seq lset = LMap.to_seq lset |> Seq.map fst
+  let of_seq e = e |> Seq.map (fun x -> x, ()) |> LMap.of_seq
 
 end
 

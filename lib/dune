@@ -6,10 +6,10 @@
  (flags :standard -short-paths)
  (libraries
 	angstrom.unix
+        binning
 	biocaml.unix
 	biotk.croquis
 	biotk.pipes.unix
-	cfstream
 	core
         core_unix
 	fmt

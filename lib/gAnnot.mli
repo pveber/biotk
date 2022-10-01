@@ -39,10 +39,10 @@ module Selection : sig
 
   val overlap : t -> GLoc.t -> int
 
-  val to_stream : t -> GLoc.t Stream.t
+  val to_seq : t -> GLoc.t Seq.t
 
-  val of_stream : GLoc.t Stream.t -> t
-  (** [of_stream e] computes a selection (i.e. a set of non
+  val of_seq : GLoc.t Seq.t -> t
+  (** [of_seq e] computes a selection (i.e. a set of non
       overlapping locations) as the union of the locations contained
       in [e] *)
 
@@ -54,8 +54,8 @@ module LSet : sig
 
   val empty : t
 
-  val to_stream : t -> GLoc.t Stream.t
-  val of_stream : GLoc.t Stream.t -> t
+  val to_seq : t -> GLoc.t Seq.t
+  val of_seq : GLoc.t Seq.t -> t
 
 
   val intersects : t -> GLoc.t -> bool
@@ -69,8 +69,8 @@ module LSet : sig
       distance. Returns [None] if there is no GLoc.t in [lset]
       that comes from the same chromosome than [loc]. *)
 
-  val intersecting_elems : t -> GLoc.t -> GLoc.t Stream.t
-  (** [intersecting_elems lset loc] returns a stream of all
+  val intersecting_elems : t -> GLoc.t -> GLoc.t Seq.t
+  (** [intersecting_elems lset loc] returns a seq of all
       locations in [lset] that intersect [loc]. *)
 
 end
@@ -83,8 +83,8 @@ module LMap : sig
 
   val add : 'a t -> GLoc.t -> 'a -> 'a t
 
-  val to_stream : 'a t -> (GLoc.t * 'a) Stream.t
-  val of_stream : (GLoc.t * 'a) Stream.t -> 'a t
+  val to_seq : 'a t -> (GLoc.t * 'a) Seq.t
+  val of_seq : (GLoc.t * 'a) Seq.t -> 'a t
 
   val intersects : 'a t -> GLoc.t -> bool
   (** [intersects lmap loc] returns [true] if [loc] has a non-empty
@@ -97,8 +97,8 @@ module LMap : sig
       distance. Returns [None] if there is no GLoc.t in [lmap]
       that comes from the same chromosome than [loc]. *)
 
-  val intersecting_elems : 'a t -> GLoc.t -> (GLoc.t * 'a) Stream.t
-  (** [intersecting_elems lmap loc] returns a stream of elements
+  val intersecting_elems : 'a t -> GLoc.t -> (GLoc.t * 'a) Seq.t
+  (** [intersecting_elems lmap loc] returns a seq of elements
       in [lmap] whose GLoc.t intersects with [loc]. *)
 end
 
