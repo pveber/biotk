@@ -19,6 +19,7 @@
   (depends
     ("angstrom" (>= 0.15.0))
     ("angstrom-unix" (>= 0.15.0))
+    "binning"
     "biocaml"
     ("core" (>= "v0.15.0"))
     ("core_unix" (>= "v0.15.0"))
