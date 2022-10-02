@@ -637,8 +637,12 @@ module Axis = struct
     let unit = guess_unit lo hi in
     let min = inferior_tick ~unit lo in
     let max = superior_tick ~unit hi in
-    let nticks = 1 + Float.to_int (Float.round ~dir:`Up ((hi -. lo) /. 2. /. unit)) in
-    let ticks = List.init nticks ~f:(fun i -> min +. float i *. 2. *. unit) in
+    let ticks =
+      Seq.unfold
+        (fun x -> if Float.( <= ) x  max then Some (x, x +. 2. *. unit) else None)
+        min
+      |> Stdlib.List.of_seq
+    in
     { min ; max ; unit ; ticks }
 
   let draw ax ~proj ~point ~text ~pos ~tick_length =
