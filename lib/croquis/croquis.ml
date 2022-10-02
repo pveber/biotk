@@ -78,7 +78,7 @@ let labeling_map2_exn l1 l2 ~f =
 
 type mark = Bullet | Circle
 
-let normal_thickness = 0.01
+let normal_thickness = 0.02
 
 let box_convex_hull ~x ~y =
   let xmin = Float_array.min x in
@@ -111,7 +111,7 @@ module Points = struct
       )
     in
     let mark = labeling_map2_exn col area ~f:(fun col area ->
-        I.cut ~area (P.empty |> P.circle V2.zero 0.1) (I.const col)
+        I.cut ~area (P.empty |> P.circle V2.zero 0.05) (I.const col)
       )
     in
     ifold (Array.length x) ~init:I.void ~f:(fun acc i ->
@@ -334,6 +334,7 @@ let text ?(col = Color.black) ?(size = 12.) ?(font = Font.default) ?(halign = `m
   let dy =
     match valign with
     | `base -> 0.
+    | `middle -> (miny +. maxy) /. 2.
     | `top -> maxy
     | `bottom -> miny
   in
@@ -610,41 +611,83 @@ let render ?padding croquis file_format target =
     Out_channel.with_file fn ~f:(fun oc -> render (`Channel oc))
   | (`Channel _ | `Buffer _) as target -> render target
 
-type point = float * float
+let linear_scaling ~domain:(from_lo, from_hi) ~range:(to_lo, to_hi) =
+  let delta = to_hi -. to_lo in
+  let rho = delta /. (from_hi -. from_lo) in
+  fun x -> (x -. from_lo) *. rho +. to_lo
 
+module Axis = struct
+  type t = {
+    min : float ;
+    max : float ;
+    unit : float ;
+    ticks : float list ;
+  }
 
-module Scaling = struct
-  type 'a t = 'a -> float
+  let guess_unit lo hi =
+    10. ** (Float.round ~dir:`Nearest (Float.log10 (hi -. lo)) -. 1.)
 
-  let id x = x
-  let linear ~domain:(from_lo, from_hi) ~range:(to_lo, to_hi) =
-    let delta = to_hi -. to_lo in
-    let rho = delta /. (from_hi -. from_lo) in
-    fun x -> (x -. from_lo) *. rho +. to_lo
+  let inferior_tick ~unit x =
+    Float.round ~dir:`Down (x /. unit) *. unit
+
+  let superior_tick ~unit x =
+    Float.round ~dir:`Up (x /. unit) *. unit
+
+  let make lo hi =
+    let unit = guess_unit lo hi in
+    let min = inferior_tick ~unit lo in
+    let max = superior_tick ~unit hi in
+    let nticks = 1 + Float.to_int (Float.round ~dir:`Up ((hi -. lo) /. 2. /. unit)) in
+    let ticks = List.init nticks ~f:(fun i -> min +. float i *. 2. *. unit) in
+    { min ; max ; unit ; ticks }
+
+  let draw ax ~proj ~point ~text ~pos ~tick_length =
+    let tick_pos = List.map ax.ticks ~f:proj in
+    let pos' = pos -. tick_length in
+    let area = `O { P.o with P.width = normal_thickness } in
+    let img = List.fold tick_pos ~init:I.void ~f:(fun acc x ->
+        let path =
+          P.sub (point x pos') P.empty
+          |> P.line (point x pos)
+        in
+        I.blend acc (I.cut ~area path (I.const Color.black))
+      )
+    in
+    let bbox = Box2.of_pts (point ax.min pos) (V2.v ax.max pos') in
+    let ticks = { img ; bbox } in
+    let labels =
+      List.map2_exn ax.ticks tick_pos ~f:(fun v x ->
+          text ~size:(tick_length *. 3.) x (pos -. 2. *. tick_length) (sprintf "%g" v)
+        )
+    in
+    group (ticks :: labels)
+
 end
 
 module Viewport = struct
   type t = {
     scale_x : float -> float ;
     scale_y : float -> float ;
+    range_w : float ;
+    range_h : float ;
+    axis_x : Axis.t ;
+    axis_y : Axis.t ;
   }
 
   let linear ~xlim ~ylim ~size:(w, h) =
-    { scale_x = Scaling.linear ~domain:xlim ~range:(0., w) ;
-      scale_y = Scaling.linear ~domain:ylim ~range:(0., h) }
+    let domain_xmin, domain_xmax = xlim in
+    let domain_ymin, domain_ymax = ylim in
+    let axis_x = Axis.make domain_xmin domain_xmax in
+    let axis_y = Axis.make domain_ymin domain_ymax in
+    { scale_x = linear_scaling ~domain:xlim ~range:(0., w) ;
+      scale_y = linear_scaling ~domain:ylim ~range:(0., h) ;
+      range_w = w ;
+      range_h = h ;
+      axis_x ; axis_y ;
+    }
 
-  let make ?(scale_x = Scaling.id) ?(scale_y = Scaling.id) () =
-    { scale_x ; scale_y }
-
-  let id = {
-    scale_x = Fun.id ;
-    scale_y = Fun.id ;
-  }
   let scale_x vp = vp.scale_x
   let scale_y vp = vp.scale_y
-
-  let scale vp (x, y) =
-    (vp.scale_x x, vp.scale_y y)
 end
 
 module Plot = struct
@@ -676,6 +719,20 @@ module Plot = struct
       (V2.v minx miny)
       (V2.v (max_x plot -. minx) (max_y plot -. miny))
 
+  let draw_axes (vp : Viewport.t) =
+    let rho = 0.05 in
+    let xmin = vp.scale_x vp.axis_x.min -. vp.range_w *. rho in
+    let xmax = vp.scale_x vp.axis_x.max +. vp.range_w *. rho in
+    let ymin = vp.scale_y vp.axis_y.min -. vp.range_h *. rho in
+    let ymax = vp.scale_y vp.axis_y.max +. vp.range_h *. rho in
+    let tick_length = Float.min (vp.range_w *. rho /. 4.) (vp.range_h *. rho /. 4.) in
+    let xticks = Axis.draw vp.axis_x ~proj:(Viewport.scale_x vp) ~point:V2.v ~text:(fun ~size x y msg -> text ~size ~valign:`top ~halign:`middle ~x ~y msg) ~pos:ymin ~tick_length in
+    let yticks = Axis.draw vp.axis_y ~proj:(Viewport.scale_y vp) ~point:(Fun.flip V2.v) ~text:(fun ~size y x msg -> text ~size ~valign:`middle ~halign:`right ~x ~y msg) ~pos:xmin ~tick_length in
+    group [
+      rect ~draw:Color.black ~xmin ~xmax ~ymin ~ymax () ;
+      xticks ; yticks ;
+    ]
+
   let render ?(width = 10.) ?(height = 6.) plots =
     match plots with
     | [] -> void Box2.empty
@@ -690,13 +747,16 @@ module Plot = struct
           ~ylim:Box2.(miny bb, maxy bb)
           ~size:(width, height)
       in
-      List.map plots ~f:(function
-          | Points { x ; y ; col ; mark ; _ } ->
-            let x = Array.map x ~f:(Viewport.scale_x vp) in
-            let y = Array.map y ~f:(Viewport.scale_y vp) in
-            points ~col:(`C col) ~x ~y ~mark:(`C mark) ()
-        )
-      |> group
+      let plot_img =
+        List.map plots ~f:(function
+            | Points { x ; y ; col ; mark ; _ } ->
+              let x = Array.map x ~f:(Viewport.scale_x vp) in
+              let y = Array.map y ~f:(Viewport.scale_y vp) in
+              points ~col:(`C col) ~x ~y ~mark:(`C mark) ()
+          )
+        |> group
+      in
+      padding (draw_axes vp ++ plot_img)
 
   let points ?title ?(col = Color.black) ?(mark = Bullet) x y =
     Points { title ; col ; mark ; x ; y }

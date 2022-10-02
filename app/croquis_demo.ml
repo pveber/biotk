@@ -43,6 +43,13 @@ let protein_pfm, site_profile1, site_profile2 =
   let pfm = Option.value_exn (PFM.of_array freqs) in
   PFM.draw ~palette:PFM.dayhoff_palette pfm, PFM.draw_profile freqs.(0), PFM.draw_profile freqs.(8)
 
+let plot =
+  let open Croquis in
+  let rng = Gsl.Rng.(make (default ())) in
+  let x = Array.init 100 ~f:(fun _ -> Gsl.Rng.uniform rng) in
+  let y = Array.init 100 ~f:(fun i -> x.(i) +. Gsl.Randist.gaussian rng ~sigma:0.1) in
+  plot [ Plot.points x y ]
+
 let picture =
   Croquis.vstack ~align:`centered [
     tree ;
@@ -53,6 +60,7 @@ let picture =
     Croquis.(palette Profile_matrix.Protein.dayhoff_palette) ;
     site_profile1 ;
     site_profile2 ;
+    plot ;
   ]
 
 let () =

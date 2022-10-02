@@ -86,7 +86,7 @@ val text :
   ?size:float ->
   ?font:Font.t ->
   ?halign:[ `middle | `left | `right ] ->
-  ?valign:[ `base | `top | `bottom ] ->
+  ?valign:[ `base | `middle | `top | `bottom ] ->
   x:float ->
   y:float ->
   string ->
@@ -148,40 +148,6 @@ val render :
   [`pdf | `svg] ->
   target ->
   unit
-
-type point = float * float
-
-module Scaling : sig
-  type 'a t
-
-  val id : float t
-  val linear :
-    domain:(float * float) ->
-    range:(float * float) ->
-    float t
-end
-
-module Viewport : sig
-  type t
-
-  val id : t
-
-  val make :
-    ?scale_x:float Scaling.t ->
-    ?scale_y:float Scaling.t ->
-    unit ->
-    t
-
-  val linear :
-    xlim:float * float ->
-    ylim:float * float ->
-    size:float * float ->
-    t
-
-  val scale_x : t -> float -> float
-  val scale_y : t -> float -> float
-  val scale : t -> point -> point
-end
 
 module Plot : sig
   type t
