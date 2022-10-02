@@ -639,8 +639,10 @@ module Axis = struct
     let max = superior_tick ~unit hi in
     let ticks =
       Seq.unfold
-        (fun x -> if Float.( <= ) x  max then Some (x, x +. 2. *. unit) else None)
-        min
+        (fun i ->
+           let x = min +. 2. *. float i *. unit in
+           if Float.( <= ) x  max then Some (x, i + 1) else None)
+        0
       |> Stdlib.List.of_seq
     in
     { min ; max ; unit ; ticks }
@@ -649,7 +651,7 @@ module Axis = struct
     let tick_pos = List.map ax.ticks ~f:proj in
     let pos' = pos -. tick_length in
     let area = `O { P.o with P.width = normal_thickness } in
-    let img = List.fold tick_pos ~init:I.void ~f:(fun acc x ->
+    let ticks_img = List.fold tick_pos ~init:I.void ~f:(fun acc x ->
         let path =
           P.sub (point x pos') P.empty
           |> P.line (point x pos)
@@ -657,11 +659,11 @@ module Axis = struct
         I.blend acc (I.cut ~area path (I.const Color.black))
       )
     in
-    let bbox = Box2.of_pts (point ax.min pos) (V2.v ax.max pos') in
-    let ticks = { img ; bbox } in
+    let ticks_bbox = Box2.of_pts (point (proj ax.min) pos') (point (proj ax.max) pos) in
+    let ticks = { img = ticks_img ; bbox = ticks_bbox } in
     let labels =
       List.map2_exn ax.ticks tick_pos ~f:(fun v x ->
-          text ~size:(tick_length *. 3.) x (pos -. 2. *. tick_length) (sprintf "%g" v)
+          text ~size:(tick_length *. 2.) x (pos -. 2. *. tick_length) (sprintf "%g" v)
         )
     in
     group (ticks :: labels)
@@ -729,7 +731,7 @@ module Plot = struct
     let xmax = vp.scale_x vp.axis_x.max +. vp.range_w *. rho in
     let ymin = vp.scale_y vp.axis_y.min -. vp.range_h *. rho in
     let ymax = vp.scale_y vp.axis_y.max +. vp.range_h *. rho in
-    let tick_length = Float.min (vp.range_w *. rho /. 4.) (vp.range_h *. rho /. 4.) in
+    let tick_length = ((vp.range_w *. rho /. 2.) +. (vp.range_h *. rho /. 2.)) /. 2. in
     let xticks = Axis.draw vp.axis_x ~proj:(Viewport.scale_x vp) ~point:V2.v ~text:(fun ~size x y msg -> text ~size ~valign:`top ~halign:`middle ~x ~y msg) ~pos:ymin ~tick_length in
     let yticks = Axis.draw vp.axis_y ~proj:(Viewport.scale_y vp) ~point:(Fun.flip V2.v) ~text:(fun ~size y x msg -> text ~size ~valign:`middle ~halign:`right ~x ~y msg) ~pos:xmin ~tick_length in
     group [
