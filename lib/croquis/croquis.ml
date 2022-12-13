@@ -736,8 +736,8 @@ module Plot = struct
 
   type annotation =
     | ABLine of {
-        col : Color.t ;
-        thickness : float ;
+        col : Color.t option ;
+        thickness : float option ;
         descr : [`H of float | `V of float | `AB of float * float]
       }
 
@@ -766,7 +766,7 @@ module Plot = struct
     ]
 
   let render_annotation (vp : Viewport.t) = function
-    | ABLine { descr ; _ } ->
+    | ABLine { descr ; col ; thickness } ->
       let minx = Box2.minx vp.visible_bbox in
       let maxx = Box2.maxx vp.visible_bbox in
       let p1, p2 = match descr with
@@ -776,7 +776,7 @@ module Plot = struct
           (v, vp.axis_y.min), (v, vp.axis_y.max)
         | `AB (a, b) -> (minx, a +. b *. minx), (maxx, a +. b *. maxx)
       in
-      line (Viewport.scale vp p1) (Viewport.scale vp p2)
+      line ?col ?thickness (Viewport.scale vp p1) (Viewport.scale vp p2)
 
   let render ?(width = 10.) ?(height = 6.) ?(annotations = []) plots =
     match plots with
@@ -812,13 +812,13 @@ module Plot = struct
   let points ?title ?(col = Color.black) ?(mark = Bullet) x y =
     Points { title ; col ; mark ; x ; y }
 
-  let hline ?(col = Color.black) ?(thickness = 1.) h =
+  let hline ?col ?thickness h =
     ABLine { descr = `H h ; thickness ; col }
 
-  let vline ?(col = Color.black) ?(thickness = 1.) v =
+  let vline ?col ?thickness v =
     ABLine { descr = `V v ; thickness ; col }
 
-  let abline ?(col = Color.black) ?(thickness = 1.) ~intercept ~slope () =
+  let abline ?col ?thickness ~intercept ~slope () =
     ABLine { descr = `AB (intercept, slope) ; thickness ; col }
 end
 
