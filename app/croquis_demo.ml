@@ -48,7 +48,8 @@ let plot =
   let rng = Gsl.Rng.(make (default ())) in
   let x = Array.init 100 ~f:(fun _ -> Gsl.Rng.uniform rng) in
   let y = Array.init 100 ~f:(fun i -> x.(i) +. Gsl.Randist.gaussian rng ~sigma:0.1) in
-  plot [ Plot.points x y ]
+  let annotations = [ Plot.abline ~intercept:0. ~slope:1. () ] in
+  plot ~annotations [ Plot.points x y ]
 
 let picture =
   Croquis.vstack ~align:`centered [

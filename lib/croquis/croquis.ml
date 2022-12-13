@@ -678,6 +678,7 @@ module Viewport = struct
   type t = {
     scale_x : float -> float ;
     scale_y : float -> float ;
+    visible_bbox : box2 ; (* visible area *)
     range_w : float ;
     range_h : float ;
     axis_x : Axis.t ;
@@ -689,8 +690,21 @@ module Viewport = struct
     let domain_ymin, domain_ymax = ylim in
     let axis_x = Axis.make domain_xmin domain_xmax in
     let axis_y = Axis.make domain_ymin domain_ymax in
+    let rho = 0.05 in
+    let visible_bbox =
+      let xmin = Float.min domain_xmin axis_x.min in
+      let xmax = Float.max domain_xmax axis_x.max in
+      let ymin = Float.min domain_ymin axis_y.min in
+      let ymax = Float.max domain_ymax axis_y.max in
+      let w = xmax -. xmin in
+      let h = ymax -. ymin in
+      Box2.of_pts
+        (V2.v (xmin -. rho *. w) (ymin -. rho *. h))
+        (V2.v (xmax +. rho *. w) (ymax +. rho *. h))
+    in
     { scale_x = linear_scaling ~domain:xlim ~range:(0., w) ;
       scale_y = linear_scaling ~domain:ylim ~range:(0., h) ;
+      visible_bbox ;
       range_w = w ;
       range_h = h ;
       axis_x ; axis_y ;
@@ -698,6 +712,16 @@ module Viewport = struct
 
   let scale_x vp = vp.scale_x
   let scale_y vp = vp.scale_y
+
+  let scale vp (x, y) = (scale_x vp x, scale_y vp y)
+
+  let scale_v2 vp p =
+    V2.v (scale_x vp (V2.x p)) (scale_y vp (V2.y p))
+
+  let scale_box vp box =
+    Box2.of_pts
+      (scale_v2 vp (Box2.tl_pt box))
+      (scale_v2 vp (Box2.br_pt box))
 end
 
 module Plot = struct
@@ -710,31 +734,29 @@ module Plot = struct
         y : float array ;
       }
 
-  let min_x = function
-    | Points { x ; _ } -> Float_array.min x
+  type annotation =
+    | ABLine of {
+        col : Color.t ;
+        thickness : float ;
+        descr : [`H of float | `V of float | `AB of float * float]
+      }
 
-  let max_x = function
-    | Points { x ; _ } -> Float_array.max x
-
-  let min_y = function
-    | Points { y ; _ } -> Float_array.min y
-
-  let max_y = function
-    | Points { y ; _ } -> Float_array.max y
-
-  let bb plot =
-    let minx = min_x plot in
-    let miny = min_y plot in
-    Box2.v
-      (V2.v minx miny)
-      (V2.v (max_x plot -. minx) (max_y plot -. miny))
+  let bb = function
+    | Points { x ; y ; _ } ->
+      let minx = Float_array.min x in
+      let miny = Float_array.min y in
+      let maxx = Float_array.max x in
+      let maxy = Float_array.max y in
+      Box2.v
+        (V2.v minx miny)
+        (V2.v (maxx -. minx) (maxy -. miny))
 
   let draw_axes (vp : Viewport.t) =
     let rho = 0.05 in
-    let xmin = vp.scale_x vp.axis_x.min -. vp.range_w *. rho in
-    let xmax = vp.scale_x vp.axis_x.max +. vp.range_w *. rho in
-    let ymin = vp.scale_y vp.axis_y.min -. vp.range_h *. rho in
-    let ymax = vp.scale_y vp.axis_y.max +. vp.range_h *. rho in
+    let xmin = vp.scale_x (Box2.minx vp.visible_bbox) in
+    let xmax = vp.scale_x (Box2.maxx vp.visible_bbox) in
+    let ymin = vp.scale_y (Box2.miny vp.visible_bbox) in
+    let ymax = vp.scale_y (Box2.maxy vp.visible_bbox) in
     let tick_length = ((vp.range_w *. rho /. 2.) +. (vp.range_h *. rho /. 2.)) /. 2. in
     let xticks = Axis.draw vp.axis_x ~proj:(Viewport.scale_x vp) ~point:V2.v ~text:(fun ~size x y msg -> text ~size ~valign:`top ~halign:`middle ~x ~y msg) ~pos:ymin ~tick_length in
     let yticks = Axis.draw vp.axis_y ~proj:(Viewport.scale_y vp) ~point:(Fun.flip V2.v) ~text:(fun ~size y x msg -> text ~size ~valign:`middle ~halign:`right ~x ~y msg) ~pos:xmin ~tick_length in
@@ -743,7 +765,20 @@ module Plot = struct
       xticks ; yticks ;
     ]
 
-  let render ?(width = 10.) ?(height = 6.) plots =
+  let render_annotation (vp : Viewport.t) = function
+    | ABLine { descr ; _ } ->
+      let minx = Box2.minx vp.visible_bbox in
+      let maxx = Box2.maxx vp.visible_bbox in
+      let p1, p2 = match descr with
+        | `H h ->
+          (minx, h), (maxx, h)
+        | `V v ->
+          (v, vp.axis_y.min), (v, vp.axis_y.max)
+        | `AB (a, b) -> (minx, a +. b *. minx), (maxx, a +. b *. maxx)
+      in
+      line (Viewport.scale vp p1) (Viewport.scale vp p2)
+
+  let render ?(width = 10.) ?(height = 6.) ?(annotations = []) plots =
     match plots with
     | [] -> void Box2.empty
     | _ ->
@@ -757,23 +792,38 @@ module Plot = struct
           ~ylim:Box2.(miny bb, maxy bb)
           ~size:(width, height)
       in
-      let plot_img =
+      let plot_imgs =
         List.map plots ~f:(function
             | Points { x ; y ; col ; mark ; _ } ->
               let x = Array.map x ~f:(Viewport.scale_x vp) in
               let y = Array.map y ~f:(Viewport.scale_y vp) in
               points ~col:(`C col) ~x ~y ~mark:(`C mark) ()
           )
-        |> group
+      and annotation_imgs =
+        List.map annotations ~f:(render_annotation vp)
       in
-      padding (draw_axes vp ++ plot_img)
+      let img =
+        plot_imgs @ annotation_imgs
+        |> group
+        |> Fn.flip crop (Viewport.scale_box vp vp.visible_bbox)
+      in
+      padding (draw_axes vp ++ img)
 
   let points ?title ?(col = Color.black) ?(mark = Bullet) x y =
     Points { title ; col ; mark ; x ; y }
+
+  let hline ?(col = Color.black) ?(thickness = 1.) h =
+    ABLine { descr = `H h ; thickness ; col }
+
+  let vline ?(col = Color.black) ?(thickness = 1.) v =
+    ABLine { descr = `V v ; thickness ; col }
+
+  let abline ?(col = Color.black) ?(thickness = 1.) ~intercept ~slope () =
+    ABLine { descr = `AB (intercept, slope) ; thickness ; col }
 end
 
-let plot ?width ?height pl =
-  Plot.render ?width ?height pl
+let plot ?width ?height ?annotations pl =
+  Plot.render ?width ?height ?annotations pl
 
 module Colormap = struct
   type t = Color.t array

@@ -159,11 +159,32 @@ module Plot : sig
     float array ->
     float array ->
     t
+
+
+  type annotation
+
+  val hline :
+    ?col:Color.t ->
+    ?thickness:float ->
+    float -> annotation
+
+  val vline :
+    ?col:Color.t ->
+    ?thickness:float ->
+    float -> annotation
+
+  val abline :
+    ?col:Color.t ->
+    ?thickness:float ->
+    intercept:float ->
+    slope:float ->
+    unit -> annotation
 end
 
 val plot :
   ?width:float ->
   ?height:float ->
+  ?annotations:Plot.annotation list ->
   Plot.t list ->
   t
 
