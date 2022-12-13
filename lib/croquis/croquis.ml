@@ -725,7 +725,7 @@ module Viewport = struct
 end
 
 module Plot = struct
-  type t =
+  type geom =
     | Points of {
         title : string option ;
         col : Color.t ;
@@ -733,13 +733,17 @@ module Plot = struct
         x : float array ;
         y : float array ;
       }
-
-  type annotation =
     | ABLine of {
         col : Color.t option ;
         thickness : float option ;
         descr : [`H of float | `V of float | `AB of float * float]
       }
+
+  type t = {
+    geoms : geom list ;
+    xlab : string option ;
+    ylab : string option ;
+  }
 
   let bb = function
     | Points { x ; y ; _ } ->
@@ -747,9 +751,12 @@ module Plot = struct
       let miny = Float_array.min y in
       let maxx = Float_array.max x in
       let maxy = Float_array.max y in
-      Box2.v
-        (V2.v minx miny)
-        (V2.v (maxx -. minx) (maxy -. miny))
+      Some (
+        Box2.v
+          (V2.v minx miny)
+          (V2.v (maxx -. minx) (maxy -. miny))
+      )
+    | ABLine _ -> None
 
   let draw_axes (vp : Viewport.t) =
     let rho = 0.05 in
@@ -765,7 +772,11 @@ module Plot = struct
       xticks ; yticks ;
     ]
 
-  let render_annotation (vp : Viewport.t) = function
+  let render_geom (vp : Viewport.t) = function
+    | Points { x ; y ; col ; mark ; _ } ->
+      let x = Array.map x ~f:(Viewport.scale_x vp) in
+      let y = Array.map y ~f:(Viewport.scale_y vp) in
+      points ~col:(`C col) ~x ~y ~mark:(`C mark) ()
     | ABLine { descr ; col ; thickness } ->
       let minx = Box2.minx vp.visible_bbox in
       let maxx = Box2.maxx vp.visible_bbox in
@@ -778,13 +789,16 @@ module Plot = struct
       in
       line ?col ?thickness (Viewport.scale vp p1) (Viewport.scale vp p2)
 
-  let render ?(width = 10.) ?(height = 6.) ?(annotations = []) plots =
-    match plots with
+  let make ?xlab ?ylab geoms =
+    { geoms ; xlab ; ylab }
+
+  let render ?(width = 10.) ?(height = 6.) { geoms ; _ } =
+    match geoms with
     | [] -> void Box2.empty
     | _ ->
-      let bb =
-        List.map plots ~f:bb
-        |> List.reduce_exn ~f:Box2.union
+      let bb = match List.filter_map geoms ~f:bb with
+        | [] -> Box2.v V2.zero (V2.v 1. 1.)
+        | bboxes -> List.reduce_exn ~f:Box2.union bboxes
       in
       let vp =
         Viewport.linear
@@ -792,18 +806,8 @@ module Plot = struct
           ~ylim:Box2.(miny bb, maxy bb)
           ~size:(width, height)
       in
-      let plot_imgs =
-        List.map plots ~f:(function
-            | Points { x ; y ; col ; mark ; _ } ->
-              let x = Array.map x ~f:(Viewport.scale_x vp) in
-              let y = Array.map y ~f:(Viewport.scale_y vp) in
-              points ~col:(`C col) ~x ~y ~mark:(`C mark) ()
-          )
-      and annotation_imgs =
-        List.map annotations ~f:(render_annotation vp)
-      in
       let img =
-        plot_imgs @ annotation_imgs
+        List.map geoms ~f:(render_geom vp)
         |> group
         |> Fn.flip crop (Viewport.scale_box vp vp.visible_bbox)
       in
@@ -822,8 +826,9 @@ module Plot = struct
     ABLine { descr = `AB (intercept, slope) ; thickness ; col }
 end
 
-let plot ?width ?height ?annotations pl =
-  Plot.render ?width ?height ?annotations pl
+let plot ?width ?height ?xlab ?ylab geoms =
+  let plot = Plot.make ?xlab ?ylab geoms in
+  Plot.render ?width ?height plot
 
 module Colormap = struct
   type t = Color.t array

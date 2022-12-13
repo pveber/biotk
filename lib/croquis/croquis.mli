@@ -151,6 +151,7 @@ val render :
 
 module Plot : sig
   type t
+  type geom
 
   val points :
     ?title:string ->
@@ -158,34 +159,32 @@ module Plot : sig
     ?mark:mark ->
     float array ->
     float array ->
-    t
-
-
-  type annotation
+    geom
 
   val hline :
     ?col:Color.t ->
     ?thickness:float ->
-    float -> annotation
+    float -> geom
 
   val vline :
     ?col:Color.t ->
     ?thickness:float ->
-    float -> annotation
+    float -> geom
 
   val abline :
     ?col:Color.t ->
     ?thickness:float ->
     intercept:float ->
     slope:float ->
-    unit -> annotation
+    unit -> geom
 end
 
 val plot :
   ?width:float ->
   ?height:float ->
-  ?annotations:Plot.annotation list ->
-  Plot.t list ->
+  ?xlab:string ->
+  ?ylab:string ->
+  Plot.geom list ->
   t
 
 
