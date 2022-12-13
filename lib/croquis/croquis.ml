@@ -87,6 +87,13 @@ let box_convex_hull ~x ~y =
   let ymax = Float_array.max y in
   Box2.of_pts (V2.v xmin ymin) (V2.v xmax ymax)
 
+type t = {
+  bbox : Box2.t ;
+  img : image ;
+}
+
+let bbox { bbox ; _ } = bbox
+
 module Points = struct
   type t =  {
     col : Color.t labeling ;
@@ -96,13 +103,13 @@ module Points = struct
     y : float array ;
   }
 
-  let make ?(col = `C Color.black) ?(mark = `C Bullet) ?(thickness = `C 0.01) ~x ~y () =
+  let v ?(col = `C Color.black) ?(mark = `C Bullet) ?(thickness = `C 0.01) ~x ~y () =
     if Array.(length x <> length y) then invalid_arg "x and y should have same length" ;
     { col ; mark ; thickness ; x ; y }
 
   let bbox { x ; y ; _ } = box_convex_hull ~x ~y
 
-  let render { mark ; col ; thickness ; x ; y } =
+  let img { mark ; col ; thickness ; x ; y } =
     let area = labeling_map2_exn mark thickness ~f:(fun mark thickness ->
         match mark with
         | Bullet -> `Anz
@@ -117,6 +124,11 @@ module Points = struct
     ifold (Array.length x) ~init:I.void ~f:(fun acc i ->
         I.blend acc (I.move (V2.v x.(i) y.(i)) (labeling mark i))
       )
+
+  let draw pts =
+    let bbox = bbox pts in
+    let img = img pts in
+    { bbox ; img }
 end
 
 module Arrow_head = struct
@@ -169,7 +181,7 @@ module Lines = struct
     | None -> segment_bbox
     | Some ah -> Box2.union segment_bbox (Arrow_head.bbox ah)
 
-  let make ?(col = Color.black) ?(thickness = normal_thickness) ?(cap = `Butt) ?(arrow_head = false) ~x ~y () =
+  let v ?(col = Color.black) ?(thickness = normal_thickness) ?(cap = `Butt) ?(arrow_head = false) ~x ~y () =
     if Array.(length x <> length y) then invalid_arg "x and y should have same length" ;
     let n = Array.length x in
     if n < 2 then invalid_arg "at least two points expected" ;
@@ -182,7 +194,7 @@ module Lines = struct
     in
     { x ; y ; col ; maybe_arrow_head ; thickness ; cap }
 
-  let render { x ; y ; col ; cap ; thickness ; maybe_arrow_head ; _ } =
+  let img { x ; y ; col ; cap ; thickness ; maybe_arrow_head ; _ } =
     let n = Array.length x in
     let path =
       if n > 0 then
@@ -197,6 +209,11 @@ module Lines = struct
     | None -> line_img
     | Some ah ->
       I.blend (Arrow_head.render ah col) line_img
+
+  let draw pts =
+    let bbox = bbox pts in
+    let img = img pts in
+    { bbox ; img }
 end
 
 module Rect = struct
@@ -210,7 +227,7 @@ module Rect = struct
     thickness : float ;
   }
 
-  let make ?draw ?fill ?(thickness = normal_thickness) ~xmin ~xmax ~ymin ~ymax () =
+  let v ?draw ?fill ?(thickness = normal_thickness) ~xmin ~xmax ~ymin ~ymax () =
     if Float.(xmin > xmax || ymin > ymax) then invalid_arg "invalid coordinates" ;
     { xmin ; ymin ; xmax ; ymax ; draw ; fill ; thickness }
 
@@ -254,7 +271,7 @@ module Circle = struct
     thickness : float ;
   }
 
-  let make ?draw ?fill ?(thickness = normal_thickness) ~x ~y ~radius () =
+  let v ?draw ?fill ?(thickness = normal_thickness) ~x ~y ~radius () =
     let center = V2.v x y in
     { center ; radius ; draw ; fill ; thickness }
 
@@ -281,41 +298,28 @@ module Circle = struct
     Box2.v_mid center (V2.v (2. *. radius) (2. *. radius))
 end
 
-type t = {
-  bbox : Box2.t ;
-  img : image ;
-}
-
-let bbox { bbox ; _ } = bbox
-
 let void bbox = {
   img = I.void ;
   bbox ;
 }
 
 let points ?col ?mark ?thickness ~x ~y () =
-  let pts = Points.make ?col ?mark ?thickness ~x ~y () in
-  let bbox = Points.bbox pts in
-  let img = Points.render pts in
-  { bbox ; img }
+  Points.(draw @@ v ?col ?mark ?thickness ~x ~y ())
 
 let lines ?col ?thickness ?arrow_head ?cap ~x ~y () =
-  let l = Lines.make ?col ?thickness ?arrow_head ?cap ~x ~y () in
-  let bbox = Lines.bbox l in
-  let img = Lines.render l in
-  { bbox ; img }
+  Lines.(draw @@ v ?col ?thickness ?arrow_head ?cap ~x ~y ())
 
 let line ?col ?thickness ?arrow_head ?cap (x1, y1) (x2, y2) =
-  lines ?col ?thickness ?arrow_head ?cap ~x:[|x1;x2|] ~y:[|y1;y2|] ()
+  Lines.(draw @@ v ?col ?thickness ?arrow_head ?cap ~x:[|x1;x2|] ~y:[|y1;y2|] ())
 
 let rect ?draw ?fill ?thickness ~xmin ~xmax ~ymin ~ymax () =
-  let r = Rect.make ?draw ?fill ?thickness ~xmin ~xmax ~ymin ~ymax () in
+  let r = Rect.v ?draw ?fill ?thickness ~xmin ~xmax ~ymin ~ymax () in
   let bbox = Rect.bbox r in
   let img = Rect.render r in
   { bbox ; img }
 
 let circle ?draw ?fill ?thickness ~x ~y ~radius () =
-  let c  = Circle.make ?draw ?fill ?thickness ~x ~y ~radius () in
+  let c  = Circle.v ?draw ?fill ?thickness ~x ~y ~radius () in
   let bbox = Circle.bbox c in
   let img = Circle.render c in
   { bbox ; img }
