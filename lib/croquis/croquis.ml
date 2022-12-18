@@ -760,10 +760,10 @@ module Plot = struct
 
   let draw_axes (vp : Viewport.t) =
     let rho = 0.05 in
-    let xmin = vp.scale_x (Box2.minx vp.visible_bbox) in
-    let xmax = vp.scale_x (Box2.maxx vp.visible_bbox) in
-    let ymin = vp.scale_y (Box2.miny vp.visible_bbox) in
-    let ymax = vp.scale_y (Box2.maxy vp.visible_bbox) in
+    let xmin, xmax, ymin, ymax =
+      let bb = Viewport.scale_box vp vp.visible_bbox in
+      Box2.(minx bb, maxx bb, miny bb, maxy bb)
+    in
     let tick_length = ((vp.range_w *. rho /. 2.) +. (vp.range_h *. rho /. 2.)) /. 2. in
     let xticks = Axis.draw vp.axis_x ~proj:(Viewport.scale_x vp) ~point:V2.v ~text:(fun ~size x y msg -> text ~size ~valign:`top ~halign:`middle ~x ~y msg) ~pos:ymin ~tick_length in
     let yticks = Axis.draw vp.axis_y ~proj:(Viewport.scale_y vp) ~point:(Fun.flip V2.v) ~text:(fun ~size y x msg -> text ~size ~valign:`middle ~halign:`right ~x ~y msg) ~pos:xmin ~tick_length in
@@ -800,18 +800,21 @@ module Plot = struct
         | [] -> Box2.v V2.zero (V2.v 1. 1.)
         | bboxes -> List.reduce_exn ~f:Box2.union bboxes
       in
+      let rho = 0.1 in
       let vp =
         Viewport.linear
           ~xlim:Box2.(minx bb, maxx bb)
           ~ylim:Box2.(miny bb, maxy bb)
-          ~size:(width, height)
+          ~size:(width *. (1. -. 2. *. rho), height *. (1. -. 2. *. rho))
       in
       let img =
         List.map geoms ~f:(render_geom vp)
         |> group
         |> Fn.flip crop (Viewport.scale_box vp vp.visible_bbox)
       in
-      padding (draw_axes vp ++ img)
+      draw_axes vp ++ img
+      |> translate ~dx:(width *. rho) ~dy:(height *. rho)
+      |> Fn.flip crop (Box2.v V2.zero (V2.v width height))
 
   let points ?title ?(col = Color.black) ?(mark = Bullet) x y =
     Points { title ; col ; mark ; x ; y }
