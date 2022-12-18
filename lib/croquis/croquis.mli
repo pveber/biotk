@@ -111,7 +111,7 @@ val reshape :
   bbox:box2 ->
   t
 
-val crop : t -> box2 -> t
+val crop : t -> bbox:box2 -> t
 
 val frame : t -> t
 

@@ -467,7 +467,7 @@ let path_of_box2 b =
   |> P.line (Box2.tl_pt b)
   |> P.line (Box2.bl_pt b)
 
-let crop t b =
+let crop t ~bbox:b =
   { bbox = b ; img = I.cut (path_of_box2 b) t.img }
 
 let frame t =
@@ -810,11 +810,11 @@ module Plot = struct
       let img =
         List.map geoms ~f:(render_geom vp)
         |> group
-        |> Fn.flip crop (Viewport.scale_box vp vp.visible_bbox)
+        |> crop ~bbox:(Viewport.scale_box vp vp.visible_bbox)
       in
       draw_axes vp ++ img
       |> translate ~dx:(width *. rho) ~dy:(height *. rho)
-      |> Fn.flip crop (Box2.v V2.zero (V2.v width height))
+      |> crop ~bbox:(Box2.v V2.zero (V2.v width height))
 
   let points ?title ?(col = Color.black) ?(mark = Bullet) x y =
     Points { title ; col ; mark ; x ; y }
