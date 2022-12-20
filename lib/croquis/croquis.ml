@@ -324,6 +324,11 @@ let circle ?draw ?fill ?thickness ~x ~y ~radius () =
   let img = Circle.render c in
   { bbox ; img }
 
+let text_width ?(font = Font.default) ~size text =
+  let font = Lazy.force font in
+  let layout = Vg_text.Layout.make font ~size text in
+  Vg_text.Layout.width layout
+
 let text ?(col = Color.black) ?(size = 12.) ?(font = Font.default) ?(halign = `middle) ?(valign = `base) ~x ~y text =
   let font = Lazy.force font in
   let layout = Vg_text.Layout.make font ~size text in
@@ -651,6 +656,8 @@ module Axis = struct
     in
     { min ; max ; unit ; ticks }
 
+  let tick_display x = sprintf "%g" x
+
   let draw ax ~proj ~point ~text ~pos ~tick_length =
     let tick_pos = List.map ax.ticks ~f:proj in
     let pos' = pos -. tick_length in
@@ -667,11 +674,29 @@ module Axis = struct
     let ticks = { img = ticks_img ; bbox = ticks_bbox } in
     let labels =
       List.map2_exn ax.ticks tick_pos ~f:(fun v x ->
-          text ~size:(tick_length *. 2.) x (pos -. 2. *. tick_length) (sprintf "%g" v)
+          text ~size:(tick_length *. 2.) x (pos -. 2. *. tick_length) (tick_display v)
         )
     in
     group (ticks :: labels)
 
+  let draw_horizontal ax ~proj ~tick_length ~ypos =
+    draw ax ~proj ~point:V2.v ~text:(fun ~size x y msg -> text ~size ~valign:`top ~halign:`middle ~x ~y msg) ~pos:ypos ~tick_length
+
+  let draw_vertical ax ~proj ~tick_length ~xpos =
+    draw ax ~proj
+      ~point:(Fun.flip V2.v)
+      ~text:(fun ~size y x msg -> text ~size ~valign:`middle ~halign:`right ~x ~y msg)
+      ~pos:xpos ~tick_length
+
+  let width_if_vertical ax ~tick_length =
+    let label_width =
+      List.map ax.ticks ~f:(fun x ->
+          tick_display x
+          |> text_width ~size:(tick_length *. 2.)
+        )
+      |> List.reduce_exn ~f:Float.max (* tick list cannot be empty *)
+    in
+    label_width +. 2. *. tick_length
 end
 
 module Viewport = struct
@@ -679,35 +704,43 @@ module Viewport = struct
     scale_x : float -> float ;
     scale_y : float -> float ;
     visible_bbox : box2 ; (* visible area *)
-    range_w : float ;
-    range_h : float ;
+    tick_length : float ;
     axis_x : Axis.t ;
     axis_y : Axis.t ;
   }
 
   let linear ~xlim ~ylim ~size:(w, h) =
+    let tick_length = 0.1 in
     let domain_xmin, domain_xmax = xlim in
     let domain_ymin, domain_ymax = ylim in
     let axis_x = Axis.make domain_xmin domain_xmax in
     let axis_y = Axis.make domain_ymin domain_ymax in
-    let rho = 0.05 in
-    let visible_bbox =
+    let axis_y_width = Axis.width_if_vertical axis_y ~tick_length in
+    let paper_origin_x = axis_y_width +. tick_length (* outer margin *) in
+    let paper_origin_y = 5. *. tick_length (* ticks, space, text (x2), outer margin left *) in
+    let paper_w = w -. paper_origin_x -. tick_length (* outer margin *) in
+    let paper_h = h -. paper_origin_y -. tick_length  in
+    let visible_xmin, visible_xmax, visible_ymin, visible_ymax =
       let xmin = Float.min domain_xmin axis_x.min in
       let xmax = Float.max domain_xmax axis_x.max in
       let ymin = Float.min domain_ymin axis_y.min in
       let ymax = Float.max domain_ymax axis_y.max in
       let w = xmax -. xmin in
       let h = ymax -. ymin in
-      Box2.of_pts
-        (V2.v (xmin -. rho *. w) (ymin -. rho *. h))
-        (V2.v (xmax +. rho *. w) (ymax +. rho *. h))
+      let rho = 0.05 in
+      xmin -. rho *. w, xmax +. rho *. w,
+      ymin -. rho *. h, ymax +. rho *. h
     in
-    { scale_x = linear_scaling ~domain:xlim ~range:(0., w) ;
-      scale_y = linear_scaling ~domain:ylim ~range:(0., h) ;
+    let visible_bbox =
+      Box2.of_pts
+        (V2.v visible_xmin visible_ymin)
+        (V2.v visible_xmax visible_ymax)
+    in
+    { scale_x = linear_scaling ~domain:(visible_xmin, visible_xmax) ~range:(paper_origin_x, paper_w) ;
+      scale_y = linear_scaling ~domain:(visible_ymin, visible_ymax) ~range:(paper_origin_y, paper_h) ;
       visible_bbox ;
-      range_w = w ;
-      range_h = h ;
       axis_x ; axis_y ;
+      tick_length ;
     }
 
   let scale_x vp = vp.scale_x
@@ -759,14 +792,13 @@ module Plot = struct
     | ABLine _ -> None
 
   let draw_axes (vp : Viewport.t) =
-    let rho = 0.05 in
     let xmin, xmax, ymin, ymax =
       let bb = Viewport.scale_box vp vp.visible_bbox in
       Box2.(minx bb, maxx bb, miny bb, maxy bb)
     in
-    let tick_length = ((vp.range_w *. rho /. 2.) +. (vp.range_h *. rho /. 2.)) /. 2. in
-    let xticks = Axis.draw vp.axis_x ~proj:(Viewport.scale_x vp) ~point:V2.v ~text:(fun ~size x y msg -> text ~size ~valign:`top ~halign:`middle ~x ~y msg) ~pos:ymin ~tick_length in
-    let yticks = Axis.draw vp.axis_y ~proj:(Viewport.scale_y vp) ~point:(Fun.flip V2.v) ~text:(fun ~size y x msg -> text ~size ~valign:`middle ~halign:`right ~x ~y msg) ~pos:xmin ~tick_length in
+    let tick_length = vp.tick_length in
+    let xticks = Axis.draw_horizontal vp.axis_x ~proj:(Viewport.scale_x vp) ~ypos:ymin ~tick_length in
+    let yticks = Axis.draw_vertical vp.axis_y ~proj:(Viewport.scale_y vp) ~xpos:xmin ~tick_length in
     group [
       rect ~draw:Color.black ~xmin ~xmax ~ymin ~ymax () ;
       xticks ; yticks ;
@@ -800,12 +832,11 @@ module Plot = struct
         | [] -> Box2.v V2.zero (V2.v 1. 1.)
         | bboxes -> List.reduce_exn ~f:Box2.union bboxes
       in
-      let rho = 0.1 in
       let vp =
         Viewport.linear
           ~xlim:Box2.(minx bb, maxx bb)
           ~ylim:Box2.(miny bb, maxy bb)
-          ~size:(width *. (1. -. 2. *. rho), height *. (1. -. 2. *. rho))
+          ~size:(width, height)
       in
       let img =
         List.map geoms ~f:(render_geom vp)
@@ -813,7 +844,6 @@ module Plot = struct
         |> crop ~bbox:(Viewport.scale_box vp vp.visible_bbox)
       in
       draw_axes vp ++ img
-      |> translate ~dx:(width *. rho) ~dy:(height *. rho)
       |> crop ~bbox:(Box2.v V2.zero (V2.v width height))
 
   let points ?title ?(col = Color.black) ?(mark = Bullet) x y =
