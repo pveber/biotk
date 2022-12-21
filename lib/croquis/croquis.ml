@@ -78,7 +78,7 @@ let labeling_map2_exn l1 l2 ~f =
 
 type mark = Bullet | Circle
 
-let normal_thickness = 0.02
+let normal_thickness = 0.015
 
 let box_convex_hull ~x ~y =
   let xmin = Float_array.min x in
@@ -99,26 +99,27 @@ module Points = struct
     col : Color.t labeling ;
     mark : mark labeling ;
     thickness : float labeling ;
+    size : float ;
     x : float array ; (* inv: Array.(length x = length y *)
     y : float array ;
   }
 
-  let v ?(col = `C Color.black) ?(mark = `C Bullet) ?(thickness = `C 0.01) ~x ~y () =
+  let v ?(col = `C Color.black) ?(mark = `C Bullet) ?(thickness = `C 1.) ?(size = 1.) ~x ~y () =
     if Array.(length x <> length y) then invalid_arg "x and y should have same length" ;
-    { col ; mark ; thickness ; x ; y }
+    { col ; mark ; thickness ; x ; y ; size }
 
   let bbox { x ; y ; _ } = box_convex_hull ~x ~y
 
-  let img { mark ; col ; thickness ; x ; y } =
+  let img { mark ; col ; thickness ; x ; y ; size } =
     let area = labeling_map2_exn mark thickness ~f:(fun mark thickness ->
         match mark with
         | Bullet -> `Anz
         | Circle ->
-          `O { P.o with P.width = thickness }
+          `O { P.o with P.width = normal_thickness *. thickness }
       )
     in
     let mark = labeling_map2_exn col area ~f:(fun col area ->
-        I.cut ~area (P.empty |> P.circle V2.zero 0.05) (I.const col)
+        I.cut ~area (P.empty |> P.circle V2.zero (0.025 *. size)) (I.const col)
       )
     in
     ifold (Array.length x) ~init:I.void ~f:(fun acc i ->
@@ -181,7 +182,7 @@ module Lines = struct
     | None -> segment_bbox
     | Some ah -> Box2.union segment_bbox (Arrow_head.bbox ah)
 
-  let v ?(col = Color.black) ?(thickness = normal_thickness) ?(cap = `Butt) ?(arrow_head = false) ~x ~y () =
+  let v ?(col = Color.black) ?(thickness = 1.) ?(cap = `Butt) ?(arrow_head = false) ~x ~y () =
     if Array.(length x <> length y) then invalid_arg "x and y should have same length" ;
     let n = Array.length x in
     if n < 2 then invalid_arg "at least two points expected" ;
@@ -203,7 +204,7 @@ module Lines = struct
           )
       else P.empty
     in
-    let area = `O { P.o with P.width = thickness ; cap } in
+    let area = `O { P.o with P.width = thickness *. normal_thickness ; cap } in
     let line_img = I.cut ~area path (I.const col) in
     match maybe_arrow_head with
     | None -> line_img
@@ -227,7 +228,7 @@ module Rect = struct
     thickness : float ;
   }
 
-  let v ?draw ?fill ?(thickness = normal_thickness) ~xmin ~xmax ~ymin ~ymax () =
+  let v ?draw ?fill ?(thickness = 1.) ~xmin ~xmax ~ymin ~ymax () =
     if Float.(xmin > xmax || ymin > ymax) then invalid_arg "invalid coordinates" ;
     { xmin ; ymin ; xmax ; ymax ; draw ; fill ; thickness }
 
@@ -247,7 +248,7 @@ module Rect = struct
     let outline = match draw with
       | None -> I.void
       | Some col ->
-        let area = `O { P.o with P.width = thickness ;
+        let area = `O { P.o with P.width = thickness *. normal_thickness ;
                                  P.cap = `Square } in
         I.cut ~area p (I.const col)
     in
@@ -271,7 +272,7 @@ module Circle = struct
     thickness : float ;
   }
 
-  let v ?draw ?fill ?(thickness = normal_thickness) ~x ~y ~radius () =
+  let v ?draw ?fill ?(thickness = 1.) ~x ~y ~radius () =
     let center = V2.v x y in
     { center ; radius ; draw ; fill ; thickness }
 
@@ -283,7 +284,7 @@ module Circle = struct
     let outline = match draw with
       | None -> I.void
       | Some col ->
-        let area = `O { P.o with P.width = thickness ;
+        let area = `O { P.o with P.width = thickness *. normal_thickness ;
                                  P.cap = `Square } in
         I.cut ~area p (I.const col)
     in
@@ -303,8 +304,8 @@ let void bbox = {
   bbox ;
 }
 
-let points ?col ?mark ?thickness ~x ~y () =
-  Points.(draw @@ v ?col ?mark ?thickness ~x ~y ())
+let points ?col ?mark ?thickness ?size ~x ~y () =
+  Points.(draw @@ v ?col ?mark ?thickness ?size ~x ~y ())
 
 let lines ?col ?thickness ?arrow_head ?cap ~x ~y () =
   Lines.(draw @@ v ?col ?thickness ?arrow_head ?cap ~x ~y ())
@@ -763,6 +764,7 @@ module Plot = struct
         title : string option ;
         col : Color.t ;
         mark : mark ;
+        size : float option ;
         x : float array ;
         y : float array ;
       }
@@ -774,7 +776,7 @@ module Plot = struct
     | Lines of {
         title : string option ;
         col : Color.t ;
-        thickness : float ;
+        thickness : float option ;
         x : float array ;
         y : float array ;
       }
@@ -813,10 +815,10 @@ module Plot = struct
     ]
 
   let render_geom (vp : Viewport.t) = function
-    | Points { x ; y ; col ; mark ; _ } ->
+    | Points { x ; y ; col ; mark ; size ; _ } ->
       let x = Array.map x ~f:(Viewport.scale_x vp) in
       let y = Array.map y ~f:(Viewport.scale_y vp) in
-      points ~col:(`C col) ~x ~y ~mark:(`C mark) ()
+      points ~col:(`C col) ~x ~y ~mark:(`C mark) ?size ()
     | ABLine { descr ; col ; thickness } ->
       let minx = Box2.minx vp.visible_bbox in
       let maxx = Box2.maxx vp.visible_bbox in
@@ -831,7 +833,7 @@ module Plot = struct
     | Lines { x ; y ; col ; thickness ; _ } ->
       let x = Array.map x ~f:(Viewport.scale_x vp) in
       let y = Array.map y ~f:(Viewport.scale_y vp) in
-      lines ~col ~x ~y ~thickness ()
+      lines ~col ~x ~y ?thickness ()
 
 
   let make ?xlab ?ylab geoms =
@@ -859,10 +861,10 @@ module Plot = struct
       draw_axes vp ++ img
       |> crop ~bbox:(Box2.v V2.zero (V2.v width height))
 
-  let points ?title ?(col = Color.black) ?(mark = Bullet) x y =
-    Points { title ; col ; mark ; x ; y }
+  let points ?title ?(col = Color.black) ?(mark = Bullet) ?size x y =
+    Points { title ; col ; mark ; size ; x ; y }
 
-  let lines ?title ?(col = Color.black) ?(thickness = normal_thickness) x y =
+  let lines ?title ?(col = Color.black) ?thickness x y =
     Lines { title ; col ; thickness ; x ; y }
 
   let hline ?col ?thickness h =

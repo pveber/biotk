@@ -36,6 +36,7 @@ val points :
   ?col:Color.t labeling ->
   ?mark:mark labeling ->
   ?thickness:float labeling ->
+  ?size:float ->
   x:float array ->
   y:float array ->
   unit ->
@@ -157,6 +158,7 @@ module Plot : sig
     ?title:string ->
     ?col:Color.t ->
     ?mark:mark ->
+    ?size:float ->
     float array ->
     float array ->
     geom
