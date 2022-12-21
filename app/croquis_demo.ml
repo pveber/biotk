@@ -47,9 +47,11 @@ let plot =
   let open Croquis in
   let rng = Gsl.Rng.(make (default ())) in
   let x = Array.init 100 ~f:(fun _ -> Gsl.Rng.uniform rng) in
+  let sorted_x = Array.sorted_copy ~compare:Float.compare x in
   let y = Array.init 100 ~f:(fun i -> x.(i) +. Gsl.Randist.gaussian rng ~sigma:0.1) in
+  let z = Array.map sorted_x ~f:(fun x -> Float.cos (3. *. x)) in
   let id = Plot.abline ~thickness:0.01 ~col:Gg.Color.red ~intercept:0. ~slope:1. () in
-  plot [ Plot.points x y ; id ]
+  plot [ Plot.points x y ; Plot.lines sorted_x z ~col:Gg.Color.blue ; id ]
 
 let picture =
   Croquis.vstack ~align:`centered [

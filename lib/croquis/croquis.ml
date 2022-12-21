@@ -771,6 +771,13 @@ module Plot = struct
         thickness : float option ;
         descr : [`H of float | `V of float | `AB of float * float]
       }
+    | Lines of {
+        title : string option ;
+        col : Color.t ;
+        thickness : float ;
+        x : float array ;
+        y : float array ;
+      }
 
   type t = {
     geoms : geom list ;
@@ -779,7 +786,8 @@ module Plot = struct
   }
 
   let bb = function
-    | Points { x ; y ; _ } ->
+    | Points { x ; y ; _ }
+    | Lines { x ; y ; _ } ->
       let minx = Float_array.min x in
       let miny = Float_array.min y in
       let maxx = Float_array.max x in
@@ -820,6 +828,11 @@ module Plot = struct
         | `AB (a, b) -> (minx, a +. b *. minx), (maxx, a +. b *. maxx)
       in
       line ?col ?thickness (Viewport.scale vp p1) (Viewport.scale vp p2)
+    | Lines { x ; y ; col ; thickness ; _ } ->
+      let x = Array.map x ~f:(Viewport.scale_x vp) in
+      let y = Array.map y ~f:(Viewport.scale_y vp) in
+      lines ~col ~x ~y ~thickness ()
+
 
   let make ?xlab ?ylab geoms =
     { geoms ; xlab ; ylab }
@@ -848,6 +861,9 @@ module Plot = struct
 
   let points ?title ?(col = Color.black) ?(mark = Bullet) x y =
     Points { title ; col ; mark ; x ; y }
+
+  let lines ?title ?(col = Color.black) ?(thickness = normal_thickness) x y =
+    Lines { title ; col ; thickness ; x ; y }
 
   let hline ?col ?thickness h =
     ABLine { descr = `H h ; thickness ; col }

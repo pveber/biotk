@@ -161,6 +161,14 @@ module Plot : sig
     float array ->
     geom
 
+  val lines :
+    ?title:string ->
+    ?col:Color.t ->
+    ?thickness:float ->
+    float array ->
+    float array ->
+    geom
+
   val hline :
     ?col:Color.t ->
     ?thickness:float ->
