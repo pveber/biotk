@@ -51,7 +51,7 @@ let plot =
   let y = Array.init 100 ~f:(fun i -> x.(i) +. Gsl.Randist.gaussian rng ~sigma:0.1) in
   let z = Array.map sorted_x ~f:(fun x -> Float.cos (3. *. x)) in
   let id = Plot.abline ~thickness:0.01 ~col:Gg.Color.red ~intercept:0. ~slope:1. () in
-  plot [ Plot.points x y ; Plot.lines sorted_x z ~col:Gg.Color.blue ; id ]
+  plot ~xlab:"Signal" ~ylab:"Response" [ Plot.points x y ; Plot.lines sorted_x z ~col:Gg.Color.blue ; id ]
 
 let picture =
   Croquis.vstack ~align:`centered [

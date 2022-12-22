@@ -2,6 +2,8 @@ open Gg
 open Vg
 open Core
 
+let pi = 4. *. Float.atan 1.
+
 let ifold n ~init ~f =
   if n < 0 then invalid_arg "n should be positive" ;
   let rec loop i acc =
@@ -370,6 +372,11 @@ let translate ?(dx = 0.) ?(dy = 0.) t = {
   img = I.move (V2.v dx dy) t.img ;
 }
 
+let rotate ~alpha t = {
+  bbox = Box2.ltr (M2.rot2 alpha) t.bbox ;
+  img = I.rot alpha t.img ;
+}
+
 let scale ?(center = `bbox_center) ?(sx = 1.) ?(sy = 1.) t =
   let bbox =
     let bb = t.bbox in
@@ -632,6 +639,7 @@ module Axis = struct
     max : float ;
     unit : float ;
     ticks : float list ;
+    label : string option ;
   }
 
   let guess_unit lo hi =
@@ -643,7 +651,7 @@ module Axis = struct
   let superior_tick ~unit x =
     Float.round ~dir:`Up (x /. unit) *. unit
 
-  let make lo hi =
+  let make ?label lo hi =
     let unit = guess_unit lo hi in
     let min = inferior_tick ~unit lo in
     let max = superior_tick ~unit hi in
@@ -655,11 +663,13 @@ module Axis = struct
         0
       |> Stdlib.List.of_seq
     in
-    { min ; max ; unit ; ticks }
+    { min ; max ; unit ; ticks ; label }
 
   let tick_display x = sprintf "%g" x
 
-  let draw ax ~proj ~point ~text ~pos ~tick_length =
+  let label_size_in_tick_lengths = 2.5
+
+  let draw ax ~proj ~point ~text ~lab_text ~pos ~tick_length =
     let tick_pos = List.map ax.ticks ~f:proj in
     let pos' = pos -. tick_length in
     let area = `O { P.o with P.width = normal_thickness } in
@@ -678,26 +688,52 @@ module Axis = struct
           text ~size:(tick_length *. 2.) x (pos -. 2. *. tick_length) (tick_display v)
         )
     in
-    group (ticks :: labels)
+    let maybe_add_axis_label xs =
+      match ax.label with
+      | None -> xs
+      | Some lab ->
+        let size = tick_length *. label_size_in_tick_lengths in
+        let mid_ax_pos = proj ((ax.min +. ax.max) /. 2.) in
+        let side_ax_pos = pos -. 4. *. tick_length in
+        let t = lab_text ~size mid_ax_pos side_ax_pos lab in
+        t :: xs
+    in
+    group (maybe_add_axis_label (ticks :: labels))
 
   let draw_horizontal ax ~proj ~tick_length ~ypos =
-    draw ax ~proj ~point:V2.v ~text:(fun ~size x y msg -> text ~size ~valign:`top ~halign:`middle ~x ~y msg) ~pos:ypos ~tick_length
+    let text ~size x y msg = text ~size ~valign:`top ~halign:`middle ~x ~y msg in
+    draw ax ~proj ~point:V2.v ~text ~pos:ypos ~tick_length ~lab_text:text
+
+  let label_width ax ~tick_length =
+    List.map ax.ticks ~f:(fun x ->
+        tick_display x
+        |> text_width ~size:(tick_length *. 2.)
+      )
+    |> List.reduce_exn ~f:Float.max (* tick list cannot be empty *)
 
   let draw_vertical ax ~proj ~tick_length ~xpos =
+    let label_width = label_width ax ~tick_length  in
+    let lab_text ~size x y msg =
+      text ~valign:`middle ~halign:`middle ~size ~x:0. ~y:0. msg
+      |> rotate ~alpha:(pi /. 2.)
+      |> translate ~dx:(y -. label_width) ~dy:x
+    in
+    let text ~size y x msg = text ~size ~valign:`middle ~halign:`right ~x ~y msg in
     draw ax ~proj
       ~point:(Fun.flip V2.v)
-      ~text:(fun ~size y x msg -> text ~size ~valign:`middle ~halign:`right ~x ~y msg)
+      ~text ~lab_text
       ~pos:xpos ~tick_length
 
   let width_if_vertical ax ~tick_length =
-    let label_width =
-      List.map ax.ticks ~f:(fun x ->
-          tick_display x
-          |> text_width ~size:(tick_length *. 2.)
-        )
-      |> List.reduce_exn ~f:Float.max (* tick list cannot be empty *)
-    in
-    label_width +. 2. *. tick_length
+    label_width ax ~tick_length +. 2. *. tick_length
+    +. label_size_in_tick_lengths *. tick_length
+
+  let height_if_horizonal ax ~tick_length =
+    tick_length *. (
+      4. +. (* ticks, space, text (x2) *)
+      if Option.is_some ax.label then label_size_in_tick_lengths
+      else 0.
+    )
 end
 
 module Viewport = struct
@@ -710,15 +746,15 @@ module Viewport = struct
     axis_y : Axis.t ;
   }
 
-  let linear ~xlim ~ylim ~size:(w, h) =
+  let linear ?xlab ?ylab ~xlim ~ylim ~size:(w, h) () =
     let tick_length = 0.1 in
     let domain_xmin, domain_xmax = xlim in
     let domain_ymin, domain_ymax = ylim in
-    let axis_x = Axis.make domain_xmin domain_xmax in
-    let axis_y = Axis.make domain_ymin domain_ymax in
+    let axis_x = Axis.make ?label:xlab domain_xmin domain_xmax in
+    let axis_y = Axis.make ?label:ylab domain_ymin domain_ymax in
     let axis_y_width = Axis.width_if_vertical axis_y ~tick_length in
     let paper_origin_x = axis_y_width +. tick_length (* outer margin *) in
-    let paper_origin_y = 5. *. tick_length (* ticks, space, text (x2), outer margin left *) in
+    let paper_origin_y = Axis.height_if_horizonal axis_y ~tick_length in
     let paper_w = w -. paper_origin_x -. tick_length (* outer margin *) in
     let paper_h = h -. paper_origin_y -. tick_length  in
     let visible_xmin, visible_xmax, visible_ymin, visible_ymax =
@@ -839,7 +875,7 @@ module Plot = struct
   let make ?xlab ?ylab geoms =
     { geoms ; xlab ; ylab }
 
-  let render ?(width = 10.) ?(height = 6.) { geoms ; _ } =
+  let render ?(width = 10.) ?(height = 6.) { geoms ; xlab ; ylab } =
     match geoms with
     | [] -> void Box2.empty
     | _ ->
@@ -849,9 +885,10 @@ module Plot = struct
       in
       let vp =
         Viewport.linear
+          ?xlab ?ylab
           ~xlim:Box2.(minx bb, maxx bb)
           ~ylim:Box2.(miny bb, maxy bb)
-          ~size:(width, height)
+          ~size:(width, height) ()
       in
       let img =
         List.map geoms ~f:(render_geom vp)
