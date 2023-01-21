@@ -146,7 +146,7 @@ module LMap = struct
 end
 
 module LSet = struct
-  module T = Biocaml_unix.Interval_tree
+  module T = Interval_tree
 
   type t = unit Interval_tree.t Map.t
 
