@@ -1,10 +1,6 @@
 open Core
 open Biocaml_base
 
-let lines () =
-  let open Lines.Parser in
-  Biotk_pipes_unix.Pipe.loop step initial_state
-
 module type Item = sig
   type t
   val parse : Line.t -> t
@@ -29,13 +25,14 @@ module Make(Item : Item) = struct
       )
 
   let fold fn ~init ~f =
-    let open Biotk_pipes_unix.Pipe in
-    run (
-      from_file fn
-      $$ lines ()
-      $$ map Item.parse
-      $$ fold init (Fn.flip f)
-    )
+    In_channel.with_file fn ~f:(fun ic ->
+        let rec loop acc =
+          match In_channel.input_line ic with
+          | None -> acc
+          | Some l -> loop (f acc (Item.parse (Line.of_string_unsafe l)))
+        in
+        loop init
+      )
 
   let save items fn =
     let open Out_channel in
