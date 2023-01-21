@@ -1,5 +1,3 @@
-open Biocaml_base
-
 module type Item = sig
   type t
   val parse : Line.t -> t

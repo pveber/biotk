@@ -1,5 +1,4 @@
 open Core
-open Biocaml_base
 
 module type Item = sig
   type t

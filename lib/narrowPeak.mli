@@ -1,5 +1,3 @@
-open Biocaml_base
-
 type record = {
   chrom : string ;
   chromStart : int ;

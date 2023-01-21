@@ -1,4 +1,5 @@
 open Core
+module L = Line
 open CFStream
 open Biocaml_base
 
@@ -239,7 +240,7 @@ module Item = struct
   type t = Gff.item
 
   let parse line =
-    match Gff.gtf_item_of_line line with
+    match Gff.gtf_item_of_line (Biocaml_base.Line.of_string_unsafe (L.to_string line)) with
     | Ok item -> item
     | Error (`Msg msg) -> failwith msg
 

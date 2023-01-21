@@ -2,10 +2,7 @@
    https://github.com/taoliu/MACS/blob/macs_v1/README.rst
 *)
 
-open Biocaml_base
-
 module Xls : sig
-
   type entry = {
       seqid : string ;
       pos_start : int ;

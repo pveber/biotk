@@ -1,4 +1,5 @@
 open Core
+module L = Line
 open Biocaml_base
 
 module Record = struct
@@ -26,7 +27,7 @@ module Item = struct
   type t = Gff.item
 
   let parse line =
-    match Gff.gff3_item_of_line line with
+    match Gff.gff3_item_of_line (Biocaml_base.Line.of_string_unsafe (L.to_string line)) with
     | Ok item -> item
     | Error (`Msg msg) -> failwith msg
 

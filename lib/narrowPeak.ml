@@ -29,7 +29,7 @@ module Item = struct
   ]
 
   let parse line =
-    match (line : Biocaml_base.Line.t :> string) with
+    match (line : Line.t :> string) with
     | "" -> `Comment ""
     | line ->
       if Char.(line.[0] = '#') then
