@@ -1,7 +1,5 @@
 (** Interaction with MACS2 peak caller *)
 
-open Biocaml_base
-
 (** XLS output *)
 module Xls : sig
   type item = [
