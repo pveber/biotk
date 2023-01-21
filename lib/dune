@@ -9,7 +9,6 @@
         binning
 	biocaml.unix
 	biotk.croquis
-	biotk.pipes.unix
 	core
         core_unix
 	fmt
