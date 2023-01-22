@@ -24,7 +24,7 @@ let of_string s =
   try Ok (of_string_exn s)
   with _ -> Error `Parse_error
 
-let range { lo ; hi ; _ } = Range.make ~lo ~hi
+let range { lo ; hi ; _ } = Range.make_exn ~lo ~hi
 
 let strictly_before x y =
   match String.compare x.chr y.chr with
