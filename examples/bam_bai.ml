@@ -1,6 +1,6 @@
 open Core
-open Biocaml_unix
 open Biotk
+open Biocaml_unix
 open Rresult
 
 
