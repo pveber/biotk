@@ -516,6 +516,62 @@ let parse_header_item line =
         List.map tvl ~f:parse_tag_value |> Result.all >>= fun tvl ->
         parse_data tag tvl
 
+let parse_header_gen src =
+  let open Let_syntax.Result in
+  let return ({version; sort_order; group_order; _} as x) maybe_al =
+    let ref_seqs = List.rev x.ref_seqs in
+    let read_groups = List.rev x.read_groups in
+    let programs = List.rev x.programs in
+    let comments = List.rev x.comments in
+    let others = List.rev x.others in
+    let+ header =
+      header
+        ?version ?sort_order ?group_order ~ref_seqs ~read_groups
+        ~programs ~comments ~others ()
+    in
+    header, maybe_al
+  in
+  let rec loop hdr =
+    match src () with
+    | None -> return hdr None
+    | Some line ->
+      if String.length line = 0 then
+        Or_error.error_string "invalid empty line"
+      else if Char.(line.[0] <> '@') then
+        return hdr (Some line)
+      else (
+        let* header_item = parse_header_item line in
+        match header_item with
+        | `HD ({version; sort_order; group_order} : header_line) -> (
+            match hdr.version with
+            | Some _ ->
+              Or_error.error_string "multiple @HD lines not allowed"
+            | None ->
+              loop {hdr with version = Some version; sort_order; group_order}
+          )
+        | `SQ x -> loop {hdr with ref_seqs = x::hdr.ref_seqs}
+        | `RG x -> loop {hdr with read_groups = x::hdr.read_groups}
+        | `PG x -> loop {hdr with programs = x::hdr.programs}
+        | `CO x -> loop {hdr with comments = x::hdr.comments}
+        | `Other x -> loop {hdr with others = x::hdr.others}
+      )
+  in
+  loop empty_header
+
+let list_iterator xs =
+  let cursor = ref xs in
+  fun () ->
+    match !cursor with
+    | [] -> None
+    | h :: t -> cursor := t ; Some h
+
+let parse_header buf =
+  let open Let_syntax.Result in
+  let lines = String.split_lines buf in
+  let src = list_iterator lines in
+  let+ header, _ = parse_header_gen src in
+  header
+
 
 (******************************************************************************)
 (* Alignment Parsers and Constructors                                         *)
@@ -1017,46 +1073,7 @@ let print_alignment a =
     )
 
 let read_header ic =
-  let open Let_syntax.Result in
-  let return ({version; sort_order; group_order; _} as x) maybe_al =
-    let ref_seqs = List.rev x.ref_seqs in
-    let read_groups = List.rev x.read_groups in
-    let programs = List.rev x.programs in
-    let comments = List.rev x.comments in
-    let others = List.rev x.others in
-    let+ header =
-      header
-        ?version ?sort_order ?group_order ~ref_seqs ~read_groups
-        ~programs ~comments ~others ()
-    in
-    header, maybe_al
-  in
-  let rec loop hdr =
-    match In_channel.input_line ic with
-    | None -> return hdr None
-    | Some line ->
-      if String.length line = 0 then
-        Or_error.error_string "invalid empty line"
-      else if Char.(line.[0] <> '@') then
-        return hdr (Some line)
-      else (
-        let* header_item = parse_header_item line in
-        match header_item with
-        | `HD ({version; sort_order; group_order} : header_line) -> (
-            match hdr.version with
-            | Some _ ->
-              Or_error.error_string "multiple @HD lines not allowed"
-            | None ->
-              loop {hdr with version = Some version; sort_order; group_order}
-          )
-        | `SQ x -> loop {hdr with ref_seqs = x::hdr.ref_seqs}
-        | `RG x -> loop {hdr with read_groups = x::hdr.read_groups}
-        | `PG x -> loop {hdr with programs = x::hdr.programs}
-        | `CO x -> loop {hdr with comments = x::hdr.comments}
-        | `Other x -> loop {hdr with others = x::hdr.others}
-      )
-  in
-  loop empty_header
+  parse_header_gen (fun () -> In_channel.input_line ic)
 
 let write_header oc (h : header) =
   Option.iter h.version ~f:(fun version ->

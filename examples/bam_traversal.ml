@@ -1,5 +1,4 @@
 open Core
-open Biocaml_unix
 open Biotk
 open Rresult
 
@@ -19,7 +18,7 @@ let ok_exn' = function
   | Error e -> failwith (Error.to_string_hum e)
 
 let loc_of_al = function
-  | { Biocaml_unix.Sam.rname = Some chr ; pos = Some pos ; seq = Some seq ; _ } ->
+  | { Sam.rname = Some chr ; pos = Some pos ; seq = Some seq ; _ } ->
     let lo = pos - 1 in
     let len = String.length seq in
     let hi = lo + len in
@@ -48,8 +47,8 @@ let indexed_traversal ~bam ~bai ~loc =
 let full_traversal ~bam ~loc =
   let visited = ref 0 in
   let count =
-    ok_exn' @@ Bam.with_file bam ~f:CFStream.(fun _ als ->
-        Stream.filter als ~f:Result.(fun al ->
+    ok_exn' @@ Bam.with_file bam ~f:(fun _ als ->
+        Fun.flip Caml.Seq.filter als Result.(fun al ->
             incr visited ;
             match map al ~f:loc_of_al with
             | Ok (Some loc') ->
@@ -57,7 +56,7 @@ let full_traversal ~bam ~loc =
             | Ok None -> false
             | Error _ -> assert false
           )
-        |> Stream.to_list
+        |> Caml.List.of_seq
         |> List.length
         |> R.ok
       )

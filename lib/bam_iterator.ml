@@ -1,6 +1,5 @@
 open Core
 open Rresult
-open Biocaml_unix
 
 type index = (Bai.reference_sequence * Bai.bin Int.Table.t) String.Table.t
 
@@ -106,7 +105,7 @@ let with_iterator ~bam ~bai ~f =
     | res -> res
     | exception _ -> R.error_msg "Bam_iterator: failure"
   in
-  Biocaml_unix.Bgzf.close_in iterator.bam ;
+  Bgzf.close_in iterator.bam ;
   y
 
 let fold0 ~bam ~bai ~loc ~init ~f =
