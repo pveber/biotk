@@ -1,8 +1,6 @@
 open Core
-open Biocaml_base
 
 module Xls = struct
-
   type entry = {
       seqid : string ;
       pos_start : int ;

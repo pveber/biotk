@@ -1,6 +1,5 @@
 open Core
 open Rresult
-open Biocaml_base
 
 let parse_field f field x =
   try R.ok (f x)
@@ -60,11 +59,10 @@ module Xls = struct
         | _ -> R.error_msg "Wrong number of fields"
 
   let read fn =
-    Biocaml_unix.Lines.with_file fn ~f:(fun lines ->
-        CFStream.Stream.map lines ~f:parse_line
-        |> CFStream.Stream.Result.fold' ~init:[] ~f:(fun acc l ->
-            l :: acc
-          )
+    Line_oriented.fold_err fn ~init:[] ~f:(fun acc _ line ->
+        let open Let_syntax.Result in
+        let+ item = parse_line line in
+        item :: acc
       )
 end
 

@@ -1,5 +1,3 @@
-open Biocaml_unix
-
 type t = private Range.t list
 
 val empty : t

@@ -1,5 +1,3 @@
-open Biocaml_unix
-
 val fold0 :
   bam:string ->
   bai:string ->

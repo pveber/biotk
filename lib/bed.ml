@@ -1,11 +1,5 @@
 open Core
-open Biocaml_base
 open Printf
-
-type 'a item = [
-  | `Comment of string
-  | `Record of 'a
-]
 
 type strand = [
   | `Plus
@@ -21,26 +15,11 @@ let parse_strand = function
   | "-" -> Ok `Minus
   | s -> Error s
 
-
 let unparse_strand = function
   | `Not_relevant -> "."
   | `Unknown -> "?"
   | `Plus -> "+"
   | `Minus -> "-"
-
-let parse_item f line =
-  match (line : Line.t :> string) with
-  | "" -> `Comment ""
-  | line ->
-    if Char.(line.[0] = '#')
-    then `Comment (String.slice line 1 0)
-    else
-      let fields = String.split ~on:'\t' line in
-      `Record (f fields)
-
-let unparse_item f = function
-  | `Comment c -> sprintf "#%s" c
-  | `Record r -> String.concat ~sep:"\t" (f r)
 
 module type Base = sig
   type t
@@ -49,7 +28,7 @@ module type Base = sig
   val to_fields : t -> string list
 end
 
-module type Record = sig
+module type Item = sig
   type t
   val loc : t -> GLoc.t
   val of_line : Line.t -> t
@@ -57,18 +36,14 @@ module type Record = sig
 end
 
 module type S = sig
-  type record
-  val load : string -> record item list
-  val load_records : string -> record list
-  val load_as_lmap : string -> record GAnnot.LMap.t
-  val save : record item list -> string -> unit
-  val save_records : record list -> string -> unit
+  type item
+  val load : string -> item list
+  val load_as_lmap : string -> item GAnnot.LMap.t
+  val save : item list -> string -> unit
 end
 
-(* this trick is necessary because otherwise Record cannot be
-   extended (it should be possible in 4.08) *)
-module Make'(T : Base) = struct
-  module Internal_record = struct
+module Make(T : Base) = struct
+  module Item = struct
     type t = T.t
     let loc = T.loc
     let of_line line =
@@ -78,13 +53,6 @@ module Make'(T : Base) = struct
     let to_line r =
       T.to_fields r
       |> String.concat ~sep:"\t"
-  end
-
-  module Item = struct
-    (* type t = T.t
-     * let loc = T.loc *)
-    let of_line = parse_item T.from_fields
-    let to_line = unparse_item T.to_fields
   end
 
   let load fn =
@@ -99,43 +67,24 @@ module Make'(T : Base) = struct
           )
       )
 
-  let load_records fn =
-    load fn
-    |> List.filter_map ~f:(function
-        | `Comment _ -> None
-        | `Record r -> Some r
-      )
-
-  let save_records rs fn =
-    save (List.map rs ~f:(fun r -> `Record r)) fn
-
   let load_as_lmap fn = (* FIXME: could use stream to read bed file *)
     load fn
     |> Stdlib.List.to_seq
-    |> Seq.filter_map (function
-        | `Comment _ -> None
-        | `Record x -> Some (T.loc x, x)
-      )
+    |> Seq.map (fun x -> T.loc x, x)
     |> GAnnot.LMap.of_seq
-
-end
-
-module Make(T : Base) = struct
-  include Make'(T)
-  module Record = Internal_record
 end
 
 type fields = string list
 [@@deriving show]
 
 module Bed3 = struct
-  type record = {
+  type item = {
     chrom : string ;
     chromStart : int ;
     chromEnd : int ;
   }
   module Base = struct
-    type t = record
+    type t = item
 
     let loc r = GLoc.{ chr = r.chrom ; lo = r.chromStart ; hi = r.chromEnd }
 
@@ -151,9 +100,9 @@ module Bed3 = struct
       r.chrom ; sprintf "%d" r.chromStart ; sprintf "%d" r.chromEnd
     ]
   end
-  include Make'(Base)
-  module Record = struct
-    include Internal_record
+  include Make(Base)
+  module Item = struct
+    include Item
     let of_loc l = {
       chrom = l.GLoc.chr ;
       chromStart = l.lo ;
@@ -164,14 +113,14 @@ module Bed3 = struct
 end
 
 module Bed4 = struct
-  type record = {
+  type item = {
     chrom : string ;
     chromStart : int ;
     chromEnd : int ;
     name : string ;
   }
   module Base = struct
-    type t = record
+    type t = item
     let loc r = GLoc.{ chr = r.chrom ; lo = r.chromStart ; hi = r.chromEnd }
 
     let from_fields = function
@@ -190,7 +139,7 @@ module Bed4 = struct
 end
 
 module Bed5 = struct
-  type record = {
+  type item = {
     chrom : string ;
     chromStart : int ;
     chromEnd : int ;
@@ -198,7 +147,7 @@ module Bed5 = struct
     score : int ;
   }
   module Base = struct
-    type t = record
+    type t = item
     let loc r = GLoc.{ chr = r.chrom ; lo = r.chromStart ; hi = r.chromEnd }
 
     let from_fields = function
@@ -214,20 +163,18 @@ module Bed5 = struct
       r.name ; sprintf "%d" r.score
     ]
   end
-  include Make'(Base)
+  include Make(Base)
 
-  module Record = struct
-    include Internal_record
-    let to_bed4 = function
-      | `Comment c -> `Comment c
-      | `Record r ->
-        `Record { Bed4.chrom = r.chrom ; chromStart = r.chromStart ;
-                  chromEnd = r.chromEnd ; name = r.name }
+  module Item = struct
+    include Item
+    let to_bed4 it =
+      { Bed4.chrom = it.chrom ; chromStart = it.chromStart ;
+        chromEnd = it.chromEnd ; name = it.name }
   end
 end
 
 module Bed6 = struct
-  type record = {
+  type item = {
     chrom : string ;
     chromStart : int ;
     chromEnd : int ;
@@ -236,7 +183,7 @@ module Bed6 = struct
     strand : strand ;
   }
   module Base = struct
-    type t = record
+    type t = item
     let loc r = GLoc.{ chr = r.chrom ; lo = r.chromStart ; hi = r.chromEnd }
 
     let from_fields = function
@@ -267,13 +214,11 @@ module Bed6 = struct
   include Make(Base)
 end
 
-type record = GLoc.t * fields
 module Base = struct
-  type t = record
+  type t = GLoc.t * fields
 
   let loc = fst
   let from_fields xs = Bed3.Base.(from_fields xs |> loc), xs
   let to_fields = snd
 end
-include Base
 include Make(Base)

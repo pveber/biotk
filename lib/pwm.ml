@@ -1,5 +1,4 @@
 open Core
-open CFStream
 
 type count_matrix = int array array
 type background = float array
@@ -48,9 +47,10 @@ let make mat bg =
           )
       in
       let n_case =
-        Stream.Infix.(0 --^ (Array.length p))
-        |> Stream.fold ~f:(fun accu i -> accu +. bg.(i) *. r.(i)) ~init:0. in
-      append r [| n_case |])
+        RanT.fold 0 (Array.length p - 1) ~f:(fun accu i -> accu +. bg.(i) *. r.(i)) ~init:0.
+      in
+      append r [| n_case |]
+    )
 
 let random_profile () =
   let v = Array.init 4 ~f:(fun _ -> Random.float 1.) in
