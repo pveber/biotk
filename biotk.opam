@@ -16,21 +16,24 @@ depends: [
   "angstrom" {>= "0.15.0"}
   "angstrom-unix" {>= "0.15.0"}
   "binning"
-  "biocaml"
+  "camlzip" {>= "1.05"}
   "core" {>= "v0.15.0"}
+  "core_bench" {with-test}
+  "core_kernel" {>= "v0.15.0"}
   "core_unix" {>= "v0.15.0"}
   "crunch" {>= "3.2.0"}
   "fmt"
   "gsl"
   "ocaml" {>= "4.11.0"}
-  "ocamlnet"
   "otfm"
   "ppx_csv_conv"
   "ppx_deriving"
   "result" {>= "1.5"}
   "rresult" {>= "0.6.0"}
+  "uri" {>= "4.2.0"}
   "vg"
   "tyxml" {>= "4.4.0"}
+  "zlib" {>= "0.6"}
   "odoc" {with-doc}
 ]
 build: [

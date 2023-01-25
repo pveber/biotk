@@ -7,11 +7,14 @@
  (libraries
 	angstrom.unix
         binning
-	biocaml.unix
 	biotk.croquis
 	core
+	core_kernel.binary_packing
         core_unix
 	fmt
 	gsl
-	tyxml)
+	rresult
+	tyxml
+	uri
+	zip)
  (preprocess (pps ppx_compare ppx_csv_conv ppx_expect ppx_fields_conv ppx_inline_test ppx_let ppx_sexp_conv ppx_deriving.show)))
