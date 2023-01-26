@@ -8,7 +8,7 @@ biotk implements various functionalities in
                 algorithms, as well as access to some databases."""
 maintainer: ["philippe.veber@gmail.com"]
 authors: ["Philippe Veber"]
-license: "CeCILL-B"
+license: "CeCILL-C"
 homepage: "https://github.com/pveber/biotk/"
 bug-reports: "https://github.com/pveber/biotk/issues"
 depends: [

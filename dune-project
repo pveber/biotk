@@ -3,7 +3,7 @@
 
 (name biotk)
 (source (github pveber/biotk))
-(license CeCILL-B)
+(license CeCILL-C)
 (authors "Philippe Veber")
 (maintainers "philippe.veber@gmail.com")
 (homepage "https://github.com/pveber/biotk/")
