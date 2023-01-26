@@ -1,6 +1,13 @@
-v0.2.0 2022-05-06 Villeurbanne
+v0.2.0 2023-01-26 Villeurbanne
 ------------------------------
 
+- changed license to CeCILL-C, for LGPL compatibility
+- dropped dependency on biocaml, missing functionalities have been
+  imported and adapted
+- croquis: plotting functions, several enhancements and bug fixes
+- new Amino_acid module
+- new Alphabet module
+- new Meme module
 - Compatible with core v0.15.0
 - Improvement in Dataframe parsing
 
