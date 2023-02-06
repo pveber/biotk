@@ -4,10 +4,10 @@ open Rresult
 
 
 
-let bai = R.get_ok @@ Bai.read (In_channel.create "data/range.bam.bai")
-let ba2 = R.get_ok @@ Bai.read (In_channel.create "rien.bai")
+let _bai = R.get_ok @@ Bai.read (In_channel.create "data/range.bam.bai")
+let _ba2 = R.get_ok @@ Bai.read (In_channel.create "rien.bai")
 
-let f () =
+let _f () =
   let bam_ic = Bgzf.open_in "data/range.bam" in
   let _ = (ok_exn @@ Bam.read_header bam_ic : Bam.Header.t) in
   for i = 1 to 112 do

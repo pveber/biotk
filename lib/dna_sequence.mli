@@ -37,5 +37,5 @@ module type Parser = sig
   val use_location : Location.t -> (int * int * float) list -> (Location.t * float) list *)
 end
 
-module Parser_of_char(P : Wfa.Profile with type symbol = Wfa.Nucleotide.t
+module Parser_of_char(_ : Wfa.Profile with type symbol = Wfa.Nucleotide.t
                                        and type score = float) : Parser with type score := float

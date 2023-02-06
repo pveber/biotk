@@ -12,7 +12,7 @@ license: "CeCILL-C"
 homepage: "https://github.com/pveber/biotk/"
 bug-reports: "https://github.com/pveber/biotk/issues"
 depends: [
-  "dune" {>= "2.7"}
+  "dune" {>= "3.6"}
   "angstrom" {>= "0.15.0"}
   "angstrom-unix" {>= "0.15.0"}
   "binning"

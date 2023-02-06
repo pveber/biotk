@@ -17,7 +17,7 @@ module type S = sig
   val entropy : t -> float array
 end
 
-module Make(A : Alphabet.S) : S
+module Make(_ : Alphabet.S) : S
 
 module DNA : sig
   include S

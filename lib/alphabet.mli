@@ -8,4 +8,4 @@ module type S = sig
   val to_int : t -> int
 end
 
-module Make(X : sig val letters : string end) : S
+module Make(_ : sig val letters : string end) : S

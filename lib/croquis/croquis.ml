@@ -637,7 +637,6 @@ module Axis = struct
   type t = {
     min : float ;
     max : float ;
-    unit : float ;
     ticks : float list ;
     label : string option ;
   }
@@ -663,7 +662,7 @@ module Axis = struct
         0
       |> Stdlib.List.of_seq
     in
-    { min ; max ; unit ; ticks ; label }
+    { min ; max ; ticks ; label }
 
   let tick_display x = sprintf "%g" x
 

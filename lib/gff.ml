@@ -605,7 +605,6 @@ end
 
 module Annotation = struct
   type t = {
-    gene_id_label : string ;
     transcript_id_label : string ;
     items : Record.t list String.Table.t ;
   }
@@ -626,7 +625,7 @@ module Annotation = struct
       |> Caml.List.of_seq
       |> String.Table.of_alist_exn
     in
-    { gene_id_label ; transcript_id_label ; items }
+    { transcript_id_label ; items }
 
   let%test_unit "Annotation.of_items tail rec" =
     List.init 1_000_000 ~f:(fun _ -> `Comment "")
