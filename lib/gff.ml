@@ -603,6 +603,16 @@ module GFF3 = struct
   include Line_oriented.Make(Item)
 end
 
+module type S = sig
+  include Line_oriented.S with type item := item
+
+  module Item : sig
+    type t = item
+    val parse : Line.t -> [> `Comment of string | `Record of Record.t ]
+    val unparse : item -> string
+  end
+end
+
 module Annotation = struct
   type t = {
     transcript_id_label : string ;
