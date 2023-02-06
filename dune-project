@@ -28,7 +28,7 @@
     (crunch (>= 3.2.0))
     "fmt"
     "gsl"
-    (ocaml (>= 4.11.0))
+    (ocaml (>= 4.13.0))
     "otfm"
     "ppx_csv_conv"
     "ppx_deriving"
