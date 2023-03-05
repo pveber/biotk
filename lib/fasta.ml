@@ -39,7 +39,7 @@ module Parser = struct
 
   let fasta =
     let p =
-      header >>= fun header ->
+      header <* option () end_of_line >>= fun header ->
       sep_by end_of_line item >>= fun items ->
       option () end_of_line *> end_of_input >>| fun () ->
       List.map ~f:snd header, items
