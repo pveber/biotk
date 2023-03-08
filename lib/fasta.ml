@@ -6,7 +6,7 @@ type item = {
   description : string;
   sequence : string;
 }
-[@@ deriving sexp]
+[@@ deriving sexp, show]
 
 module Parser = struct
   open Angstrom
@@ -15,39 +15,47 @@ module Parser = struct
     | '\n' | '\r' -> false
     | _ -> true
 
+  let eolf = end_of_line <|> end_of_input
+
   let comment_line =
     choice [ char ';' ; char '#' ] >>= fun comment_char ->
-    take_while is_not_eol >>| fun comment_msg ->
-    (comment_char, comment_msg)
+    take_while is_not_eol >>= fun comment_msg ->
+    eolf *>
+    return (comment_char, comment_msg)
 
-  let header = sep_by end_of_line comment_line
+  let header = many comment_line
 
   let description_line =
-    char '>' *> take_while is_not_eol
+    char '>' *> take_while is_not_eol <* eolf
 
   let sequence_line =
     peek_char_fail >>= (function
         | '>' -> fail "Expected sequence line, not description"
         | _ -> take_while is_not_eol
-      )
+      ) <* eolf
 
   let item =
-    description_line <* end_of_line >>= fun description ->
-    sep_by end_of_line sequence_line >>| fun seqs ->
+    description_line >>= fun description ->
+    many sequence_line >>= fun seqs ->
     let sequence = String.concat seqs in
-    { description ; sequence }
+    return { description ; sequence }
 
   let fasta =
     let p =
-      header <* option () end_of_line >>= fun header ->
-      sep_by end_of_line item >>= fun items ->
-      option () end_of_line *> end_of_input >>| fun () ->
+      header >>= fun header ->
+      many item >>= fun items ->
+      end_of_input >>| fun () ->
       List.map ~f:snd header, items
     in
     p <?> "fasta"
 end
 
 let from_string s = Angstrom.(parse_string ~consume:All) Parser.fasta s
+
+let%expect_test "parse FASTA without header" =
+  let fa = from_string ";qsdf\n>s1\nAA\n>s2\nA\n" in
+  print_endline @@ [%show: (string list * item list, string) result] fa ;
+  [%expect {||}]
 
 let from_file fn =
   In_channel.with_file fn ~f:(fun ic ->

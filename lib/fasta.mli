@@ -4,7 +4,7 @@ type item = {
   description : string;
   sequence : string;
 }
-[@@ deriving sexp]
+[@@ deriving sexp, show]
 
 
 val from_string :
