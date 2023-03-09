@@ -53,9 +53,20 @@ end
 let from_string s = Angstrom.(parse_string ~consume:All) Parser.fasta s
 
 let%expect_test "parse FASTA without header" =
-  let fa = from_string ";qsdf\n>s1\nAA\n>s2\nA\n" in
+  let fa = from_string ">s1\nAA\n>s2\nA\n" in
   print_endline @@ [%show: (string list * item list, string) result] fa ;
-  [%expect {||}]
+  [%expect {|
+    (Ok ([],
+         [{ Fasta.description = "s1"; sequence = "AA" };
+           { Fasta.description = "s2"; sequence = "A" }])) |}]
+
+let%expect_test "parse FASTA with header" =
+  let fa = from_string ";a few\n#sequences\n>s1\nAA\n>s2\nA\n" in
+  print_endline @@ [%show: (string list * item list, string) result] fa ;
+  [%expect {|
+    (Ok (["a few"; "sequences"],
+         [{ Fasta.description = "s1"; sequence = "AA" };
+           { Fasta.description = "s2"; sequence = "A" }])) |}]
 
 let from_file fn =
   In_channel.with_file fn ~f:(fun ic ->
