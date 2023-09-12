@@ -23,6 +23,49 @@ module Font : sig
 end
 
 type t
+type croquis = t
+
+module Axis : sig
+  type t
+
+  val make :
+    ?label:string ->
+    float ->
+    float ->
+    t
+
+  val draw_horizontal :
+    t ->
+    proj:(float -> float) ->
+    tick_length:float ->
+    ypos:float ->
+    croquis
+
+  val draw_vertical :
+    t ->
+    proj:(float -> float) ->
+    tick_length:float ->
+    xpos:float ->
+    croquis
+end
+
+module Viewport : sig
+  type t
+  val make :
+    ?xlab:string ->
+    ?ylab:string ->
+    xlim:float * float ->
+    ylim:float * float ->
+    size:float * float ->
+    unit ->
+    t
+
+  val draw_axes : t -> croquis
+
+  val scale_x : t -> float -> float
+  val scale_y : t -> float -> float
+  val scale : t -> float * float -> float * float
+end
 
 val bbox : t -> box2
 

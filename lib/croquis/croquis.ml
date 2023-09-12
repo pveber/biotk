@@ -93,6 +93,7 @@ type t = {
   bbox : Box2.t ;
   img : image ;
 }
+type croquis = t
 
 let bbox { bbox ; _ } = bbox
 
@@ -745,8 +746,8 @@ module Viewport = struct
     axis_y : Axis.t ;
   }
 
-  let linear ?xlab ?ylab ~xlim ~ylim ~size:(w, h) () =
-    let tick_length = 0.1 in
+  let make ?xlab ?ylab ~xlim ~ylim ~size:(w, h) () =
+    let tick_length = Float.min w h /. 100. in
     let domain_xmin, domain_xmax = xlim in
     let domain_ymin, domain_ymax = ylim in
     let axis_x = Axis.make ?label:xlab domain_xmin domain_xmax in
@@ -791,6 +792,19 @@ module Viewport = struct
     Box2.of_pts
       (scale_v2 vp (Box2.tl_pt box))
       (scale_v2 vp (Box2.br_pt box))
+
+  let draw_axes vp =
+    let xmin, xmax, ymin, ymax =
+      let bb = scale_box vp vp.visible_bbox in
+      Box2.(minx bb, maxx bb, miny bb, maxy bb)
+    in
+    let tick_length = vp.tick_length in
+    let xticks = Axis.draw_horizontal vp.axis_x ~proj:(scale_x vp) ~ypos:ymin ~tick_length in
+    let yticks = Axis.draw_vertical vp.axis_y ~proj:(scale_y vp) ~xpos:xmin ~tick_length in
+    group [
+      rect ~draw:Color.black ~xmin ~xmax ~ymin ~ymax () ;
+      xticks ; yticks ;
+    ]
 end
 
 module Plot = struct
@@ -836,19 +850,6 @@ module Plot = struct
       )
     | ABLine _ -> None
 
-  let draw_axes (vp : Viewport.t) =
-    let xmin, xmax, ymin, ymax =
-      let bb = Viewport.scale_box vp vp.visible_bbox in
-      Box2.(minx bb, maxx bb, miny bb, maxy bb)
-    in
-    let tick_length = vp.tick_length in
-    let xticks = Axis.draw_horizontal vp.axis_x ~proj:(Viewport.scale_x vp) ~ypos:ymin ~tick_length in
-    let yticks = Axis.draw_vertical vp.axis_y ~proj:(Viewport.scale_y vp) ~xpos:xmin ~tick_length in
-    group [
-      rect ~draw:Color.black ~xmin ~xmax ~ymin ~ymax () ;
-      xticks ; yticks ;
-    ]
-
   let render_geom (vp : Viewport.t) = function
     | Points { x ; y ; col ; mark ; size ; _ } ->
       let x = Array.map x ~f:(Viewport.scale_x vp) in
@@ -883,7 +884,7 @@ module Plot = struct
         | bboxes -> List.reduce_exn ~f:Box2.union bboxes
       in
       let vp =
-        Viewport.linear
+        Viewport.make
           ?xlab ?ylab
           ~xlim:Box2.(minx bb, maxx bb)
           ~ylim:Box2.(miny bb, maxy bb)
@@ -894,7 +895,7 @@ module Plot = struct
         |> group
         |> crop ~bbox:(Viewport.scale_box vp vp.visible_bbox)
       in
-      draw_axes vp ++ img
+      Viewport.draw_axes vp ++ img
       |> crop ~bbox:(Box2.v V2.zero (V2.v width height))
 
   let points ?title ?(col = Color.black) ?(mark = Bullet) ?size x y =
