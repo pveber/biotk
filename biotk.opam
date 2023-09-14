@@ -51,3 +51,4 @@ build: [
   ]
 ]
 dev-repo: "git+https://github.com/pveber/biotk.git"
+available: arch != "arm32" & arch != "x86_32"
