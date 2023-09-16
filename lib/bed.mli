@@ -2,7 +2,7 @@
 
     BED (Browser Extensible Data) format is used to describe a
     collection of genomic features. It is a tabulated format. See the
-    {{https://genome.ucsc.edu/FAQ/FAQformat.html#format1}specification}. Several
+    {{:https://genome.ucsc.edu/FAQ/FAQformat.html#format1}specification}. Several
     variants exist, depending on the number of fields, and they are
     accordingly named BED3, BED4, {i etc}. This module offers one
     representation per variant, including a general-purpose

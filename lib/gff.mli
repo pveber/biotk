@@ -6,14 +6,14 @@
     (also known as GTF) and GFF3 (most often called GFF). They differ
     at the syntax level in the encoding of attributes (see below) and
     GFF3 introduces other, more semantic, differences (see
-    {{http://gmod.org/wiki/GFF2#Why_GFF2_is_harmful_to_your_health}this
+    {{:http://gmod.org/wiki/GFF2#Why_GFF2_is_harmful_to_your_health}this
     summary}).
 
-    @see {{http://gmod.org/wiki/GFF3}}
-    @see {{http://gmod.org/wiki/GFF2}}
-    @see {{https://github.com/The-Sequence-Ontology/Specifications/blob/master/gff3.md}}
-    @see {{https://www.ensembl.org/info/website/upload/gff.html}}
-    @see {{https://agat.readthedocs.io/en/latest/gxf.html#the-gtf-gff-formats}}
+    @see <http://gmod.org/wiki/GFF3>
+    @see <http://gmod.org/wiki/GFF2>
+    @see <https://github.com/The-Sequence-Ontology/Specifications/blob/master/gff3.md>
+    @see <https://www.ensembl.org/info/website/upload/gff.html>
+    @see <https://agat.readthedocs.io/en/latest/gxf.html#the-gtf-gff-formats>
 *)
 
 module Record : sig

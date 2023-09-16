@@ -1,4 +1,4 @@
-(** Single line of text. See also {!module: Lines}.
+(** Single line of text.
 
     This module is adapted from biocaml 0.8 distributed under LGPL.
  *)

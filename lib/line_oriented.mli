@@ -19,7 +19,7 @@ val fold_err :
 (** A parser for lines
 
     This module provides building blocks for a line parser, especially
-    a {!step} function, that given the state of the parser and a chunk
+    a step function, that given the state of the parser and a chunk
     of bytes returns a list of lines and a new state. This API is
     meant to be usable from various contexts, including async or lwt.
 *)
