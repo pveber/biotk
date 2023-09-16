@@ -1,3 +1,5 @@
+(** Utility functions to traverse a BAM file *)
+
 val fold0 :
   bam:string ->
   bai:string ->

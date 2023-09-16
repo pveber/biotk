@@ -1,3 +1,5 @@
+(** Deprecated. Utilities to handle DNA sequences *)
+
 val gc : string -> float
 val local_gc : int -> string -> float Seq.t
 

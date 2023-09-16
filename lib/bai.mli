@@ -1,9 +1,9 @@
-(**
-   BAI format: index for BAM file
+(** BAI format: index for BAM file
 
-   @see https://samtools.github.io/hts-specs/SAMv1.pdf
-   @see https://academic.oup.com/bioinformatics/article/32/14/2202/1742831
+    @see <https://samtools.github.io/hts-specs/SAMv1.pdf>
+    @see <https://academic.oup.com/bioinformatics/article/32/14/2202/1742831>
 *)
+
 open Stdio
 
 (** [chunk_beg] should be less than [chunk_end], except for chunks in

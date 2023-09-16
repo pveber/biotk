@@ -1,4 +1,4 @@
-(** GFF format
+(** General Feature Format
 
     This is a module to handle the {i General Feature Format}, a
     widely-used file format to represent transcriptome

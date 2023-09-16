@@ -1,4 +1,7 @@
+(** Table parsing *)
+
 type t
+
 type column =
   | Ints of int array
   | Int_opts of int option array

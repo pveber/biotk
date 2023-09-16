@@ -1,3 +1,8 @@
+(** Parsing of the Catalog of Inferred Sequence Binding Preferences
+
+    @see <http://cisbp.ccbr.utoronto.ca/>
+*)
+
 module TF_information : sig
   type item = {
     tf_id : string ;

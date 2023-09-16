@@ -1,3 +1,11 @@
+(** Alphabet representation
+
+    This module provides a functor to generate modules that implement
+    an alphabet datatype. Internally, elements of the alphabet are
+    represented as simple [char] values but this is hidden by the
+    module signature to make sure we only manipulate valid characters
+    of a given alphabet. *)
+
 module type S = sig
   type t
   val all : t list
