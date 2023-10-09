@@ -230,6 +230,15 @@ module Plot : sig
     intercept:float ->
     slope:float ->
     unit -> geom
+
+  val function_graph :
+    ?title:string ->
+    ?col:Color.t ->
+    ?thickness:float ->
+    float ->
+    float ->
+    (float -> float) ->
+    geom
 end
 
 val plot :

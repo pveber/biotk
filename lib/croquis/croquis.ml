@@ -12,6 +12,11 @@ let ifold n ~init ~f =
   in
   loop 0 init
 
+let seq a b n =
+  Array.init n ~f:(fun i ->
+      (b -. a) /. (float n) *. float i
+    )
+
 module Float_array = struct
   let min xs =
     Array.fold xs ~init:Float.max_value ~f:Float.min
@@ -912,6 +917,11 @@ module Plot = struct
 
   let abline ?col ?thickness ~intercept ~slope () =
     ABLine { descr = `AB (intercept, slope) ; thickness ; col }
+
+  let function_graph ?title ?(col = Color.black) ?thickness xmin xmax f =
+    let x = seq xmin xmax 100 in
+    let y = Array.map x ~f in
+    Lines { title ; col ; thickness ; x ; y }
 end
 
 let plot ?width ?height ?xlab ?ylab geoms =
