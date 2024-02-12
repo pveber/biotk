@@ -2,7 +2,7 @@
  (name biotk)
  (public_name biotk)
  (foreign_stubs (language c) (names pwm_stub) (flags :standard -O3))
- (inline_tests (deps ../data/ex1.bam.bai ../data/survival.tsv))
+ (inline_tests (deps ../data/ex1.bam.bai ../data/survival.tsv ../data/test.ibed))
  (flags :standard -short-paths)
  (libraries
 	angstrom.unix
