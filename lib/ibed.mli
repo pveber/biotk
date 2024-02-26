@@ -1,4 +1,4 @@
-(** b ibed format
+(** ibed format
 
   [ibed] files are produced by {{:https://doi.org/10.1186/s13059-016-0992-2}CHiCAGO} software
   for detecting statistically significant interaction events in Capture HiC data.
@@ -33,11 +33,11 @@ type t = item list
 val sort : ?desc:bool -> t -> t
 
 (** Produce a list of contacts list, each sublist contains all contact that share the same bait. *)
-val group_by_bait : t -> (GLoc.t * t) list
+val group_by_bait : t -> (item * t) list
 
 (** Produce a list of tuple, first element of the couple is the chromosome, the second is all contacts
     that belong to this chromosome. *)
-val group_by_chr : t -> (string * t) list
+val group_by_chr : t -> (item * t) list
 
 val from_file_exn : ?header:bool -> string -> t
 
