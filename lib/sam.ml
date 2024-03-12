@@ -1,6 +1,6 @@
 open Core
 
-module Seq = Caml.Seq
+module Seq = Stdlib.Seq
 open Result.Monad_infix
 
 let ( >>?~ )

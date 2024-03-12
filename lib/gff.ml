@@ -68,7 +68,7 @@ module Handwritten_parser = struct
       Ok (k + 1, String.sub buf ~pos ~len:(k - pos))
 
   let%test "Gff.parse_tag" =
-    Caml.(parse_tag 0 "gene_id=foo" = Ok (8, "gene_id"))
+    Stdlib.(parse_tag 0 "gene_id=foo" = Ok (8, "gene_id"))
 
   let lfind_mapi ?(pos = 0) s ~f =
     let n = String.length s in
@@ -102,7 +102,7 @@ module Handwritten_parser = struct
 
   let test_parse_value buf y =
     let n, x = parse_value_list 0 buf [] in
-    Caml.((n, x) = (String.length buf, y))
+    Stdlib.((n, x) = (String.length buf, y))
 
   let%test "parse_value_list1" =
     test_parse_value
@@ -124,7 +124,7 @@ module Handwritten_parser = struct
   let parse_gff3_attributes buf = parse_gff3_attributes 0 buf []
 
   let%test "Gff.parse_gff3_attributes" =
-    Caml.(
+    Stdlib.(
       parse_gff3_attributes "a=2,3;b=4"
       =
       Ok [ ("a", ["2" ; "3"]) ; ("b", ["4"]) ]
@@ -177,14 +177,14 @@ module Handwritten_parser = struct
     attribute [] tokens
 
   let%test "Gff.parse_gff2_attributes1" =
-    Caml.(
+    Stdlib.(
       parse_gff2_attributes {|gene_id "FBgn0031081"|}
       =
       Ok [ ("gene_id", ["FBgn0031081"]) ]
     )
 
   let%test "Gff.parse_gff2_attributes" =
-    Caml.(
+    Stdlib.(
       parse_gff2_attributes {|gene_id "FBgn0031081"; gene_symbol "Nep3"; transcript_id "FBtr0070000"; transcript_symbol "Nep3-RA";|}
       =
       Ok [ ("gene_id", ["FBgn0031081"]) ; ("gene_symbol", ["Nep3"]) ;
@@ -621,8 +621,8 @@ module Annotation = struct
 
   let of_items ?(gene_id_label = "gene_id") ?(transcript_id_label = "transcript_id") (items : item list) =
     let items =
-      Caml.List.to_seq items
-      |> Caml.Seq.filter_map (function
+      Stdlib.List.to_seq items
+      |> Stdlib.Seq.filter_map (function
           | `Comment _ -> None
           | `Record r ->
             match List.Assoc.find r.Record.attributes gene_id_label ~equal:String.equal with
@@ -632,7 +632,7 @@ module Annotation = struct
         )
       |> Binning.relation
       |> Seq.map (fun (x, y) -> x, List.rev y)
-      |> Caml.List.of_seq
+      |> Stdlib.List.of_seq
       |> String.Table.of_alist_exn
     in
     { transcript_id_label ; items }
@@ -660,15 +660,15 @@ module Annotation = struct
       )
 
   let sort_by_attribute ~attr_label items =
-    Caml.List.to_seq items
-    |> Caml.Seq.filter_map (fun r ->
+    Stdlib.List.to_seq items
+    |> Stdlib.Seq.filter_map (fun r ->
         match List.Assoc.find r.Record.attributes attr_label ~equal:String.equal with
           | Some (id :: _) -> Some (id, r)
           | Some []
           | None -> None
       )
     |> Binning.relation
-    |> Caml.List.of_seq
+    |> Stdlib.List.of_seq
 
   let gene_of_entry ~id ~transcript_id_label items =
     match exons_of_entry items with
@@ -688,10 +688,10 @@ module Annotation = struct
   let genes annot =
     let r = String.Table.create () in
     let errors =
-      String.Table.fold annot.items ~init:[] ~f:(fun ~key:id ~data:items errors ->
+      Hashtbl.fold annot.items ~init:[] ~f:(fun ~key:id ~data:items errors ->
           match gene_of_entry ~id ~transcript_id_label:annot.transcript_id_label items with
           | Ok (Some g) ->
-            String.Table.set r ~key:id ~data:g ;
+            Hashtbl.set r ~key:id ~data:g ;
             errors
           | Ok None -> errors
           | Error e -> (id, e) :: errors
@@ -700,7 +700,7 @@ module Annotation = struct
     r, errors
 
   let utr5' annot =
-    String.Table.filter_map annot.items ~f:(fun items ->
+    Hashtbl.filter_map annot.items ~f:(fun items ->
         List.find_map items ~f:(fun r ->
             match r.Record.feature with
             | Some "5UTR" -> Some r
@@ -709,7 +709,7 @@ module Annotation = struct
       )
 
   let utr3' annot =
-    String.Table.filter_map annot.items ~f:(fun items ->
+    Hashtbl.filter_map annot.items ~f:(fun items ->
         List.find_map items ~f:(fun r ->
             match r.Record.feature with
             | Some "3UTR" -> Some r

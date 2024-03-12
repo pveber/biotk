@@ -10,11 +10,11 @@ let to_string { chr ; lo ; hi } =
   Printf.sprintf "%s:%d-%d" chr lo hi
 
 let of_string_exn s =
-  try Caml.Scanf.sscanf s "%[^:]:%d-%d" (fun chr lo hi -> { chr ; lo ; hi })
+  try Stdlib.Scanf.sscanf s "%[^:]:%d-%d" (fun chr lo hi -> { chr ; lo ; hi })
   with _ -> failwith ("GLoc.of_string_exn: " ^ s)
 
 let%test "of_string_exn_1" =
-  Caml.(
+  Stdlib.(
     of_string_exn "chr1:3053032-3053034"
     =
     { chr = "chr1" ; lo = 3053032 ; hi = 3053034 }

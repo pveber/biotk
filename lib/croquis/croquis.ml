@@ -519,7 +519,7 @@ module Pileup_layout = struct
   let block_compare b1 b2 =
     let b1 = b1.bbox in
     let b2 = b2.bbox in
-    Caml.compare Box2.(minx b1, maxx b1) Box2.(minx b2, maxx b2)
+    Stdlib.compare Box2.(minx b1, maxx b1) Box2.(minx b2, maxx b2)
 
   let x_overlap_partition = function
     | [] -> [], []

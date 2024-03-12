@@ -124,13 +124,13 @@ module Parser_of_char(P : Wfa.Profile with type symbol = Wfa.Nucleotide.t
       values = Array.map seqz ~f:(fun s ->
           M.scan char aut s
           |> Seq.map (fun (_, s, _) -> s)
-          |> Caml.Array.of_seq
+          |> Stdlib.Array.of_seq
           |> arrange_score_values
         ) ;
     }
 
   let rec rank_aux t x a b =
-    if a > b then raise Caml.Not_found
+    if a > b then raise Stdlib.Not_found
     else if a = b then a
     else (
       let i = (a + b) / 2 + 1 in

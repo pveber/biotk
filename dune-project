@@ -21,10 +21,9 @@ well as access to some databases.")
     ("angstrom-unix" (>= 0.15.0))
     "binning"
     ("camlzip" (>= 1.05))
-    ("core" (and (>= "v0.15.0") (< "v0.16.0")))
+    ("core" (>= "v0.16.0"))
     ("core_bench" :with-test)
-    ("core_kernel" (>= "v0.15.0"))
-    ("core_unix" (>= "v0.15.0"))
+    ("core_unix" (>= v0.16.0))
     (crunch (>= 3.2.0))
     "fmt"
     "gsl"

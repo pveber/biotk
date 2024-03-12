@@ -5,18 +5,18 @@ let rec seq_of_sequence xs () =
   | None -> Seq.Nil
   | Some (h, t) -> Seq.Cons (h, seq_of_sequence t)
 
-module Map = struct
+module String_map = struct
   include Map.Make(String)
 
-  let to_seq t = seq_of_sequence (to_sequence t)
+  let to_seq t = seq_of_sequence (Map.to_sequence t)
   let of_seq xs =
-    Seq.fold_left (fun accu (key,data) -> set accu ~key ~data) empty xs
+    Seq.fold_left (fun accu (key,data) -> Map.set accu ~key ~data) empty xs
 end
 
 module Selection = struct
-  type t = ISet.t Map.t
+  type t = ISet.t String_map.t
 
-  let empty = Map.empty
+  let empty = String_map.empty
   let add sel GLoc.{ chr ; lo ; hi } =
     let set_chr =
       match Map.find sel chr with
@@ -27,7 +27,7 @@ module Selection = struct
     Map.set sel ~key:chr ~data:set_chr
 
   let inter u v =
-    Map.fold u ~init:Map.empty ~f:(fun ~key:k ~data:set_u accu ->
+    Map.fold u ~init:String_map.empty ~f:(fun ~key:k ~data:set_u accu ->
         match Map.find v k with
         | Some set_v -> Map.set accu ~key:k ~data:(ISet.inter set_u set_v)
         | None -> accu
@@ -35,7 +35,7 @@ module Selection = struct
 
   let union u v =
     let keys = List.dedup_and_sort ~compare:String.compare (Map.keys u @ Map.keys v) in
-    List.fold keys ~init:Map.empty ~f:(fun accu k ->
+    List.fold keys ~init:String_map.empty ~f:(fun accu k ->
         Map.set accu ~key:k ~data:(
           ISet.union
             (Option.value (Map.find u k) ~default:ISet.empty)
@@ -44,7 +44,7 @@ module Selection = struct
       )
 
   let diff u v =
-    Map.fold u ~init:Map.empty ~f:(fun ~key:k ~data:set_u accu ->
+    Map.fold u ~init:String_map.empty ~f:(fun ~key:k ~data:set_u accu ->
         let set_u' =
           match Map.find v k with
           | Some set_v -> ISet.diff set_u set_v
@@ -71,7 +71,7 @@ module Selection = struct
       ~f:(fun x -> ISet.intersects_range x lo hi)
 
   let to_seq sel =
-    Map.to_seq sel
+    String_map.to_seq sel
     |> Seq.map (fun (chr, s) ->
         Seq.map
           (fun (lo, hi) -> GLoc.{ chr ; lo ; hi })
@@ -88,13 +88,13 @@ module Selection = struct
         ()
     in
     Seq.iter (fun loc -> Binning.add accu loc loc) e ;
-    Map.of_seq (Binning.seq accu)
+    String_map.of_seq (Binning.seq accu)
 end
 
 module LMap = struct
-  type 'a t = 'a Interval_tree.t Map.t
+  type 'a t = 'a Interval_tree.t String_map.t
 
-  let empty = Map.empty
+  let empty = String_map.empty
 
   let intersects lmap { GLoc.chr ; lo ; hi }  =
     Option.value_map
@@ -120,7 +120,7 @@ module LMap = struct
     | None -> Seq.empty
 
   let to_seq lmap =
-    Map.to_seq lmap
+    String_map.to_seq lmap
     |> Seq.map (fun (chr, t) ->
         Seq.map
           (fun (lo, hi, x) -> { GLoc.chr ; lo ; hi }, x)
@@ -136,7 +136,7 @@ module LMap = struct
         ()
     in
     Seq.iter (fun (loc, value) -> Binning.add accu loc (loc, value)) e ;
-    Map.of_seq (Binning.seq accu)
+    String_map.of_seq (Binning.seq accu)
 
   let add m k v =
     let chr = k.GLoc.chr  in
@@ -148,9 +148,9 @@ end
 module LSet = struct
   module T = Interval_tree
 
-  type t = unit Interval_tree.t Map.t
+  type t = unit Interval_tree.t String_map.t
 
-  let empty = Map.empty
+  let empty = String_map.empty
 
   let intersects = LMap.intersects
 
@@ -246,7 +246,7 @@ module LAssoc = struct
     let midloc u = u.GLoc.chr, midpoint u
 
     let compare (u : GLoc.t) (v : GLoc.t) =
-      Caml.compare (midloc u) (midloc v)
+      Stdlib.compare (midloc u) (midloc v)
   end
 
   module Score = struct
@@ -256,7 +256,7 @@ module LAssoc = struct
     }
 
     let compare x y =
-      Caml.compare (x.value, y.weight) (y.value, x.weight)
+      Stdlib.compare (x.value, y.weight) (y.value, x.weight)
 
     let%test "matching_score_compare" =
       compare { value = 3 ; weight = 6 } { value = 2 ; weight = 3 } > 0
@@ -306,7 +306,7 @@ module LAssoc = struct
           | true, false, true -> assert false
 
     let memo_rec ff =
-      let open Caml in
+      let open Stdlib in
       let h = Hashtbl.create 0 in
       let rec f x y  =
         try Hashtbl.find h (x,y)
@@ -348,7 +348,7 @@ module LAssoc = struct
 
   let%test_module "MATCHING" = (module struct
     let loc lo hi = GLoc.{ chr = "chr" ; lo ; hi }, ()
-    let ( = ) = Caml.( = )
+    let ( = ) = Stdlib.( = )
 
     let%test "matching_1" = matching ~mode:`Point ~max_dist:10 [] [] = []
 

@@ -48,7 +48,7 @@ let full_traversal ~bam ~loc =
   let visited = ref 0 in
   let count =
     ok_exn' @@ Bam.with_file bam ~f:(fun _ als ->
-        Fun.flip Caml.Seq.filter als Result.(fun al ->
+        Fun.flip Stdlib.Seq.filter als Result.(fun al ->
             incr visited ;
             match map al ~f:loc_of_al with
             | Ok (Some loc') ->
@@ -56,7 +56,7 @@ let full_traversal ~bam ~loc =
             | Ok None -> false
             | Error _ -> assert false
           )
-        |> Caml.List.of_seq
+        |> Stdlib.List.of_seq
         |> List.length
         |> R.ok
       )

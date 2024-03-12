@@ -41,7 +41,7 @@ module BP = struct
   let unpack_signed_32_little_endian ~buf ~pos =
     let b1 =
       Int32.shift_left
-        (Int32.of_int_exn (Caml.Char.code (String.get buf (pos + 3))))
+        (Int32.of_int_exn (Stdlib.Char.code (String.get buf (pos + 3))))
         24
     in
     let b2 = Char.to_int (String.get buf (pos + 2)) lsl 16 in

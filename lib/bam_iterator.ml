@@ -13,7 +13,7 @@ let make_index bai bam_header : index =
   let foreach_reference_sequence name bai_reference_sequence =
     let r = Int.Table.create () in
     let bins = bai_reference_sequence.Bai.bins in
-    Array.iter bins ~f:(fun b -> Int.Table.set r ~key:b.Bai.bin ~data:b) ;
+    Array.iter bins ~f:(fun b -> Hashtbl.set r ~key:b.Bai.bin ~data:b) ;
     (name, (bai_reference_sequence, r))
   in
   let reference_sequences =
@@ -81,13 +81,13 @@ let consider_chunk linear_bound (chunk : Bai.chunk) =
   | Some l -> Int64.(l <= chunk.chunk_end)
 
 let fold0_aux iterator ~(loc : GLoc.t) ~init ~f =
-  match String.Table.find iterator.index loc.chr with
+  match Hashtbl.find iterator.index loc.chr with
   | None -> R.error_msgf "Unknown reference sequence %s" loc.chr
   | Some (refseq, idx) ->
     let linear_bound = linear_bound refseq loc.lo in
     try R.ok @@
       Bai.reg2bins loc.lo loc.hi ~init ~f:(fun acc i ->
-        match Int.Table.find idx i with
+        match Hashtbl.find idx i with
         | None -> acc
         | Some bin ->
           Array.fold bin.chunks ~init:acc ~f:(fun acc chunk ->

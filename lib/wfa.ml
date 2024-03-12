@@ -188,25 +188,25 @@ module Make
     end)
 
   let convolution xs ys =
-    ScoreSet.fold xs ~init:ScoreSet.empty ~f:(fun acc x ->
-        ScoreSet.fold ys ~init:acc ~f:(fun acc y ->
-            ScoreSet.add acc Score.(x + y)
+    Set.fold xs ~init:ScoreSet.empty ~f:(fun acc x ->
+        Set.fold ys ~init:acc ~f:(fun acc y ->
+            Set.add acc Score.(x + y)
           )
       )
 
   let rec scores = function
     | Profile profile ->
       List.fold Symbol.all ~init:ScoreSet.empty ~f:(fun acc x ->
-          ScoreSet.add acc (Profile.score profile x)
+          Set.add acc (Profile.score profile x)
         )
     | Sequence exprz ->
       List.reduce_exn ~f:convolution (List.map ~f:scores exprz)
     | Disjunction exprz ->
       (* FIXME j'ai un doute, c'est sans doute une surapproximation dans le cas de la disjonction*)
-      List.reduce_exn ~f:ScoreSet.union (List.map ~f:scores exprz)
+      List.reduce_exn ~f:Set.union (List.map ~f:scores exprz)
     | Gap _ -> ScoreSet.singleton Score.zero
 
-  let scores e = ScoreSet.to_array (scores e)
+  let scores e = Set.to_array (scores e)
 
   (* The code that follows is adapted from WAPAM *)
   let rec gen_gap i = function
@@ -257,7 +257,7 @@ module Make
       arcs
 
   let rec find_and_remove f = function
-    | [] -> raise Caml.Not_found
+    | [] -> raise Stdlib.Not_found
     | t::q -> if (f t)
       then t, q
       else
@@ -275,7 +275,7 @@ module Make
       let (i,_,f), l = find_and_remove (function (_,`epsilon,_) -> true | _ -> false) arcs in
       enleve_epsilon (epsilon i f l)
     with
-      Caml.Not_found -> check_no_epsilon arcs
+      Stdlib.Not_found -> check_no_epsilon arcs
 
 
 

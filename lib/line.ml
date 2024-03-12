@@ -33,7 +33,7 @@ let append x y = x ^ y
 let to_string = Fn.id
 
 let concat ?sep xs =
-  if Caml.(sep = Some '\n')
+  if Stdlib.(sep = Some '\n')
   then
     invalid_arg "newline character is not allowed as separator";
   let sep =

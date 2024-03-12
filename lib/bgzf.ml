@@ -65,7 +65,7 @@ let close_in iz =
   dispose_in iz ;
   In_channel.close iz.ic
 
-let input_byte t = Caml.input_byte t
+let input_byte t = Stdlib.input_byte t
 
 let input_u16 ic =
   let b1 = input_byte ic in
@@ -279,7 +279,7 @@ let write_block oc buf len ~isize ~crc32 =
   Out_channel.output_byte oc 0x43 ;                 (* SI2 *)
   output_int16 oc 2 ;                   (* SLEN *)
   output_int16 oc (bsize - 1);          (* BSIZE - 1*)
-  Caml.output oc buf 0 len ;                 (* DATA *)
+  Stdlib.output oc buf 0 len ;          (* DATA *)
   output_int32 oc crc32 ;               (* CRC32 *)
   output_int32 oc isize                 (* ISIZE *)
 
@@ -326,8 +326,8 @@ let rec output ~length ~blit oz buf ~pos ~len =
   let remaining = len - ncopy in
   if remaining > 0 then output ~length ~blit oz buf ~pos:(pos + ncopy) ~len:remaining
 
-let output_from_string = output ~length:String.length ~blit:Caml.Bytes.blit_string
-let output = output ~length:Bytes.length ~blit:Caml.Bytes.blit
+let output_from_string = output ~length:String.length ~blit:Stdlib.Bytes.blit_string
+let output = output ~length:Bytes.length ~blit:Stdlib.Bytes.blit
 
 let output_char =
   let buf = Bytes.make 1 ' ' in

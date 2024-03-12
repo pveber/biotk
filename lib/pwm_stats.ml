@@ -15,7 +15,7 @@ let naive_score_distribution pwm bg =
   let m = Array.length bg in
   let t = T.create () in
   let rec loop i score prob =
-    if i >= n then T.update t score ~f:(function
+    if i >= n then Hashtbl.update t score ~f:(function
         | None -> prob
         | Some p -> p +. prob
       )
@@ -25,7 +25,7 @@ let naive_score_distribution pwm bg =
       done
   in
   loop 0 0. 1. ;
-  T.to_alist t
+  Hashtbl.to_alist t
 
 (** Implementation of {https://www.ncbi.nlm.nih.gov/pmc/articles/PMC2238751/} *)
 module TFM_pvalue = struct
@@ -89,7 +89,7 @@ module TFM_pvalue = struct
       else (
         let pval = ref p in
         let t' = T.create () in
-        T.iteri t ~f:(fun ~key:score ~data:prob ->
+        Hashtbl.iteri t ~f:(fun ~key:score ~data:prob ->
             for j = 0 to m - 1 do
               let score' = score +. pwm.(i).(j) in
               if Float.(alpha -. ws.(i) <= score') then (
@@ -97,7 +97,7 @@ module TFM_pvalue = struct
               )
               else if Float.(alpha -. bs.(i) <= score') then (
                 let prob = prob *. bg.(j) in
-                T.update t' score' ~f:(function
+                Hashtbl.update t' score' ~f:(function
                     | None -> prob
                     | Some p -> p +. prob
                   )
@@ -126,12 +126,12 @@ module TFM_pvalue = struct
       if i >= n then t
       else (
         let t' = T.create () in
-        T.iteri t ~f:(fun ~key:score ~data:prob ->
+        Hashtbl.iteri t ~f:(fun ~key:score ~data:prob ->
             for j = 0 to m - 1 do
               let score' = score +. pwm.(i).(j) in
               if Float.(alpha -. bs.(succ i) <= score' && score' <= beta -. ws.(succ i)) then (
                 let prob = prob *. bg.(j) in
-                T.update t' score' ~f:(function
+                Hashtbl.update t' score' ~f:(function
                     | None -> prob
                     | Some p -> p +. prob
                   )
@@ -142,7 +142,7 @@ module TFM_pvalue = struct
       )
     in
     loop 0 (T.of_alist_exn [0., 1.])
-    |> T.to_alist
+    |> Hashtbl.to_alist
 
   exception Found_threshold of float
 
