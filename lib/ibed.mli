@@ -12,9 +12,9 @@
     open Biotk
 
     let () =
-      Ibed.from_file "data/pchic/mouse.ibed"
+      Ibed.of_file "data/pchic/mouse.ibed"
         |> List.filter (fun i -> i.bait.chr = "chr13")
-        |> Ibed.to_file "data/pchic/mouse_chr13.ibed"
+        |> Ibed.to_file "data/pchic/mouse_chr13.ibed" ~header:true
   ]}
 *)
 
@@ -39,6 +39,6 @@ val group_by_bait : t -> (item * t) list
     that belong to this chromosome. *)
 val group_by_chr : t -> (item * t) list
 
-val from_file_exn : ?header:bool -> string -> t
+val of_file_exn : string -> t
 
-val to_file : ?header:bool -> string -> t -> unit
+val to_file : t -> path:string -> header:bool -> unit

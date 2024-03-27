@@ -48,12 +48,12 @@ let sort ?(desc = false) =
 
 let gb_fold_fun comp_func acc (it : item) =
   match acc with
-    | [[]] -> [[it]]
-    | (hd::tl)::rest -> if comp_func hd it then
-                          (it::hd::tl)::rest
-                        else
-                          [it]::(hd::tl)::rest
-    | _ -> assert false
+  | [[]] -> [[it]]
+  | (hd::tl)::rest -> if comp_func hd it then
+                        (it::hd::tl)::rest
+                      else
+                        [it]::(hd::tl)::rest
+  | _ -> assert false
 
 let group_by fold_fn map_fn = function
   | [] -> []
@@ -71,21 +71,20 @@ let group_by_chr it_lst =
   let map_fun = fun grp -> List.hd grp, grp in
   group_by fold_fun map_fun it_lst
 
-let from_file_exn ?(header = true) f_path =
-  let idx_offset = if header then 2 else 1 in
-  let from_line' idx l =
+let of_file_exn path =
+  let of_line' idx l =
     try of_line_exn l
-    with _ -> failwith (Printf.sprintf "Please check the format of (%s) near line (%d)" f_path (idx + idx_offset))
+    with _ -> failwith (Printf.sprintf "Please check the format of (%s) near line (%d)" path idx)
   in
-  let lines = Core.In_channel.read_lines f_path in
-  List.mapi from_line' (if header then List.tl lines else lines)
+  let lines = Core.In_channel.read_lines path in
+  let lines' = if head = (List.hd lines) then List.tl lines else lines in
+  Core.List.mapi ~f:of_line' lines'
 
-let to_file ?(header = true) f_path it_lst =
+let to_file it_lst ~path ~header =
   it_lst
-    |> List.map to_line
-    |> List.cons (if header then head else "")
-    |> Core.Out_channel.write_lines f_path
-
+  |> Core.List.map ~f:to_line
+  |> List.cons (if header then head else "")
+  |> Core.Out_channel.write_lines path
 
 (* for testing *)
 
@@ -101,7 +100,7 @@ let printf_it_lst it_lst =
   String.concat "\n" @@ List.map printf_item it_lst
 
 let%expect_test "fromfile_sort_orderize_1" =
-  Printf.printf "%s" (printf_it_lst @@ sort @@ from_file_exn "../data/test.ibed");
+  Printf.printf "%s" (printf_it_lst @@ sort @@ of_file_exn "../data/test.ibed");
   [%expect {|
     1:100-200 --> 1:800-900	 (A1;A2;A3) --> (B1;B2)(rd:10;sc:1.234500)
     2:2000-3000 --> 2:200-300	 (C1) --> (D1)(rd:100;sc:9.990000)
@@ -117,7 +116,7 @@ let%expect_test "fromfile_sort_orderize_1" =
     X:2000-2500 --> X:24680-91000	 (G1;G2) --> (Z1)(rd:5;sc:130.000000) |}]
 
 let%expect_test "fromfile_sort_orderize_2" =
-  Printf.printf "%s" (printf_it_lst @@ sort ~desc:true @@ from_file_exn "../data/test.ibed");
+  Printf.printf "%s" (printf_it_lst @@ sort ~desc:true @@ of_file_exn "../data/test.ibed");
   [%expect {|
     X:2000-2500 --> X:12345-71000	 (G1;G2) --> (X1)(rd:3;sc:110.000000)
     X:2000-2500 --> X:13579-81000	 (G1;G2) --> (Y1)(rd:4;sc:120.000000)
@@ -133,7 +132,7 @@ let%expect_test "fromfile_sort_orderize_2" =
     1:100-200 --> 1:800-900	 (A1;A2;A3) --> (B1;B2)(rd:10;sc:1.234500) |}]
 
 let%expect_test "group_by_bait" =
-  let gb = group_by_bait @@ from_file_exn "../data/test.ibed" in
+  let gb = group_by_bait @@ of_file_exn "../data/test.ibed" in
   Printf.printf "%s" (String.concat "\n" @@ List.map (fun c -> Printf.sprintf "\nitem =>\n%s\nitem_list =>\n%s\n" (printf_item @@ fst c) (printf_it_lst @@ snd c)) gb);
   [%expect {|
     item =>
@@ -193,7 +192,7 @@ let%expect_test "group_by_bait" =
         1:100-200 --> 1:800-900	 (A1;A2;A3) --> (B1;B2)(rd:10;sc:1.234500) |}]
 
 let%expect_test "group_by_chr" =
-  let gb = group_by_chr @@ from_file_exn "../data/test.ibed" in
+  let gb = group_by_chr @@ of_file_exn "../data/test.ibed" in
   Printf.printf "%s" (String.concat "\n" @@ List.map (fun (c, l) -> Printf.sprintf "\nitem =>\n%s\nitem_list =>\n%s\n" (printf_item c) (printf_it_lst l)) gb);
   [%expect {|
     item =>
