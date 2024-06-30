@@ -1,3 +1,13 @@
+v0.3 2024-02-30 Villeurbanne
+----------------------------
+
+- does not depend on biocaml anymore
+- modules Interval_tree, ISet, Bgzf, Sam, Phred_score, Solexafrom, Bamstats
+  imported from biocaml
+- new modules: Meme, Alphabet, Amino_acid, Ibed
+- many small enhancement in croquis
+- compatible with core v0.16.0
+
 v0.2.0 2023-01-26 Villeurbanne
 ------------------------------
 
