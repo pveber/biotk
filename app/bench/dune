@@ -1,3 +1,4 @@
 (executables
-  (names pwm_bench)
-  (libraries biotk core_bench core_unix.command_unix))
+ (names pwm_bench)
+ (libraries biotk core_bench core_unix.command_unix)
+ (optional))
