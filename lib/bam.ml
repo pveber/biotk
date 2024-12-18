@@ -778,12 +778,12 @@ let write_reference_sequences h oz =
       Bgzf.output_s32 oz (Int32.of_int_exn rs.length) ; (* FIXME: the conversion is possibly not safe, but maybe [Sam.ref_seq] type should keep the int32 representation? *)
     )
 
-let write_header header oz =
+let write_header oz header =
   Bgzf.output_string oz magic_string ;
   write_plain_SAM_header header.sam_header oz  ;
   write_reference_sequences header oz
 
-let write_alignment oz al =
+let write_alignment0 oz al =
   let open Alignment0 in
   Bgzf.output_s32 oz (Int32.of_int_exn (sizeof al)) ;
   Bgzf.output_s32 oz (Int32.of_int_exn al.ref_id) ;
@@ -802,8 +802,8 @@ let write_alignment oz al =
 
 let write0 header alignments oc =
   let oz = Bgzf.of_out_channel oc in
-  write_header header oz ;
-  Seq.iter (write_alignment oz) alignments ;
+  write_header oz header ;
+  Seq.iter (write_alignment0 oz) alignments ;
   Bgzf.dispose_out oz
 
 let bind f x = Or_error.bind x ~f

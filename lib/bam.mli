@@ -101,3 +101,6 @@ val write : Header.t -> alignment Seq.t -> Out_channel.t -> unit Or_error.t
 val read_header : Bgzf.in_channel -> Header.t Or_error.t
 val read_alignment : Bgzf.in_channel -> Alignment0.t Or_error.t option
 val read_alignment_stream : Bgzf.in_channel -> Alignment0.t Or_error.t Seq.t
+
+val write_header : Bgzf.out_channel -> Header.t -> unit
+val write_alignment0 : Bgzf.out_channel -> Alignment0.t -> unit
