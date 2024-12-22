@@ -1,9 +1,10 @@
 open Core
-open Or_error.Monad_infix
+open Prelude
+open Let_syntax.Result
 
 let check b msg =
   if b then Ok ()
-  else Or_error.error_string msg
+  else Error.msg msg
 
 let checkf b format = Printf.ksprintf (check b) format
 
@@ -193,19 +194,24 @@ module Alignment0 = struct
   (* default is indicated in note 1 of page 14 of the spec *)
 
   let flags al =
-    Int32.shift_right al.flag_nc 16
-    |> Int32.to_int_exn (* because we are shifting right just before, Int32.to_int_exn cannot fail *)
-    |> Sam.Flags.of_int
+    let i =
+      Int32.shift_right al.flag_nc 16
+      |> Int32.to_int_exn
+      (* because we are shifting right just before,
+         Int32.to_int_exn cannot fail *)
+    in
+    Sam.Flags.of_int i
+    |> Result.map_error ~f:(fun _ -> `Flag_out_of_range i)
 
   let rname al header =
     try Ok (Option.map (ref_id al) ~f:(fun id -> (Array.get header.ref_seq id).Sam.name))
-    with _ -> Or_error.error_string "Bam.Alignment0.rname: unknown ref_id"
+    with _ -> Error.msg "Bam.Alignment0.rname: unknown ref_id"
 
   let pos al = option ~none:(- 1) al.pos
 
   let mapq al = option ~none:255 (get_16_8 al.bin_mq_nl)
 
-  let cigar_op_of_s32 x : Sam.cigar_op Or_error.t =
+  let cigar_op_of_s32 x =
     let open Sam in
     let op_len = get_32_4 x in
     match get_4_0 x with
@@ -311,10 +317,9 @@ module Alignment0 = struct
     match shift al.qual with
     | qual33 -> Sam.parse_qual qual33
     | exception Failure _ ->
-      Or_error.error
-        "Bam.Alignement0.qual: incorrect quality score"
+      Error.msgf
+        "Bam.Alignement0.qual: incorrect quality score (%s)"
         al.qual
-        sexp_of_string
 
   (** Extracts string in buf starting from pos and finishing with a
       NULL character, and returns the position just after it. Returns
@@ -325,10 +330,10 @@ module Alignment0 = struct
       if i < String.length buf then
         if Char.(String.get buf i = '\000') then Ok i
         else aux (i + 1)
-      else Or_error.error_string "Unfinished NULL terminated string"
+      else Error.msg "Unfinished NULL terminated string"
     in
-    aux pos >>= fun pos' ->
-    Ok (String.sub buf ~pos ~len:(pos' - pos), pos' + 1)
+    let+ pos' = aux pos in
+    String.sub buf ~pos ~len:(pos' - pos), pos' + 1
 
   let cCsSiIf_size = function
     | 'c'
@@ -336,11 +341,11 @@ module Alignment0 = struct
     | 's' | 'S' -> Ok 2
     | 'i' | 'I'
     | 'f' -> Ok 4
-    | _ -> Or_error.error_string "Incorrect numeric optional field type identifier"
+    | _ -> Error.msg "Incorrect numeric optional field type identifier"
 
   let parse_cCsSiIf buf pos typ =
-    cCsSiIf_size typ >>= fun len ->
-    check_buf ~buf ~pos ~len >>= fun () ->
+    let* len = cCsSiIf_size typ in
+    let* () = check_buf ~buf ~pos ~len in
     match typ with
     | 'c' ->
       let i = Int64.of_int_exn (BP.unpack_signed_8 ~buf ~pos) in
@@ -363,62 +368,62 @@ module Alignment0 = struct
     | 'f' ->
       let f = BP.unpack_float_little_endian ~buf ~pos in
       Ok (Sam.optional_field_value_f f, len)
-    | _ -> Or_error.error_string "Incorrect numeric optional field type identifier"
+    | _ -> Error.msg "Incorrect numeric optional field type identifier"
 
   let parse_optional_field_value buf pos = function
     | 'A' ->
-      check_buf ~buf ~pos ~len:1 >>= fun () ->
-      Sam.optional_field_value_A (String.get buf pos) >>= fun v ->
-      Ok (v, 1)
+      let* () = check_buf ~buf ~pos ~len:1 in
+      let+ v = Sam.optional_field_value_A (String.get buf pos) in
+      (v, 1)
     | 'c' | 'C' | 's' | 'S' | 'i' | 'I' | 'f' as typ ->
       parse_cCsSiIf buf pos typ
     | 'Z' ->
-      parse_cstring buf pos >>= fun (s, pos') ->
-      Sam.optional_field_value_Z s >>= fun value ->
-      Ok (value, pos' - pos)
+      let* s, pos' = parse_cstring buf pos in
+      let+ value = Sam.optional_field_value_Z s in
+      value, pos' - pos
     | 'H' ->
-      parse_cstring buf pos >>= fun (s, pos') ->
-      Sam.optional_field_value_H s >>= fun value ->
-      Ok (value, pos' - pos)
+      let* s, pos' = parse_cstring buf pos in
+      let+ value = Sam.optional_field_value_H s in
+      value, pos' - pos
     | 'B' ->
-      check_buf ~buf ~pos ~len:5 >>= fun () ->
+      let* () = check_buf ~buf ~pos ~len:5 in
       let typ = String.get buf 0 in
       let n = BP.unpack_signed_32_little_endian ~buf ~pos:(pos + 1) in
       (
         match Int32.to_int n with
         | Some n ->
-          cCsSiIf_size typ >>= fun elt_size ->
-          check_buf ~buf ~pos:(pos + 5) ~len:(n * elt_size) >>= fun () ->
+          let* elt_size = cCsSiIf_size typ in
+          let* () = check_buf ~buf ~pos:(pos + 5) ~len:(n * elt_size) in
           let elts = List.init n ~f:(fun i -> String.sub buf ~pos:(pos + 5 + i * elt_size) ~len:elt_size) in
           let bytes_read = 5 (* array type and size *) + elt_size * n in
-          Sam.optional_field_value_B typ elts >>= fun value ->
-          Ok (value, bytes_read)
+          let+ value = Sam.optional_field_value_B typ elts in
+          value, bytes_read
         | None ->
-          Or_error.error_string "Too many elements in B-type optional field"
+          Error.msg "Too many elements in B-type optional field"
       )
-    | c -> error "Incorrect optional field type identifier" c [%sexp_of: char]
+    | c -> Error.msgf "Incorrect optional field type identifier (%c)" c
 
   let parse_optional_field buf pos =
-    check_buf ~buf ~pos ~len:3 >>= fun () ->
+    let* () = check_buf ~buf ~pos ~len:3 in
     let tag = String.sub buf ~pos ~len:2 in
     let field_type = buf.[pos + 2] in
-    parse_optional_field_value buf (pos + 3) field_type >>= fun (field_value, shift) ->
-    Sam.optional_field tag field_value >>= fun field ->
-    Ok (field, shift + 3)
+    let* field_value, shift =
+      parse_optional_field_value buf (pos + 3) field_type
+    in
+    let+ field = Sam.optional_field tag field_value in
+    field, shift + 3
 
   let parse_optional_fields buf =
     let rec loop buf pos accu =
       if pos = String.length buf then Ok (List.rev accu)
       else
-        parse_optional_field buf pos >>= fun (field, used_chars) ->
+        let* field, used_chars = parse_optional_field buf pos in
         loop buf (pos + used_chars) (field :: accu)
     in
     loop buf 0 []
 
   let optional_fields al =
-    Or_error.tag (parse_optional_fields al.optional) ~tag:"Bam.Alignment0.optional_fields"
-
-
+    parse_optional_fields al.optional
 
   (* ============================ *)
   (* ==== ALIGNMENT DECODING ==== *)
@@ -426,12 +431,17 @@ module Alignment0 = struct
 
   (* Alignement0.t -> Alignment.t conversion *)
   let decode al header =
-    flags al >>= fun flags ->
-    rname al header >>= fun rname ->
-    cigar al >>= fun cigar ->
-    rnext al header >>= fun rnext ->
-    qual al >>= fun qual ->
-    optional_fields al >>= fun optional_fields ->
+    let* flags =
+      flags al
+      |> Result.map_error ~f:(fun (`Flag_out_of_range i) ->
+          `Msg (sprintf "flag out of range (%d)" i)
+        )
+    in
+    let* rname = rname al header in
+    let* cigar = cigar al in
+    let* rnext = rnext al header in
+    let* qual = qual al in
+    let* optional_fields = optional_fields al in
     Sam.alignment
       ?qname:(qname al) ~flags ?rname ?pos:(pos al) ?mapq:(mapq al)
       ~cigar ?rnext ?pnext:(pnext al) ?tlen:(tlen al)
@@ -446,7 +456,7 @@ module Alignment0 = struct
   let find_ref_id header ref_name =
     match Array.findi header.ref_seq ~f:(fun _ rs -> String.(rs.Sam.name = ref_name)) with
     | Some (i, _) -> Ok i
-    | None  -> Or_error.error_string "Bam: unknown reference id"
+    | None  -> Error.msg "Bam: unknown reference id"
 
 
   let string_of_cigar_ops cigar_ops =
@@ -519,7 +529,7 @@ module Alignment0 = struct
         else if int64_fits_s32 i then (
           Ok ('i', BP.pack_signed_32_little_endian (Int32.of_int64_exn i))
         )
-        else error "Sam integer cannot be encoded in BAM format" i Int64.sexp_of_t
+        else Error.msgf "Sam integer cannot be encoded in BAM format (%Ld)" i
 
       | `H s -> (
           let r = ref [] in
@@ -533,46 +543,42 @@ module Alignment0 = struct
       | `Z s ->
         Ok ('Z', s ^ "\000")
     in
-    let open Or_error.Monad_infix in
     List.map opt_fields ~f:(fun opt_field ->
-        field_value_encoding opt_field.Sam.value >>= fun (c, s) ->
-        Ok (sprintf "%s%c%s" opt_field.Sam.tag c s)
+        let+ c, s = field_value_encoding opt_field.Sam.value in
+        sprintf "%s%c%s" opt_field.Sam.tag c s
       )
-    |> Or_error.all
-    >>| String.concat ~sep:""
+    |> Result.all
+    |> Result.map ~f:(String.concat ~sep:"")
 
   let int32 i ~ub var =
     if i < ub then
       match Int32.of_int i with
       | Some i -> Ok i
-      | None -> Or_error.error_string "invalid conversion to int32"
+      | None -> Error.msg "invalid conversion to int32"
     else
-      Or_error.errorf "invalid conversion to int32 (%s than %d)" var ub
+      Error.msgf "invalid conversion to int32 (%s than %d)" var ub
 
   let encode_bin_mq_nl ~bin ~mapq ~l_read_name =
     let open Int32 in
-    int32 bin ~ub:65536 "bin" >>= fun bin ->
-    int32 mapq ~ub:256 "mapq" >>= fun mapq ->
-    int32 l_read_name ~ub:256 "l_read_name" >>= fun l_read_name ->
-    Ok (
-      bit_or
-        (shift_left bin 16)
-        (bit_or (shift_left mapq 8) l_read_name)
-    )
+    let* bin = int32 bin ~ub:65536 "bin" in
+    let* mapq = int32 mapq ~ub:256 "mapq" in
+    let+ l_read_name = int32 l_read_name ~ub:256 "l_read_name" in
+    bit_or
+      (shift_left bin 16)
+      (bit_or (shift_left mapq 8) l_read_name)
 
   let encode_flag_nc ~flags ~n_cigar_ops =
     let open Int32 in
-    int32 flags ~ub:65536 "flags" >>= fun flags ->
-    int32 n_cigar_ops ~ub:65536 "n_cigar_ops" >>= fun n_cigar_ops ->
-    Ok (bit_or (shift_left flags 16) n_cigar_ops)
+    let* flags = int32 flags ~ub:65536 "flags" in
+    let+ n_cigar_ops = int32 n_cigar_ops ~ub:65536 "n_cigar_ops" in
+    bit_or (shift_left flags 16) n_cigar_ops
 
   let encode al header =
-    begin match al.Sam.rname with
-    | Some rname -> find_ref_id header rname
-    | None -> Ok (-1)
-    end
-    >>= fun ref_id ->
-
+    let* ref_id =
+      match al.Sam.rname with
+      | Some rname -> find_ref_id header rname
+      | None -> Ok (-1)
+    in
     let read_name = Option.value ~default:"*" al.Sam.qname in
     let seq = Option.value_map ~default:"" ~f:encode_seq al.Sam.seq in
 
@@ -581,34 +587,31 @@ module Alignment0 = struct
     let bin = reg2bin pos (pos + String.(length seq)) in
     let mapq = Option.value ~default:255 al.Sam.mapq in
     let l_read_name = String.length read_name + 1 in (* NULL terminated string *)
-    encode_bin_mq_nl ~bin ~mapq ~l_read_name
-    >>= fun bin_mq_nl ->
-
+    let* bin_mq_nl = encode_bin_mq_nl ~bin ~mapq ~l_read_name in
     let flags = (al.Sam.flags :> int) in
     let n_cigar_ops = List.length al.Sam.cigar in
-    encode_flag_nc ~flags ~n_cigar_ops
-    >>= fun flag_nc ->
-
-    begin match al.Sam.rnext with
-    | Some `Equal_to_RNAME -> Ok ref_id
-    | Some (`Value s) -> find_ref_id header s
-    | None -> Ok (-1)
-    end
-    >>= fun next_ref_id ->
-
+    let* flag_nc = encode_flag_nc ~flags ~n_cigar_ops in
+    let* next_ref_id =
+      match al.Sam.rnext with
+      | Some `Equal_to_RNAME -> Ok ref_id
+      | Some (`Value s) -> find_ref_id header s
+      | None -> Ok (-1)
+    in
     let pnext = Option.value ~default:0 al.Sam.pnext - 1 in
     let tlen = Option.value ~default:0 al.Sam.tlen in
-
     let cigar = string_of_cigar_ops al.Sam.cigar in
-
-    List.map al.Sam.qual ~f:(Phred_score.to_char ~offset:`Offset33)
-    |> Result.all
-    >>| String.of_char_list
-    >>= fun qual ->
-
-    string_of_optional_fields al.Sam.optional_fields >>= fun optional ->
-
-    Ok {
+    let* qual =
+      List.map al.Sam.qual ~f:(fun c ->
+          Phred_score.to_char ~offset:`Offset33 c
+          |> Result.map_error ~f:(fun _ -> `Msg "Invalid phred score")
+        )
+      |> Result.all
+      |> Result.map ~f:String.of_char_list
+    in
+    let+ optional =
+      string_of_optional_fields al.Sam.optional_fields
+    in
+    {
       ref_id; pos; bin_mq_nl; flag_nc; cigar;
       next_ref_id; pnext; tlen; seq; qual; optional;
       read_name
@@ -624,22 +627,25 @@ let input_s32_as_int iz =
 let read_sam_header iz =
   try
     let magic = Bgzf.input_string iz 4 in
-    check String.(magic = magic_string) "Incorrect magic string, not a BAM file" >>= fun () ->
+    let* () = check String.(magic = magic_string) "Incorrect magic string, not a BAM file" in
     let l_text = input_s32_as_int iz in
-     check (l_text >= 0) "Incorrect size of plain text in BAM header" >>= fun () ->
+    let* () = check (l_text >= 0) "Incorrect size of plain text in BAM header" in
     let text = Bgzf.input_string iz l_text in
     Sam.parse_header text
-  with End_of_file -> Or_error.error_string "EOF while reading BAM header"
+    |> Result.map_error ~f:(fun (`SAM_parsing_error (msg, _)) ->
+        `Msg msg
+      )
+  with End_of_file -> Error.msg "EOF while reading BAM header"
 
 let read_one_reference_information iz =
   try
     let l_name = input_s32_as_int iz in
-    check (l_name > 0) "Incorrect encoding of reference sequence name in BAM header" >>= fun () ->
+    let* () = check (l_name > 0) "Incorrect encoding of reference sequence name in BAM header" in
     let name = Bgzf.input_string iz (l_name - 1) in
     let (_ : char) = Bgzf.input_char iz in (* name is a NULL terminated string *)
     let length = input_s32_as_int iz in
     Sam.ref_seq ~name ~length ()
-  with End_of_file -> Or_error.error_string "EOF while reading BAM reference information"
+  with End_of_file -> Error.msg "EOF while reading BAM reference information"
 
 let read_reference_information iz =
   let rec loop accu n =
@@ -651,58 +657,53 @@ let read_reference_information iz =
   in
   try
     let n_ref = input_s32_as_int iz in
-    loop [] n_ref
-    >>| Array.of_list
-  with End_of_file -> Or_error.error_string "EOF while reading BAM reference information"
+    let+ refs = loop [] n_ref in
+    Array.of_list refs
+  with End_of_file -> Error.msg "EOF while reading BAM reference information"
 
 let read_alignment_aux iz block_size =
   try
     let ref_id = input_s32_as_int iz in
-    begin match Bgzf.input_s32 iz |> Int32.to_int with
+    let* pos =
+      match Bgzf.input_s32 iz |> Int32.to_int with
       | Some 2147483647 (* POS in BAM is 0-based *)
-      | None -> Or_error.error_string "A read has a position greater than 2^31"
+      | None -> Error.msg "A read has a position greater than 2^31"
       | Some n ->
-        if n < -1 then Or_error.errorf "A read has a negative position %d" n
+        if n < -1 then Error.msgf "A read has a negative position %d" n
         else Ok n
-    end
-    >>= fun pos ->
-
+    in
     let bin_mq_nl = Bgzf.input_s32 iz in
     let l_read_name = get_8_0 bin_mq_nl in
-    checkf (l_read_name > 0) "Alignment with l_read_name = %d"  l_read_name >>= fun () ->
+    let* () = checkf (l_read_name > 0) "Alignment with l_read_name = %d"  l_read_name in
     let flag_nc = Bgzf.input_s32 iz in
     let n_cigar_ops = get_16_0 flag_nc in
     let l_seq = input_s32_as_int iz in
-    check (l_seq >= 0) "Incorrect sequence length in alignment" >>= fun () ->
+    let* () = check (l_seq >= 0) "Incorrect sequence length in alignment" in
     let next_ref_id = input_s32_as_int iz in
-
-    begin match Bgzf.input_s32 iz |> Int32.to_int with
-    | Some 2147483647
-    | None -> Or_error.error_string "A read has a position > than 2^31"
-    | Some n ->
-      if n < -1 then Or_error.errorf "A read has a negative next position %d" n
-      else Ok n
-    end
-    >>= fun pnext ->
-
+    let+ pnext =
+      match Bgzf.input_s32 iz |> Int32.to_int with
+      | Some 2147483647
+      | None -> Error.msg "A read has a position > than 2^31"
+      | Some n ->
+        if n < -1 then Error.msgf "A read has a negative next position %d" n
+        else Ok n
+    in
     let tlen = input_s32_as_int iz in
-
     let read_name =
       let r = Bgzf.input_string iz (l_read_name - 1) in
       let (_ : char) = Bgzf.input_char iz in (* trailing null character *)
       r
     in
-
     let cigar = Bgzf.input_string iz (n_cigar_ops * 4) in
     let seq = Bgzf.input_string iz ((l_seq + 1) / 2) in
     let qual = Bgzf.input_string iz l_seq in
     let remaining = block_size - 32 - l_read_name - 4 * n_cigar_ops - ((l_seq + 1) / 2) - l_seq in
     let optional = Bgzf.input_string iz remaining in
-    Ok {
+    {
       Alignment0.ref_id ; read_name ; flag_nc ; pos ; bin_mq_nl ; cigar ;
       next_ref_id ; pnext ; tlen ; seq ; qual ; optional
     }
-  with End_of_file -> Or_error.error_string "EOF while reading alignment"
+  with End_of_file -> Error.msg "EOF while reading alignment"
 
 let read_alignment iz =
   try
@@ -719,19 +720,19 @@ let read_alignment_stream iz =
   loop
 
 let read_header iz =
-  read_sam_header iz >>= fun sam_header ->
-  read_reference_information iz >>= fun ref_seq ->
-  Ok { sam_header ; ref_seq }
+  let* sam_header = read_sam_header iz in
+  let+ ref_seq = read_reference_information iz in
+  { sam_header ; ref_seq }
 
 let read0 ic =
   let iz = Bgzf.of_in_channel ic in
-  read_header iz >>= fun header ->
-  Ok (header, read_alignment_stream iz)
+  let+ header = read_header iz in
+  (header, read_alignment_stream iz)
 
 
 let with_file0 fn ~f =
   In_channel.with_file ~binary:true fn ~f:(fun ic ->
-      read0 ic >>= fun (header, alignments) ->
+      let* header, alignments = read0 ic in
       f header alignments
     )
 
@@ -743,7 +744,10 @@ let write_plain_SAM_header h oz =
     Buffer.add_char buf '\n'
   in
   Option.iter h.version ~f:(fun version ->
-      let hl = header_line ~version ?sort_order:h.sort_order () |> ok_exn in (* the construction of the header line must be valid since we are building it from a validated header *)
+      let hl =
+        header_line ~version ?sort_order:h.sort_order ()
+        |> ok_or_failwith
+      in (* the construction of the header line must be valid since we are building it from a validated header *)
       add_line (print_header_line hl)
     ) ;
   List.iter h.ref_seqs ~f:(fun x ->
@@ -806,23 +810,23 @@ let write0 header alignments oc =
   Seq.iter (write_alignment0 oz) alignments ;
   Bgzf.dispose_out oz
 
-let bind f x = Or_error.bind x ~f
+let bind f x = Result.bind x ~f
 
 let read ic =
-  read0 ic >>= fun (header, xs) ->
-  Ok (header, Seq.map (bind (fun r -> Alignment0.decode r header)) xs)
+  let+ (header, xs) = read0 ic in
+  (header, Seq.map (bind (fun r -> Alignment0.decode r header)) xs)
 
 let with_file fn ~f = with_file0 fn ~f:(fun header xs ->
     f header (Seq.map (bind (fun r -> Alignment0.decode r header)) xs)
   )
 
 let write h xs oc =
-  let module M = struct exception E of Error.t end in
+  let exception E of string in
   let xs = Seq.map (fun al ->
       match Alignment0.encode al h with
       | Ok r -> r
-      | Error e -> raise (M.E e)
+      | Error (`Msg e) -> raise (E e)
     ) xs
   in
   try write0 h xs oc ; Ok ()
-  with M.E e -> Error e
+  with E e -> Error.msg e

@@ -51,7 +51,7 @@ let process_chunk iterator f ~(loc : GLoc.t) acc chunk =
     else
       match Bam.read_alignment iterator.bam with
       | None -> raise (Interrupt "Expected more alignments, truncated file?")
-      | Some (Error e) -> raise (Interrupt (Core.Error.to_string_hum e))
+      | Some (Error (`Msg msg)) -> raise (Interrupt msg)
       | Some (Ok al) ->
         match Bam.Alignment0.(pos al, seq al) with
         | (Some pos, Some seq) ->

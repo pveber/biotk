@@ -9,7 +9,7 @@ let _ba2 = R.get_ok @@ Bai.read (In_channel.create "rien.bai")
 
 let _f () =
   let bam_ic = Bgzf.open_in "data/range.bam" in
-  let _ = (ok_exn @@ Bam.read_header bam_ic : Bam.Header.t) in
+  let _ = (Prelude.ok_or_failwith @@ Bam.read_header bam_ic : Bam.Header.t) in
   for i = 1 to 112 do
     printf "%Ld %d\n" (Bgzf.virtual_offset bam_ic) i;
     match Bam.read_alignment bam_ic with

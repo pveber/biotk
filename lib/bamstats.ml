@@ -50,7 +50,7 @@ let update s al =
   update_gen s al.Sam.flags
 
 let update0 s al =
-  let open Or_error.Monad_infix in
+  let open Result.Monad_infix in
   Bam.Alignment0.flags al
   >>| update_gen s
 
@@ -68,7 +68,7 @@ module Fragment_length_histogram = struct
   }
 
   let with_mapped_pair ~min_mapq al f =
-    let open Or_error.Monad_infix in
+    let open Result.Monad_infix in
     Bam.Alignment0.flags al >>= fun fl ->
     let multi_segment = Sam.Flags.has_multiple_segments fl in
     let each_segment_properly_aligned = Sam.Flags.each_segment_properly_aligned fl in
@@ -114,6 +114,6 @@ module Chr_histogram = struct
           Binning.Counter.tick counts chr ;
           Ok ()
         | Ok None -> Ok ()
-        | Error _ as e -> e
+        | Error _ -> Error `Wrong_rname
       )
 end

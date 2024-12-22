@@ -1,12 +1,13 @@
 open Core
+open Prelude
 
 module Seq = Stdlib.Seq
 open Result.Monad_infix
 
 let ( >>?~ )
-    (x : 'a option Or_error.t)
-    (f : 'a -> 'b Or_error.t)
-    : 'b option Or_error.t
+    (x : ('a option, 'e) result)
+    (f : 'a -> ('b, 'e) result)
+    : ('b option, 'e) result
     =
   let open Result.Monad_infix in
   x >>= function
@@ -19,7 +20,7 @@ let ( >>?~ )
 type header_item_tag = [
 | `HD | `SQ | `RG | `PG | `CO
 | `Other of string
-] [@@deriving sexp]
+] [@@deriving sexp, show]
 
 type tag_value = string * string
 [@@deriving sexp]
@@ -94,6 +95,10 @@ type header = {
   others : (string * tag_value list) list;
 }
 
+type error = [
+  | `SAM_parsing_error of string * int option
+]
+
 let empty_header = {
   version = None;
   sort_order = None;
@@ -117,7 +122,7 @@ module Flags = struct
     if (0 <= x) && (x <= 65535) then
       Ok x
     else
-      error "flag out of range" x sexp_of_int
+      Error `Flag_out_of_range
 
   let flag_is_set s f = (f land s) <> 0
 
@@ -185,22 +190,19 @@ type alignment = {
 (* Header Parsers and Constructors                                            *)
 (******************************************************************************)
 let parse_header_version s =
-  let err =
-    error "invalid version" (`HD, s)
-    [%sexp_of: header_item_tag * string ]
-  in
+  let err () = Error.msgf "invalid version %s" s in
   match String.lsplit2 ~on:'.' s with
-  | None -> err
+  | None -> err ()
   | Some (a,b) ->
     if (String.for_all a ~f:Char.is_digit)
       && (String.for_all b ~f:Char.is_digit)
     then
-      Ok s
+      Ok (Int.of_string a, Int.of_string b)
     else
-      err
+      err ()
 
 let header_line ~version ?sort_order ?group_order () =
-  parse_header_version version >>| fun version ->
+  parse_header_version version >>| fun _ ->
   {version; sort_order; group_order}
 
 let ref_seq
@@ -218,7 +220,7 @@ let ref_seq
   (if (1 <= length) && (length <= 2147483647) then
       Ok length
    else
-      error "invalid reference sequence length" length sexp_of_int
+      Error.msgf "invalid reference sequence length %d" length
   ) >>= fun length ->
 
   (if (String.length name > 0)
@@ -230,7 +232,7 @@ let ref_seq
    then
       Ok name
    else
-      error "invalid ref seq name" name sexp_of_string
+      Error.msgf "invalid reference sequence name (%s)" name
   ) >>= fun name ->
 
   Ok {name; length; assembly; md5; species; uri}
@@ -249,12 +251,12 @@ let read_group
     with _ ->
       try Ok (Some (`Time run_date))
       with _ ->
-        error "invalid run date/time" run_date sexp_of_string
+        Error.msgf "Invalid run date or time (%s)" run_date
   ) >>= fun run_date ->
 
   (match flow_order with
   | None -> Ok None
-  | Some "" -> Or_error.error_string "invalid empty flow order"
+  | Some "" -> Error.msg "invalid empty flow order"
   | Some "*" -> Ok flow_order
   | Some x ->
     if String.for_all x ~f:(function
@@ -265,7 +267,7 @@ let read_group
     then
       Ok flow_order
     else
-      error "invalid flow order" x sexp_of_string
+      Error.msgf "invalid flow order (%s)" x
   ) >>| fun flow_order ->
 
   {
@@ -274,51 +276,42 @@ let read_group
     platform; platform_unit; sample;
   }
 
-
 let header
     ?version ?sort_order ?group_order ?(ref_seqs=[]) ?(read_groups=[])
     ?(programs=[]) ?(comments=[]) ?(others=[])
     ()
-    =
-  [
-    (
-      match version with
-      | None -> None
-      | Some x -> match parse_header_version x with
-        | Error e -> Some e
-        | Ok _ -> None
-    );
-    (
-      if Option.is_some sort_order && Poly.(version = None) then
-        Some (Error.create
-                "sort order cannot be defined without version"
-                (sort_order, version)
-                [%sexp_of: sort_order option * string option ]
-        )
-      else
-        None
-    );
-    (
+  =
+  let open Let_syntax.Result in
+  let* () =
+    match version with
+    | None -> Ok ()
+    | Some x -> parse_header_version x >>| ignore
+  in
+  let* () =
+    if Option.is_some sort_order && Poly.(version = None) then
+      Error.msg "sort order cannot be defined without version"
+    else Ok ()
+  in
+  let* () =
+    let maybe_dup =
       List.map ref_seqs ~f:(fun (x:ref_seq) -> x.name)
       |> List.find_a_dup ~compare:String.compare
-      |> Option.map ~f:(fun name ->
-         Error.create "duplicate ref seq name" name sexp_of_string
-      )
-    );
-  ]
-  |> List.filter_map ~f:Fn.id
-  |> function
-     | [] -> Ok {
-       version; sort_order; group_order; ref_seqs; read_groups;
-       programs; comments; others;
-     }
-     | errs -> Error (Error.of_list errs)
+    in
+    match maybe_dup with
+    | None -> Ok ()
+    | Some dup ->
+      Error.msgf "duplicate reference sequence name (%s)" dup
+  in
+  Ok {
+    version; sort_order; group_order; ref_seqs; read_groups;
+    programs; comments; others;
+  }
 
 
 let parse_header_item_tag s =
   let is_letter = function 'A' .. 'Z' | 'a' .. 'z' -> true | _ -> false in
   match String.chop_prefix s ~prefix:"@" with
-  | None -> error "header item tag must begin with @" s sexp_of_string
+  | None -> Error.msg "header item tag must begin with @"
   | Some "HD" -> Ok `HD
   | Some "SQ" -> Ok `SQ
   | Some "RG" -> Ok `RG
@@ -330,7 +323,7 @@ let parse_header_item_tag s =
     then
       Ok (`Other x)
     else
-      error "invalid header item tag" s sexp_of_string
+      Error.msgf "invalid header item tag (%s)" s
 
 let parse_tag_value s =
   let parse_tag s =
@@ -343,7 +336,7 @@ let parse_tag_value s =
     then
       Ok s
     else
-      error "invalid tag" s sexp_of_string
+      Error.msgf "invalid tag %s" s
   in
   let parse_value tag s =
     if String.(s <> "")
@@ -351,12 +344,11 @@ let parse_tag_value s =
     then
       Ok s
     else
-      error "tag has invalid value" (tag,s)
-      [%sexp_of: string * string ]
+      Error.msgf "tag %s has invalid value %s" tag s
   in
   match String.lsplit2 s ~on:':' with
   | None ->
-    error "tag-value not colon separated" s sexp_of_string
+    Error.msgf "tag-value %s not colon separated" s
   | Some (tag,value) ->
     parse_tag tag >>= fun tag ->
     parse_value tag value >>= fun value ->
@@ -377,22 +369,19 @@ let find_all l x' =
 let find1 header_item_tag l x =
   match find_all l x with
   | [] ->
-    error "required tag not found" (header_item_tag, x)
-    [%sexp_of: header_item_tag * string ]
-  | y::[] -> Ok y
-  | ys ->
-    error "tag found multiple times" (header_item_tag, x, ys)
-    [%sexp_of: header_item_tag * string * string list ]
+    Error.msgf "required tag %s not found in %s header item" x (show_header_item_tag header_item_tag)
+  | y :: [] -> Ok y
+  | _ ->
+    Error.msgf "tag_found_multiple_times (%s)" (show_header_item_tag header_item_tag)
 
 (** Find 0 or 1 occurrence [x] in association list [l]. Return
     error if [x] is defined more than once. *)
 let find01 header_item_tag l x =
   match find_all l x with
   | [] -> Ok None
-  | y::[] -> Ok (Some y)
-  | ys ->
-    error "tag found multiple times" (header_item_tag, x, ys)
-    [%sexp_of: header_item_tag * string * string list ]
+  | y :: [] -> Ok (Some y)
+  | _  ->
+    Error.msgf "tag found multiple times (%s)" (show_header_item_tag header_item_tag)
 
 (** Assert that [tvl] contains at most the given [tags]. *)
 let assert_tags header_item_tag tvl tags =
@@ -402,23 +391,20 @@ let assert_tags header_item_tag tvl tags =
   if Set.length unexpected_tags = 0 then
     Ok ()
   else
-    error
-      "unexpected tag for given header item type"
-      (header_item_tag, unexpected_tags)
-      [%sexp_of: header_item_tag * String.Set.t ]
+    Error.msgf "unexpected tag for given header item type (%s)" (show_header_item_tag header_item_tag)
 
 let parse_sort_order = function
   | "unknown" -> Ok `Unknown
   | "unsorted" -> Ok `Unsorted
   | "queryname" -> Ok `Query_name
   | "coordinate" -> Ok `Coordinate
-  | x -> error "invalid sort order" x sexp_of_string
+  | x -> Error.msgf "invalid sort order (%s)" x
 
 let parse_group_order = function
   | "none" -> Ok `None
   | "query" -> Ok `Query
   | "reference" -> Ok `Reference
-  | x -> error "invalid group order" x sexp_of_string
+  | x -> Error.msgf "invalid group order (%s)" x
 
 let parse_header_line tvl =
   find1 `HD tvl "VN" >>= fun version ->
@@ -434,7 +420,7 @@ let parse_ref_seq tvl =
   find1 `SQ tvl "LN" >>= fun length ->
   (try Ok (Int.of_string length)
    with _ ->
-     error "invalid ref seq length" length sexp_of_string
+     Error.msgf "invalid reference sequence length (%s)" length
   ) >>= fun length ->
   find01 `SQ tvl "AS" >>= fun assembly ->
   find01 `SQ tvl "M5" >>= fun md5 ->
@@ -451,7 +437,7 @@ let parse_platform = function
   | "HELICOS" -> Ok `Helicos
   | "IONTORRENT" -> Ok `Ion_Torrent
   | "PACBIO" -> Ok `Pac_Bio
-  | x -> error "unknown platform" x sexp_of_string
+  | x -> Error.msgf "unknown platform %s" x
 
 let parse_read_group tvl =
   find1 `RG tvl "ID" >>= fun id ->
@@ -465,10 +451,9 @@ let parse_read_group tvl =
   find01 `RG tvl "PI" >>?~ (fun predicted_median_insert_size ->
   try Ok (Int.of_string predicted_median_insert_size)
   with _ ->
-    error
-      "invalid predicted median insert size"
+    Error.msgf
+      "invalid predicted median insert size (%s)"
       predicted_median_insert_size
-      sexp_of_string
   ) >>= fun predicted_median_insert_size ->
   find01 `RG tvl "PL" >>?~
   parse_platform >>= fun platform ->
@@ -503,7 +488,7 @@ let parse_header_item line =
   in
   match String.lsplit2 ~on:'\t' line with
   | None ->
-    error "header line contains no tabs" line String.sexp_of_t
+    Error.msg "header line contains no tabs"
   | Some (tag, data) ->
     parse_header_item_tag tag >>= function
     | `CO -> Ok (`CO data)
@@ -511,14 +496,19 @@ let parse_header_item line =
       match String.split ~on:'\t' data with
       | [] -> assert false
       | ""::[] ->
-        error "header contains no data" tag sexp_of_header_item_tag
+        Error.msg "header line contains no data"
       | tvl ->
         List.map tvl ~f:parse_tag_value |> Result.all >>= fun tvl ->
         parse_data tag tvl
 
+let map_sam_parsing_error lno =
+  Result.map_error ~f:(fun (`Msg msg) ->
+      `SAM_parsing_error (msg, Some lno)
+    )
+
 let parse_header_gen src =
   let open Let_syntax.Result in
-  let return ({version; sort_order; group_order; _} as x) maybe_al =
+  let return ({version; sort_order; group_order; _} as x) lno maybe_al =
     let ref_seqs = List.rev x.ref_seqs in
     let read_groups = List.rev x.read_groups in
     let programs = List.rev x.programs in
@@ -528,35 +518,44 @@ let parse_header_gen src =
       header
         ?version ?sort_order ?group_order ~ref_seqs ~read_groups
         ~programs ~comments ~others ()
+      |> Result.map_error ~f:(fun (`Msg msg) ->
+          `SAM_parsing_error (msg, None)
+        )
     in
-    header, maybe_al
+    header, lno, maybe_al
   in
-  let rec loop hdr =
+  let rec loop lno hdr =
     match src () with
-    | None -> return hdr None
+    | None -> return hdr lno None
     | Some line ->
+      let lno = lno + 1 in
       if String.length line = 0 then
-        Or_error.error_string "invalid empty line"
+        Error (`SAM_parsing_error ("empty line", Some lno))
       else if Char.(line.[0] <> '@') then
-        return hdr (Some line)
+        return hdr (lno + 1) (Some line)
       else (
-        let* header_item = parse_header_item line in
+        let* header_item =
+          parse_header_item line
+          |> map_sam_parsing_error lno
+        in
         match header_item with
         | `HD ({version; sort_order; group_order} : header_line) -> (
             match hdr.version with
             | Some _ ->
-              Or_error.error_string "multiple @HD lines not allowed"
+              Error (`SAM_parsing_error ("multiple @HD lines not allowed", Some lno))
             | None ->
-              loop {hdr with version = Some version; sort_order; group_order}
+              loop
+                lno
+                {hdr with version = Some version; sort_order; group_order}
           )
-        | `SQ x -> loop {hdr with ref_seqs = x::hdr.ref_seqs}
-        | `RG x -> loop {hdr with read_groups = x::hdr.read_groups}
-        | `PG x -> loop {hdr with programs = x::hdr.programs}
-        | `CO x -> loop {hdr with comments = x::hdr.comments}
-        | `Other x -> loop {hdr with others = x::hdr.others}
+        | `SQ x -> loop lno {hdr with ref_seqs = x::hdr.ref_seqs}
+        | `RG x -> loop lno {hdr with read_groups = x::hdr.read_groups}
+        | `PG x -> loop lno {hdr with programs = x::hdr.programs}
+        | `CO x -> loop lno {hdr with comments = x::hdr.comments}
+        | `Other x -> loop lno {hdr with others = x::hdr.others}
       )
   in
-  loop empty_header
+  loop 0 empty_header
 
 let list_iterator xs =
   let cursor = ref xs in
@@ -569,7 +568,7 @@ let parse_header buf =
   let open Let_syntax.Result in
   let lines = String.split_lines buf in
   let src = list_iterator lines in
-  let+ header, _ = parse_header_gen src in
+  let+ header, _, _ = parse_header_gen src in
   header
 
 
@@ -581,86 +580,68 @@ let alignment
     ?rnext ?pnext ?tlen ?seq ?(qual=[])
     ?(optional_fields=[])
     ()
-    =
-  [
-    (match ref_seqs, rname with
-    | (None,_) | (_,None) -> None
+  =
+  let open Let_syntax.Result in
+  let* () =
+    match ref_seqs, rname with
+    | None, _ | _, None -> Ok ()
     | Some ref_seqs, Some rname ->
-      if Set.mem ref_seqs rname then
-        None
+      if Set.mem ref_seqs rname then Ok ()
       else
-        Some (
-          Error.create
-            "RNAME not defined in any SQ line"
-            rname sexp_of_string
-        )
-    );
-
-    (match ref_seqs, rnext with
-    | (None,_) | (_,None) -> None
+        Error.msgf "RNAME not defined in any SQ line (%s)" rname
+  in
+  let* () =
+    match ref_seqs, rnext with
+    | None, _ | _, None -> Ok ()
     | Some _, Some `Equal_to_RNAME ->
-      None (* error will already be detected in RNAME check above *)
+      Ok () (* error will already be detected in RNAME check above *)
     | Some ref_seqs, Some (`Value rnext) ->
-      if Set.mem ref_seqs rnext then
-        None
+      if Set.mem ref_seqs rnext then Ok ()
       else
-        Some (
-          Error.create
-            "RNEXT not defined in any SQ line"
-            rnext sexp_of_string
-        )
-    );
-
-    (match seq, qual with
-    | _, [] -> None
-    | None, _ ->
-      Some (Error.of_string "QUAL provided without SEQ")
+        Error.msgf "RNEXT not defined in any SQ line (%s)" rnext
+  in
+  let* () =
+    match seq, qual with
+    | _, [] -> Ok ()
+    | None, _ -> Error.msg "QUAL provided without SEQ"
     | Some seq, _ ->
       let s = String.length seq in
       let q = List.length qual in
-      if s = q then
-        None
+      if s = q then Ok ()
       else
-        Some (Error.create
-                "SEQ and QUAL lengths differ"
-                (s, q) [%sexp_of: int * int ]
-        )
-    );
-
-    (
+        Error.msgf "SEQ and QUAL lengths differ (%d, %d)" s q
+  in
+  let* () =
+    let maybe_dup =
       List.map optional_fields ~f:(fun x -> x.tag)
       |> List.find_a_dup ~compare:String.compare
-      |> Option.map ~f:(fun dup ->
-        Error.create "TAG occurs more than once" dup sexp_of_string)
-    );
-  ]
-  |> List.filter_map ~f:Fn.id
-  |> function
-    | [] -> Ok {
-      qname; flags; rname; pos; mapq; cigar;
-      rnext; pnext; tlen; seq; qual; optional_fields
-    }
-    | errs -> Error (Error.of_list errs)
-
+    in
+    match maybe_dup with
+    | None -> Ok ()
+    | Some dup ->
+      Error.msgf "TAG occurs more than once (%s)" dup
+  in
+  Ok {
+    qname; flags; rname; pos; mapq; cigar;
+    rnext; pnext; tlen; seq; qual; optional_fields
+  }
 
 let parse_int_range field lo hi s =
-  let out_of_range = sprintf "%s out of range" field in
-  let not_an_int = sprintf "%s not an int" field in
   try
     let n = Int.of_string s in
     if (lo <= n) && (n <= hi) then
       Ok n
     else
-      error out_of_range (n,lo,hi) [%sexp_of: int * int * int ]
+      Error.msgf "integer for field %s out of range (%d not in [%d, %d])" field n lo hi
   with _ ->
-    error not_an_int s sexp_of_string
+    Error.msgf "value for field %s not an integer (%s)" field s
 
 (** Parse a string that can either by "*" or some other regexp, with
     "*" denoting [None]. The given regexp [re] should include "*" as
     one of the alternatives. *)
 let parse_opt_string field re s =
   if not (Re.execp re s) then
-    error (sprintf "invalid %s" field) s sexp_of_string
+    Error.msgf "invalid value for field %s (%s)" field s
   else
     match s with
     | "*" -> Ok None
@@ -678,9 +659,13 @@ let parse_qname s =
   parse_opt_string "QNAME" qname_re s
 
 let parse_flags s =
-  try Flags.of_int (Int.of_string s)
-  with _ ->
-    error "invalid FLAG" s sexp_of_string
+  match (
+    try Flags.of_int (Int.of_string s)
+    with _ -> Error `Invalid_int
+  )
+  with
+  | Ok _ as r -> r
+  | Error _ -> Error.msgf "invalid FLAG (%s)" s
 
 let rname_re = Re.Perl.compile_pat "^\\*|[!-()+-<>-~][!-~]*$"
 let parse_rname s =
@@ -697,24 +682,25 @@ let parse_mapq s =
   | x -> Some x
 
 let positive i =
-  let open Or_error in
-  if i > 0 then return i else error_string "positive argument expected for cigar operation"
+  if i > 0 then Ok i
+  else Error.msg "positive argument expected for cigar operation"
 
-let cigar_op_alignment_match i = Or_error.(positive i >>| fun i -> `Alignment_match i)
-let cigar_op_insertion i = Or_error.(positive i >>| fun i -> `Insertion i)
-let cigar_op_deletion i = Or_error.(positive i >>| fun i -> `Deletion i)
-let cigar_op_skipped i = Or_error.(positive i >>| fun i -> `Skipped i)
-let cigar_op_soft_clipping i = Or_error.(positive i >>| fun i -> `Soft_clipping i)
-let cigar_op_hard_clipping i = Or_error.(positive i >>| fun i -> `Hard_clipping i)
-let cigar_op_padding i = Or_error.(positive i >>| fun i -> `Padding i)
-let cigar_op_seq_match i = Or_error.(positive i >>| fun i -> `Seq_match i)
-let cigar_op_seq_mismatch i = Or_error.(positive i >>| fun i -> `Seq_mismatch i)
+let cigar_op_alignment_match i = Result.(positive i >>| fun i -> `Alignment_match i)
+let cigar_op_insertion i = Result.(positive i >>| fun i -> `Insertion i)
+let cigar_op_deletion i = Result.(positive i >>| fun i -> `Deletion i)
+let cigar_op_skipped i = Result.(positive i >>| fun i -> `Skipped i)
+let cigar_op_soft_clipping i = Result.(positive i >>| fun i -> `Soft_clipping i)
+let cigar_op_hard_clipping i = Result.(positive i >>| fun i -> `Hard_clipping i)
+let cigar_op_padding i = Result.(positive i >>| fun i -> `Padding i)
+let cigar_op_seq_match i = Result.(positive i >>| fun i -> `Seq_match i)
+let cigar_op_seq_mismatch i = Result.(positive i >>| fun i -> `Seq_mismatch i)
 
 let parse_cigar text =
+  let open Let_syntax.Result in
   match text with
   | "*" -> Ok []
   | "" ->
-    error "invalid cigar string" text sexp_of_string
+    Error.msgf "invalid cigar string (%s)" text
   | _ ->
     let ch = Scanf.Scanning.from_string text in
     let rec loop accum =
@@ -723,7 +709,7 @@ let parse_cigar text =
         try
           let n = Scanf.bscanf ch "%d" Fun.id in
           let c = Scanf.bscanf ch "%c" Fun.id in
-          let x =
+          let* x =
             match c with
             | 'M' -> cigar_op_alignment_match n
             | 'I' -> cigar_op_insertion n
@@ -734,20 +720,19 @@ let parse_cigar text =
             | 'P' -> cigar_op_padding n
             | '=' -> cigar_op_seq_match n
             | 'X' -> cigar_op_seq_mismatch n
-            | other -> Or_error.error "invalid cigar operation type" other Char.sexp_of_t
+            | other -> Error.msgf "invalid cigar operation type (%c)" other
           in
-          Or_error.tag x ~tag:"Sam.parse_cigar: invalid cigar string" >>= fun x ->
-          loop (x::accum)
+          loop (x :: accum)
         with
           _ ->
-            error "invalid cigar string" text sexp_of_string
+            Error.msgf "invalid cigar string (%s)" text
     in
     loop [] >>| List.rev
 
 let rnext_re = Re.Perl.compile_pat "^\\*|=|[!-()+-<>-~][!-~]*$"
 let parse_rnext s =
   if not (Re.execp rnext_re s) then
-    error "invalid RNEXT" s sexp_of_string
+    Error.msgf "invalid RNEXT (%s)" s
   else
     match s with
     | "*" -> Ok None
@@ -770,12 +755,19 @@ let parse_seq s =
 
 let parse_qual s =
   match s with
-  | "" -> Or_error.error_string "invalid empty QUAL"
+  | "" -> Error.msg "invalid empty QUAL"
   | "*" -> Ok []
   | _ ->
-    String.to_list s
-    |> List.map ~f:(Phred_score.of_char ~offset:`Offset33)
-    |> Result.all
+    let rec loop acc i =
+      if i < 0 then Ok acc
+      else
+        let c = s.[i] in
+        match Phred_score.of_char ~offset:`Offset33 c with
+        | Ok s -> loop (s :: acc) (i - 1)
+        | Error _ ->
+          Error.msgf "invalid character for PHRED33 (%c)" c
+    in
+    loop [] (String.length s - 1)
 
 
 let opt_field_tag_re = Re.Perl.compile_pat "^[A-Za-z][A-Za-z0-9]$"
@@ -785,7 +777,7 @@ let opt_field_int_re = Re.Perl.compile_pat "^-?[0-9]+$"
 let opt_field_float_re = Re.Perl.compile_pat "^[-+]?[0-9]*\\.?[0-9]+([eE][-+]?[0-9]+)?$"
 
 let optional_field_value_err typ value =
-  error "invalid value" (typ,value) [%sexp_of: string * string ]
+  Error.msgf "invalid value (%s, %s)" typ value
 
 let optional_field_value_A value =
   if List.mem ~equal:Char.equal ['!';'-';'~'] value
@@ -814,17 +806,17 @@ let optional_field_value_B elt_type elts =
     | _ -> false
   in
   if valid_args then Ok (`B (elt_type, elts))
-  else error "invalid value" ("B", elt_type, elts) [%sexp_of: string * char * string list ]
+  else Error.msgf "invalid B value (%c, %s)" elt_type (String.concat ~sep:"," elts)
 
 let optional_field tag value =
   if not (Re.execp opt_field_tag_re tag)
-  then error "invalid TAG" tag sexp_of_string
+  then Error.msgf "invalid TAG (%s)" tag
   else Ok {tag; value}
 
 let parse_optional_field_value s =
   match String.lsplit2 s ~on:':' with
   | None ->
-    error "missing TYPE in optional field" s sexp_of_string
+    Error.msgf "missing TYPE in optional field (%s)" s
   | Some (typ,value) ->
     match typ with
     | "A" ->
@@ -848,16 +840,16 @@ let parse_optional_field_value s =
           if String.length num_typ = 1 then
             optional_field_value_B num_typ.[0] values
           else
-            error "invalid array type" num_typ sexp_of_string
+            Error.msgf "invalid array type (%s)" num_typ
         | _ -> assert false (* [String.split] cannot return an empty list *)
       )
-    | _ -> error "invalid type" typ sexp_of_string
+    | _ -> Error.msgf "invalid type (%s)" typ
 
 
 let parse_optional_field s =
   match String.lsplit2 s ~on:':' with
   | None ->
-    error "missing TAG in optional field" s sexp_of_string
+    Error.msgf "missing TAG in optional field (%s)" s
   | Some (tag,s) ->
     parse_optional_field_value s >>= fun value ->
     optional_field tag value
@@ -865,30 +857,31 @@ let parse_optional_field s =
 
 let parse_alignment ?ref_seqs line =
   match String.split ~on:'\t' line with
-  | qname::flags::rname::pos::mapq::cigar::rnext
-    ::pnext::tlen::seq::qual::optional_fields
-    -> (
-      parse_qname qname >>= fun qname ->
-      parse_flags flags >>= fun flags ->
-      parse_rname rname >>= fun rname ->
-      parse_pos pos >>= fun pos ->
-      parse_mapq mapq >>= fun mapq ->
-      parse_cigar cigar >>= fun cigar ->
-      parse_rnext rnext >>= fun rnext ->
-      parse_pnext pnext >>= fun pnext ->
-      parse_tlen tlen >>= fun tlen ->
-      parse_seq seq >>= fun seq ->
-      parse_qual qual >>= fun qual ->
-      List.map optional_fields ~f:parse_optional_field
-      |> Result.all
-      >>= fun optional_fields ->
-      alignment
-        ?ref_seqs ?qname ~flags ?rname ?pos ?mapq ~cigar
-        ?rnext ?pnext ?tlen ?seq ~qual ~optional_fields
-        ()
-    )
+  | qname :: flags :: rname :: pos :: mapq :: cigar :: rnext
+     :: pnext :: tlen :: seq :: qual :: optional_fields -> (
+       let open Let_syntax.Result in
+       let* qname = parse_qname qname in
+       let* flags = parse_flags flags in
+       let* rname = parse_rname rname in
+       let* pos = parse_pos pos in
+       let* mapq = parse_mapq mapq in
+       let* cigar = parse_cigar cigar in
+       let* rnext = parse_rnext rnext in
+       let* pnext = parse_pnext pnext in
+       let* tlen = parse_tlen tlen in
+       let* seq = parse_seq seq in
+       let* qual = parse_qual qual in
+       let* optional_fields =
+         List.map optional_fields ~f:parse_optional_field
+         |> Result.all
+       in
+       alignment
+         ?ref_seqs ?qname ~flags ?rname ?pos ?mapq ~cigar
+         ?rnext ?pnext ?tlen ?seq ~qual ~optional_fields
+         ()
+     )
   | _ ->
-    Or_error.error_string "alignment line contains < 12 fields"
+    Error.msg "alignment line contains < 12 fields"
 
 
 
@@ -1112,22 +1105,31 @@ let write_file ?perm ?append file ?header alignments =
       Seq.iter (write_alignment oc) alignments
     )
 
-let fold fn ~init ~f =
+let with_file fn ~f =
   let open Let_syntax.Result in
+  let exception Escape of int * string in
   In_channel.with_file fn ~f:(fun ic ->
-      let* (header, maybe_next_line) = read_header ic in
-      let* init = init header in
-      match maybe_next_line with
-      | None -> Ok init
-      | Some line ->
-        let rec loop acc =
-          match In_channel.input_line ic with
-          | None -> Ok acc
-          | Some line -> process_line acc line
-        and process_line acc line =
-          let* alignment = parse_alignment line in
-          let* acc' = f acc alignment in
-          loop acc'
+      let* (header, header_lno, maybe_next_line) = read_header ic in
+      let als =
+        let rec loop i = function
+          | None -> Seq.empty
+          | Some line ->
+            match parse_alignment line with
+            | Ok al ->
+              Seq.cons al (loop (i + 1) (In_channel.input_line ic))
+            | Error (`Msg s) -> raise (Escape (i, s))
         in
-        process_line init line
+        loop (header_lno + 1) maybe_next_line
+      in
+      try Ok (f header als)
+      with Escape (lno, msg) -> Error (`SAM_parsing_error (msg, Some lno))
+      (* This reallocation is necesassary to enjoy full polymorphism *)
+    )
+
+let fold fn ~init ~f =
+  with_file fn ~f:(fun header als ->
+      Seq.fold_left
+        (fun acc al -> f acc header al)
+        (init header)
+        als
     )

@@ -6,6 +6,7 @@
     Note: this module is adapted from biocaml 0.8 released under LGPL *)
 
 open Core
+open Prelude
 
 (** {2 Types} *)
 
@@ -132,7 +133,7 @@ module Flags : sig
   type t = private int
   [@@deriving sexp]
 
-  val of_int: int -> t Or_error.t
+  val of_int: int -> (t, [> `Flag_out_of_range]) result
 
   val has_multiple_segments            : t -> bool
   val each_segment_properly_aligned    : t -> bool
@@ -200,12 +201,19 @@ type alignment = private {
   optional_fields : optional_field list;
 } [@@deriving sexp]
 
+(** {2 Error types } *)
+
+type error = [
+  | `SAM_parsing_error of string * int option
+]
+
 
 (** {2 Input/Output } *)
 
+
 val read_header :
   In_channel.t ->
-  (header * string option) Or_error.t
+  (header * int * string option, [> error]) result
 
 val write_file :
   ?perm:int ->
@@ -215,13 +223,16 @@ val write_file :
   alignment Seq.t ->
   unit
 
+val with_file :
+  string ->
+  f:(header -> (* local *) alignment Seq.t -> 'a) ->
+  ('a, [> error]) result
+
 val fold :
   string ->
-  init:(header -> 'a Or_error.t) ->
-  f:('a -> alignment -> 'a Or_error.t) ->
-  'a Or_error.t
-
-
+  init:(header -> 'a) ->
+  f:('a -> header -> alignment -> 'a) ->
+  ('a, [> error]) result
 
 (** {2 Low-level Parsers and Constructors} *)
 
@@ -232,7 +243,7 @@ val header_line
   -> ?sort_order:sort_order
   -> ?group_order:group_order
   -> unit
-  -> header_line Or_error.t
+  -> header_line or_error
 
 val ref_seq
   :  name:string
@@ -242,7 +253,7 @@ val ref_seq
   -> ?species:string
   -> ?uri:string
   -> unit
-  -> ref_seq Or_error.t
+  -> ref_seq or_error
 
 (** The [run_date] string will be parsed as a Date.t or Time.t,
     whichever is possible. If it is a time without a timezone, local
@@ -261,7 +272,7 @@ val read_group
   -> ?platform_unit:string
   -> ?sample:string
   -> unit
-  -> read_group Or_error.t
+  -> read_group or_error
 
 val header
   : ?version:string
@@ -273,50 +284,50 @@ val header
   -> ?comments : string list
   -> ?others : (string * tag_value list) list
   -> unit
-  -> header Or_error.t
+  -> header or_error
 
-val parse_header_item_tag : string -> header_item_tag Or_error.t
-val parse_tag_value : string -> tag_value Or_error.t
-val parse_header_version : string -> string Or_error.t
-val parse_sort_order : string -> sort_order Or_error.t
-val parse_header_line : tag_value list -> header_line Or_error.t
-val parse_ref_seq : tag_value list -> ref_seq Or_error.t
-val parse_platform : string -> platform Or_error.t
-val parse_read_group : tag_value list -> read_group Or_error.t
-val parse_program : tag_value list -> program Or_error.t
-val parse_header_item : string -> header_item Or_error.t
-val parse_header : string -> header Or_error.t
-
-
-(** {3 Low-level Optional field Parsers and Constructors} *)
-
-val cigar_op_alignment_match : int -> cigar_op Or_error.t
-val cigar_op_insertion : int -> cigar_op Or_error.t
-val cigar_op_deletion : int -> cigar_op Or_error.t
-val cigar_op_skipped : int -> cigar_op Or_error.t
-val cigar_op_soft_clipping : int -> cigar_op Or_error.t
-val cigar_op_hard_clipping : int -> cigar_op Or_error.t
-val cigar_op_padding : int -> cigar_op Or_error.t
-val cigar_op_seq_match : int -> cigar_op Or_error.t
-val cigar_op_seq_mismatch : int -> cigar_op Or_error.t
+val parse_header_item_tag : string -> header_item_tag or_error
+val parse_tag_value : string -> tag_value or_error
+val parse_header_version : string -> (int * int) or_error
+val parse_sort_order : string -> sort_order or_error
+val parse_header_line : tag_value list -> header_line or_error
+val parse_ref_seq : tag_value list -> ref_seq or_error
+val parse_platform : string -> platform or_error
+val parse_read_group : tag_value list -> read_group or_error
+val parse_program : tag_value list -> program or_error
+val parse_header_item : string -> header_item or_error
+val parse_header : string -> (header, [> error]) result
 
 
 (** {3 Low-level Optional field Parsers and Constructors} *)
 
-val optional_field_value_A : char -> optional_field_value Or_error.t
+val cigar_op_alignment_match : int -> cigar_op or_error
+val cigar_op_insertion : int -> cigar_op or_error
+val cigar_op_deletion : int -> cigar_op or_error
+val cigar_op_skipped : int -> cigar_op or_error
+val cigar_op_soft_clipping : int -> cigar_op or_error
+val cigar_op_hard_clipping : int -> cigar_op or_error
+val cigar_op_padding : int -> cigar_op or_error
+val cigar_op_seq_match : int -> cigar_op or_error
+val cigar_op_seq_mismatch : int -> cigar_op or_error
+
+
+(** {3 Low-level Optional field Parsers and Constructors} *)
+
+val optional_field_value_A : char -> optional_field_value or_error
 val optional_field_value_i : Int64.t -> optional_field_value
 val optional_field_value_f : float -> optional_field_value
-val optional_field_value_Z : string -> optional_field_value Or_error.t
-val optional_field_value_H : string -> optional_field_value Or_error.t
-val optional_field_value_B : char -> string list -> optional_field_value Or_error.t
+val optional_field_value_Z : string -> optional_field_value or_error
+val optional_field_value_H : string -> optional_field_value or_error
+val optional_field_value_B : char -> string list -> optional_field_value or_error
 
 val optional_field
   :  string
   -> optional_field_value
-  -> optional_field Or_error.t
+  -> optional_field or_error
 
-val parse_optional_field_value : string -> optional_field_value Or_error.t
-val parse_optional_field : string -> optional_field Or_error.t
+val parse_optional_field_value : string -> optional_field_value or_error
+val parse_optional_field : string -> optional_field or_error
 
 (** {3 Low-level Alignment Parsers and Constructors} *)
 
@@ -335,20 +346,20 @@ val alignment
   -> ?qual : Phred_score.t list
   -> ?optional_fields : optional_field list
   -> unit
-  -> alignment Or_error.t
+  -> alignment or_error
 
-val parse_qname : string -> string option Or_error.t
-val parse_flags : string -> Flags.t Or_error.t
-val parse_rname : string -> string option Or_error.t
-val parse_pos : string -> int option Or_error.t
-val parse_mapq : string -> int option Or_error.t
-val parse_cigar : string -> cigar_op list Or_error.t
-val parse_rnext : string -> rnext option Or_error.t
-val parse_pnext : string -> int option Or_error.t
-val parse_tlen : string -> int option Or_error.t
-val parse_seq : string -> string option Or_error.t
-val parse_qual :  string -> Phred_score.t list Or_error.t
-val parse_alignment : ?ref_seqs:String.Set.t -> string -> alignment Or_error.t
+val parse_qname : string -> string option or_error
+val parse_flags : string -> Flags.t or_error
+val parse_rname : string -> string option or_error
+val parse_pos : string -> int option or_error
+val parse_mapq : string -> int option or_error
+val parse_cigar : string -> cigar_op list or_error
+val parse_rnext : string -> rnext option or_error
+val parse_pnext : string -> int option or_error
+val parse_tlen : string -> int option or_error
+val parse_seq : string -> string option or_error
+val parse_qual :  string -> Phred_score.t list or_error
+val parse_alignment : ?ref_seqs:String.Set.t -> string -> alignment or_error
 
 
 (** {2 Low-level Printers} *)

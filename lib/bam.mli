@@ -8,6 +8,7 @@
 *)
 
 open Core
+open Prelude
 
 (** A BAM file is composed of a header and a list of alignment
     records. The datatypes used in this module are based on those
@@ -34,20 +35,20 @@ module Alignment0 : sig
 
   val qname : t -> string option
 
-  val flags : t -> Sam.Flags.t Or_error.t
+  val flags : t -> (Sam.Flags.t, [> `Flag_out_of_range of int]) result
 
   val ref_id : t -> int option
 
-  val rname : t -> Header.t -> string option Or_error.t
+  val rname : t -> Header.t -> string option or_error
 
   (** Positions are 0-based, -1 if undefined*)
   val pos : t -> int option
 
   val mapq : t -> int option
 
-  val cigar : t -> Sam.cigar_op list Or_error.t
+  val cigar : t -> Sam.cigar_op list or_error
 
-  val rnext : t -> Header.t -> Sam.rnext option Or_error.t
+  val rnext : t -> Header.t -> Sam.rnext option or_error
 
   val pnext : t -> int option
 
@@ -55,21 +56,21 @@ module Alignment0 : sig
 
   val seq : t -> string option
 
-  val qual : t -> Phred_score.t list Or_error.t
+  val qual : t -> Phred_score.t list or_error
 
-  val optional_fields : t -> Sam.optional_field list Or_error.t
+  val optional_fields : t -> Sam.optional_field list or_error
 
-  val decode : t -> Header.t -> alignment Or_error.t
+  val decode : t -> Header.t -> alignment or_error
 
-  val encode : alignment -> Header.t -> t Or_error.t
+  val encode : alignment -> Header.t -> t or_error
 end
 
-val read0 : In_channel.t -> (Header.t * Alignment0.t Or_error.t Seq.t) Or_error.t
+val read0 : In_channel.t -> (Header.t * Alignment0.t or_error Seq.t) or_error
 (** [read0 ic] returns an error if a valid header cannot be read from
     [ic] or a pair containing a header and a stream of possibly
     errored (partially parsed) alignments. The stream stops after the first error. *)
 
-val with_file0 : string -> f:(Header.t -> Alignment0.t Or_error.t Seq.t -> 'a Or_error.t) -> 'a Or_error.t
+val with_file0 : string -> f:(Header.t -> Alignment0.t or_error Seq.t -> 'a or_error) -> 'a or_error
 (** [with_file fn ~f] opens a BAM file for reading, applies [f] and
     closes the file after that, even if [f] raises an exception. {b
     Beware}: the result of [f] {b should not} lazily depend on the
@@ -80,27 +81,27 @@ val write0 : Header.t -> Alignment0.t Seq.t -> Out_channel.t -> unit
 (** [write0 h xs oc] writes the header [h] and (partially parsed)
     alignments [xs] to [oc]. *)
 
-val read : In_channel.t -> (Header.t * alignment Or_error.t Seq.t) Or_error.t
+val read : In_channel.t -> (Header.t * alignment or_error Seq.t) or_error
 (** [read ic] returns an error if a valid header cannot be read from
     [ic] or a pair containing a header and a stream of possibly
     errored alignments. The stream stops after the first error. *)
 
-val with_file : string -> f:(Header.t -> alignment Or_error.t Seq.t -> 'a Or_error.t) -> 'a Or_error.t
+val with_file : string -> f:(Header.t -> alignment or_error Seq.t -> 'a or_error) -> 'a or_error
 (** [with_file fn ~f] opens a BAM file for reading, applies [f] and
     closes the file after that, even if [f] raises an exception. {b
     Beware}: the result of [f] {b should not} lazily depend on the
     stream it receives as a second argument, since after the call to
     [with_file] the underlying channel is closed. *)
 
-val write : Header.t -> alignment Seq.t -> Out_channel.t -> unit Or_error.t
+val write : Header.t -> alignment Seq.t -> Out_channel.t -> unit or_error
 (** [write h xs oc] writes the header [h] and the alignments [xs] to
     [oc]. *)
 
 (** {2 Low-level access} *)
 
-val read_header : Bgzf.in_channel -> Header.t Or_error.t
-val read_alignment : Bgzf.in_channel -> Alignment0.t Or_error.t option
-val read_alignment_stream : Bgzf.in_channel -> Alignment0.t Or_error.t Seq.t
+val read_header : Bgzf.in_channel -> Header.t or_error
+val read_alignment : Bgzf.in_channel -> Alignment0.t or_error option
+val read_alignment_stream : Bgzf.in_channel -> Alignment0.t or_error Seq.t
 
 val write_header : Bgzf.out_channel -> Header.t -> unit
 val write_alignment0 : Bgzf.out_channel -> Alignment0.t -> unit

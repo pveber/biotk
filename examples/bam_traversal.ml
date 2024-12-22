@@ -13,10 +13,6 @@ let ok_exn = function
   | Error (`Msg msg) -> failwith msg
   | Error `Parse_error -> failwith "Incorrect format for location"
 
-let ok_exn' = function
-  | Ok x -> x
-  | Error e -> failwith (Error.to_string_hum e)
-
 let loc_of_al = function
   | { Sam.rname = Some chr ; pos = Some pos ; seq = Some seq ; _ } ->
     let lo = pos - 1 in
@@ -47,7 +43,7 @@ let indexed_traversal ~bam ~bai ~loc =
 let full_traversal ~bam ~loc =
   let visited = ref 0 in
   let count =
-    ok_exn' @@ Bam.with_file bam ~f:(fun _ als ->
+    ok_exn @@ Bam.with_file bam ~f:(fun _ als ->
         Fun.flip Stdlib.Seq.filter als Result.(fun al ->
             incr visited ;
             match map al ~f:loc_of_al with

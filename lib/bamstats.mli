@@ -16,7 +16,10 @@ type t = {
 [@@deriving sexp]
 
 val zero : t
-val update0 : t -> Bam.Alignment0.t -> t Or_error.t
+val update0 :
+  t ->
+  Bam.Alignment0.t ->
+  (t, [> `Flag_out_of_range of int]) result
 val update : t -> Sam.alignment -> t
 
 module Fragment_length_histogram : sig
@@ -26,7 +29,10 @@ module Fragment_length_histogram : sig
   }
 
   val create : ?min_mapq:int -> unit -> t
-  val update0 : t -> Bam.Alignment0.t -> unit Or_error.t
+  val update0 :
+    t ->
+    Bam.Alignment0.t ->
+    (unit, [> `Flag_out_of_range of int ]) result
 end
 
 module Chr_histogram : sig
@@ -37,5 +43,8 @@ module Chr_histogram : sig
   }
 
   val create : ?min_mapq:int -> Bam.Header.t -> t
-  val update0 : t -> Bam.Alignment0.t -> unit Or_error.t
+  val update0 :
+    t ->
+    Bam.Alignment0.t ->
+    (unit, [> `Flag_out_of_range of int | `Wrong_rname ]) result
 end
