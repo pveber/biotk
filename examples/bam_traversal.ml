@@ -44,17 +44,16 @@ let full_traversal ~bam ~loc =
   let visited = ref 0 in
   let count =
     ok_exn @@ Bam.with_file bam ~f:(fun _ als ->
-        Fun.flip Stdlib.Seq.filter als Result.(fun al ->
-            incr visited ;
-            match map al ~f:loc_of_al with
-            | Ok (Some loc') ->
-              GLoc.intersects loc loc'
-            | Ok None -> false
-            | Error _ -> assert false
+        Seq.filter
+          (fun al ->
+             incr visited ;
+             match loc_of_al al with
+             | Some loc' -> GLoc.intersects loc loc'
+             | None -> false
           )
+          als
         |> Stdlib.List.of_seq
         |> List.length
-        |> R.ok
       )
   in
   count, !visited

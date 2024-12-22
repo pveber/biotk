@@ -70,7 +70,7 @@ val read0 : In_channel.t -> (Header.t * Alignment0.t or_error Seq.t) or_error
     [ic] or a pair containing a header and a stream of possibly
     errored (partially parsed) alignments. The stream stops after the first error. *)
 
-val with_file0 : string -> f:(Header.t -> Alignment0.t or_error Seq.t -> 'a or_error) -> 'a or_error
+val with_file0 : string -> f:(Header.t -> (* local *) Alignment0.t Seq.t -> 'a) -> 'a or_error
 (** [with_file fn ~f] opens a BAM file for reading, applies [f] and
     closes the file after that, even if [f] raises an exception. {b
     Beware}: the result of [f] {b should not} lazily depend on the
@@ -86,7 +86,7 @@ val read : In_channel.t -> (Header.t * alignment or_error Seq.t) or_error
     [ic] or a pair containing a header and a stream of possibly
     errored alignments. The stream stops after the first error. *)
 
-val with_file : string -> f:(Header.t -> alignment or_error Seq.t -> 'a or_error) -> 'a or_error
+val with_file : string -> f:(Header.t -> (* local *) alignment Seq.t -> 'a) -> 'a or_error
 (** [with_file fn ~f] opens a BAM file for reading, applies [f] and
     closes the file after that, even if [f] raises an exception. {b
     Beware}: the result of [f] {b should not} lazily depend on the

@@ -731,9 +731,18 @@ let read0 ic =
 
 
 let with_file0 fn ~f =
+  let exception Escape of string in
   In_channel.with_file ~binary:true fn ~f:(fun ic ->
-      let* header, alignments = read0 ic in
-      f header alignments
+      let* header, al_or_errors = read0 ic in
+      let alignments =
+        Seq.map
+          (function
+            | Ok al -> al
+            | Error (`Msg msg) -> raise (Escape msg))
+          al_or_errors
+      in
+      try Ok (f header alignments)
+      with Escape msg -> Error.msg msg
     )
 
 let write_plain_SAM_header h oz =
@@ -816,9 +825,21 @@ let read ic =
   let+ (header, xs) = read0 ic in
   (header, Seq.map (bind (fun r -> Alignment0.decode r header)) xs)
 
-let with_file fn ~f = with_file0 fn ~f:(fun header xs ->
-    f header (Seq.map (bind (fun r -> Alignment0.decode r header)) xs)
-  )
+let with_file fn ~f =
+  let exception Escape of string in
+  with_file0 fn ~f:(fun header xs ->
+      let als =
+        Seq.map
+          (fun al0 ->
+             match Alignment0.decode al0 header with
+             | Ok al -> al
+             | Error (`Msg msg) -> raise (Escape msg))
+          xs
+      in
+      try Ok (f header als)
+      with Escape msg -> Error.msg msg
+    )
+  |> Result.join
 
 let write h xs oc =
   let exception E of string in
