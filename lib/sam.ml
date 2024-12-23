@@ -1116,18 +1116,17 @@ let with_file fn ~f =
       let* (header, header_lno, maybe_next_line) = read_header ic in
       let als =
         let rec loop i = function
-          | None -> Seq.empty
+          | None -> Seq.Nil
           | Some line ->
             match parse_alignment line with
             | Ok al ->
-              Seq.cons al (loop (i + 1) (In_channel.input_line ic))
+              Seq.Cons (al, fun () -> loop (i + 1) (In_channel.input_line ic))
             | Error (`Msg s) -> raise (Escape (i, s))
         in
-        loop (header_lno + 1) maybe_next_line
+        fun () -> loop (header_lno + 1) maybe_next_line
       in
       try Ok (f header als)
       with Escape (lno, msg) -> Error (`SAM_parsing_error (msg, Some lno))
-      (* This reallocation is necesassary to enjoy full polymorphism *)
     )
 
 let with_file_exn fn ~f =
