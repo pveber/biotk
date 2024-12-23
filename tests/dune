@@ -1,0 +1,4 @@
+(test
+ (name test)
+ (libraries alcotest biotk)
+ (deps ../data/ex2.sam))
