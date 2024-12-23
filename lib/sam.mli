@@ -228,6 +228,11 @@ val with_file :
   f:(header -> (* local *) alignment Seq.t -> 'a) ->
   ('a, [> error]) result
 
+val with_file_exn :
+  string ->
+  f:(header -> (* local *) alignment Seq.t -> 'a) ->
+  'a
+
 val fold :
   string ->
   init:(header -> 'a) ->

@@ -1130,6 +1130,15 @@ let with_file fn ~f =
       (* This reallocation is necesassary to enjoy full polymorphism *)
     )
 
+let with_file_exn fn ~f =
+  match with_file fn ~f with
+  | Ok r -> r
+  | Error (`SAM_parsing_error (msg, maybe_lno)) ->
+    failwithf "%s%s" msg (match maybe_lno with
+        | None -> ""
+        | Some lno -> sprintf " at line %d" lno
+      ) ()
+
 let fold fn ~init ~f =
   with_file fn ~f:(fun header als ->
       Seq.fold_left
