@@ -771,7 +771,6 @@ let parse_qual s =
 
 
 let opt_field_tag_re = Re.Perl.compile_pat "^[A-Za-z][A-Za-z0-9]$"
-let opt_field_Z_re = Re.Perl.compile_pat "^[ !-~]+$"
 let opt_field_H_re = Re.Perl.compile_pat "^[0-9A-F]+$"
 let opt_field_int_re = Re.Perl.compile_pat "^-?[0-9]+$"
 let opt_field_float_re = Re.Perl.compile_pat "^[-+]?[0-9]*\\.?[0-9]+([eE][-+]?[0-9]+)?$"
@@ -779,17 +778,22 @@ let opt_field_float_re = Re.Perl.compile_pat "^[-+]?[0-9]*\\.?[0-9]+([eE][-+]?[0
 let optional_field_value_err typ value =
   Error.msgf "invalid value (%s, %s)" typ value
 
+let printable_character =
+  let lo = Stdlib.Char.code '!' and hi = Stdlib.Char.code '~' in
+  fun c ->
+    let code = Stdlib.Char.code c in
+    lo <= code && code <= hi
+
 let optional_field_value_A value =
-  if List.mem ~equal:Char.equal ['!';'-';'~'] value
-  then optional_field_value_err "A" (Char.to_string value)
-  else Ok (`A value)
+  if printable_character value then Ok (`A value)
+  else optional_field_value_err "A" (sprintf "ASCII code %d" (Stdlib.Char.code value))
 
 let optional_field_value_i i = `i i
 
 let optional_field_value_f f = `f f
 
 let optional_field_value_Z value =
-  if Re.execp opt_field_Z_re value then Ok (`Z value)
+  if String.for_all value ~f:printable_character then Ok (`Z value)
   else optional_field_value_err "Z" value
 
 let optional_field_value_H value =
