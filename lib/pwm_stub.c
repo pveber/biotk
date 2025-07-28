@@ -29,7 +29,7 @@ value biotk_pwm_scan(value mat, value seq, value caml_tol) {
   for(i = n - m; i >= 0; i--) {
     double score = 0.;
     for(j = 0; j < m; j++) {
-      score += Double_field(Field(mat, j), char_tab[Byte(seq, i + j)]);
+      score += Double_field(Field(mat, j), char_tab[Byte_u(seq, i + j)]);
     }
     if(score > tol) {
       tmp = r;
@@ -84,7 +84,7 @@ value biotk_opt_pwm_scan(value mat, value seq, value caml_tol) {
     double score = 0.;
     for(j = 0; j < m; j++) {
       if(score < bs[j]) break;
-      score += Double_field(Field(mat, j), char_tab[Byte(seq, i + j)]);
+      score += Double_field(Field(mat, j), char_tab[Byte_u(seq, i + j)]);
     }
     if(score > tol) {
       tmp = r;
