@@ -16,7 +16,7 @@ value biotk_pwm_scan(value mat, value seq, value caml_tol) {
   double tol = Double_val(caml_tol);
   int i,j;
 
-  for(int i = 0; i < 255; i++) char_tab[i] = 4;
+  for(i = 0; i < 255; i++) char_tab[i] = 4;
   char_tab['a'] = 0;
   char_tab['c'] = 1;
   char_tab['g'] = 2;
@@ -63,7 +63,7 @@ value biotk_opt_pwm_scan(value mat, value seq, value caml_tol) {
   int i,j;
 
   int char_tab[255];
-  for(int i = 0; i < 255; i++) char_tab[i] = 4;
+  for(i = 0; i < 255; i++) char_tab[i] = 4;
   char_tab['a'] = 0;
   char_tab['c'] = 1;
   char_tab['g'] = 2;
@@ -75,7 +75,7 @@ value biotk_opt_pwm_scan(value mat, value seq, value caml_tol) {
 
   double bs[m];
   bs[m - 1] = tol - array_max(Field(mat, m - 1), 4);
-  for(int i = m - 2; i >= 0; i--) {
+  for(i = m - 2; i >= 0; i--) {
     bs[i] = bs[i + 1] - array_max(Field(mat, i), 4);
   }
 
