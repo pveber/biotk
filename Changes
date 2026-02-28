@@ -1,4 +1,9 @@
-v0.3 2024-02-30 Villeurbanne
+v0.4 2026-02-28 Coublanc
+------------------------
+
+- API changes and bug fixes for Bam, Sam and Pwm
+
+v0.3 2024-02-29 Villeurbanne
 ----------------------------
 
 - does not depend on biocaml anymore
