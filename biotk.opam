@@ -13,6 +13,7 @@ homepage: "https://github.com/pveber/biotk/"
 bug-reports: "https://github.com/pveber/biotk/issues"
 depends: [
   "dune" {>= "3.6"}
+  "alcotest" {with-test}
   "angstrom" {>= "0.15.0"}
   "angstrom-unix" {>= "0.15.0"}
   "binning"
@@ -22,7 +23,7 @@ depends: [
   "core_unix" {>= "v0.16.0"}
   "crunch" {>= "3.2.0"}
   "fmt"
-  "gsl"
+  "gsl" {>= "1.25.0"}
   "ocaml" {>= "4.13.0"}
   "otfm"
   "ppx_csv_conv"
@@ -32,7 +33,7 @@ depends: [
   "uri" {>= "4.2.0"}
   "vg"
   "tyxml" {>= "4.4.0"}
-  "zlib" {>= "0.6"}
+  "zlib" {>= "0.8"}
   "odoc" {with-doc}
 ]
 build: [

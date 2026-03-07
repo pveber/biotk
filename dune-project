@@ -17,6 +17,7 @@ computational biology, like parsers/unparsers for some file
 formats, a few basic data structures and sequence algorithms, as
 well as access to some databases.")
   (depends
+    ("alcotest" :with-test)
     ("angstrom" (>= 0.15.0))
     ("angstrom-unix" (>= 0.15.0))
     "binning"
@@ -26,7 +27,7 @@ well as access to some databases.")
     ("core_unix" (>= v0.16.0))
     (crunch (>= 3.2.0))
     "fmt"
-    "gsl"
+    ("gsl" (>= 1.25.0))
     (ocaml (>= 4.13.0))
     "otfm"
     "ppx_csv_conv"
@@ -36,4 +37,4 @@ well as access to some databases.")
     ("uri" (>= 4.2.0))
     "vg"
     ("tyxml" (>= 4.4.0))
-    ("zlib" (>= 0.6))))
+    ("zlib" (>= 0.8))))
